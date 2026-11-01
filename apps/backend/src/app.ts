@@ -30,7 +30,11 @@ import { createSessionResolver, type SessionResolver } from "./auth/session.js";
 import type { DebugClinicAuth } from "./auth/auth.js";
 import type { AppConfig } from "./config/env.js";
 import { AppError, DependencyUnavailableError } from "./lib/errors.js";
-import { createLogger, type AppLogger } from "./lib/logger.js";
+import {
+  createLogger,
+  sanitizeRequestUrl,
+  type AppLogger,
+} from "./lib/logger.js";
 
 export interface DatabaseProbe {
   $queryRawUnsafe<T>(query: string): Promise<T>;
@@ -165,6 +169,15 @@ export function createApp(options: CreateAppOptions) {
   app.use(
     pinoHttp({
       logger,
+      serializers: {
+        req: (request) => ({
+          id: request.id,
+          method: request.method,
+          url: sanitizeRequestUrl(request.url),
+          remoteAddress: request.remoteAddress,
+          remotePort: request.remotePort,
+        }),
+      },
       customProps: (_request, response) => ({
         requestId: response.locals.requestId,
       }),
