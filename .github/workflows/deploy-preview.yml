@@ -1,0 +1,37 @@
+name: Deploy preview
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: read
+
+jobs:
+  preview:
+    if: github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    environment: deploy-preview
+    env:
+      NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+      NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
+      DATABASE_URL: ${{ secrets.PREVIEW_DATABASE_URL }}
+      DATABASE_URL_POOLED: ${{ secrets.PREVIEW_DATABASE_URL_POOLED }}
+      BETTER_AUTH_SECRET: ${{ secrets.PREVIEW_BETTER_AUTH_SECRET }}
+      GOOGLE_CLIENT_ID: ${{ secrets.PREVIEW_GOOGLE_CLIENT_ID }}
+      GOOGLE_CLIENT_SECRET: ${{ secrets.PREVIEW_GOOGLE_CLIENT_SECRET }}
+      APP_ORIGIN: ${{ vars.PREVIEW_APP_ORIGIN }}
+      CORS_ORIGINS: ${{ vars.PREVIEW_APP_ORIGIN }}
+      BETTER_AUTH_URL: ${{ vars.PREVIEW_APP_ORIGIN }}
+      AI_PROVIDER: fake
+      NODE_ENV: production
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - run: npm run db:deploy
+      - run: npm run build
+      - run: npx --yes netlify-cli@27.16.1 deploy --dir=apps/frontend/dist --functions=netlify/functions --message="PR ${{ github.event.pull_request.number }}"
