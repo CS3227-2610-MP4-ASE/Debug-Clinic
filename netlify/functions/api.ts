@@ -1,22 +1,24 @@
 import serverless from "serverless-http";
+import deployment from "../../generated/deployment.json" with { type: "json" };
 
 import { createAiProvider } from "../../apps/backend/src/ai/provider.js";
 import { createApp } from "../../apps/backend/src/app.js";
 import { createDebugClinicAuth } from "../../apps/backend/src/auth/auth.js";
 import { readEnv } from "../../apps/backend/src/config/env.js";
+import { deploymentEnvironment } from "../../apps/backend/src/config/deployment.js";
 import { createPrismaClient } from "../../apps/backend/src/db/client.js";
 import { createLogger } from "../../apps/backend/src/lib/logger.js";
 import { toWebHandler } from "../../apps/backend/src/lib/web-handler.js";
 
-const config = readEnv();
-const logger = createLogger(config);
-const prisma = createPrismaClient(config);
-const auth = createDebugClinicAuth(config, prisma);
+const appConfig = readEnv(deploymentEnvironment(process.env, deployment));
+const logger = createLogger(appConfig);
+const prisma = createPrismaClient(appConfig);
+const auth = createDebugClinicAuth(appConfig, prisma);
 const app = createApp({
-  config,
+  config: appConfig,
   database: prisma,
   auth,
-  aiProvider: createAiProvider(config),
+  aiProvider: createAiProvider(appConfig),
   profileUpdater: async (userId, name) =>
     prisma.user.update({
       where: { id: userId },

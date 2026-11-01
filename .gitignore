@@ -10,5 +10,6 @@ test-results/
 .netlify/
 .DS_Store
 generated/prisma/
+generated/deployment.json
 *.tsbuildinfo
 .impeccable/review/

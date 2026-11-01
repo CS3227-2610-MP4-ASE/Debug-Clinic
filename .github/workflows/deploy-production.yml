@@ -45,7 +45,7 @@ jobs:
         with:
           node-version-file: .nvmrc
           cache: npm
-      - run: npm ci
+      - run: npm ci --include=dev
       - run: npm run format:check
       - run: npm run lint
       - run: npm run typecheck
@@ -54,4 +54,4 @@ jobs:
       - name: Apply database migrations
         run: npm run db:deploy
       - name: Deploy immutable production build
-        run: npx --yes netlify-cli@27.16.1 deploy --prod --dir=apps/frontend/dist --functions=netlify/functions --message="${{ github.sha }}"
+        run: npx --yes netlify-cli@27.16.1 deploy --no-build --context=production --prod --dir=apps/frontend/dist --functions=netlify/functions --message="${{ github.sha }}"
