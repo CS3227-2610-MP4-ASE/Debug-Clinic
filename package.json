@@ -19,7 +19,7 @@
     "dev": "concurrently -k -n frontend,backend -c cyan,magenta \"npm run dev -w @debugclinic/frontend\" \"npm run dev -w @debugclinic/backend\"",
     "config:check": "tsx scripts/check-config.ts",
     "email:verify": "tsx scripts/verify-email.ts",
-    "build": "npm run db:generate && npm run build --workspaces --if-present",
+    "build": "npm run db:generate && npm run build -w @debugclinic/contracts && npm run build -w @debugclinic/backend && npm run build -w @debugclinic/frontend",
     "lint": "eslint . --max-warnings=0",
     "typecheck": "npm run typecheck --workspaces --if-present && tsc -p tsconfig.functions.json --noEmit && tsc -p tsconfig.integration.json",
     "test": "vitest run",
@@ -37,10 +37,11 @@
     "db:seed": "prisma db seed",
     "db:reset": "prisma migrate reset",
     "netlify:dev": "npx --yes netlify-cli@27.16.1 dev",
-    "prepare": "npm run db:generate"
+    "prepare": "npm run db:generate && npm run build -w @debugclinic/contracts"
   },
   "dependencies": {
-    "serverless-http": "^4.0.0"
+    "serverless-http": "^4.0.0",
+    "zod": "^4.6.6"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",

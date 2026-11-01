@@ -6,6 +6,7 @@ import { createDebugClinicAuth } from "../../apps/backend/src/auth/auth.js";
 import { readEnv } from "../../apps/backend/src/config/env.js";
 import { createPrismaClient } from "../../apps/backend/src/db/client.js";
 import { createLogger } from "../../apps/backend/src/lib/logger.js";
+import { toWebHandler } from "../../apps/backend/src/lib/web-handler.js";
 
 const config = readEnv();
 const logger = createLogger(config);
@@ -25,4 +26,6 @@ const app = createApp({
   logger,
 });
 
-export const handler = serverless(app);
+// A default Web handler selects Netlify's ESM runtime, preserving Prisma's
+// import.meta.url. The adapter retains Express and multiple auth cookies.
+export default toWebHandler(serverless(app, { binary: true }));
