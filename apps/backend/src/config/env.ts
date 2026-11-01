@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { DEV_ORIGIN, isDevelopmentOrigin } from "./deployment.js";
 
 const optionalString = z.preprocess(
   (value) => (value === "" || value === undefined ? undefined : value),
@@ -19,6 +20,8 @@ const envSchema = z
     BETTER_AUTH_SECRET: z.string().min(32),
     GOOGLE_CLIENT_ID: optionalString,
     GOOGLE_CLIENT_SECRET: optionalString,
+    OAUTH_PROXY_URL: optionalString.pipe(z.literal(DEV_ORIGIN).optional()),
+    OAUTH_PROXY_SECRET: optionalString.pipe(z.string().min(32).optional()),
     SMTP_HOST: z.preprocess(
       (value) => (value === "" ? undefined : value),
       z.string().min(1).default("smtp.gmail.com"),
@@ -45,6 +48,38 @@ const envSchema = z
       .default("info"),
   })
   .superRefine((value, context) => {
+    if (Boolean(value.OAUTH_PROXY_URL) !== Boolean(value.OAUTH_PROXY_SECRET)) {
+      context.addIssue({
+        code: "custom",
+        path: ["OAUTH_PROXY_URL"],
+        message:
+          "OAUTH_PROXY_URL and OAUTH_PROXY_SECRET must be configured together",
+      });
+    }
+    if (
+      value.OAUTH_PROXY_URL &&
+      (!isDevelopmentOrigin(value.APP_ORIGIN) ||
+        value.BETTER_AUTH_URL !== value.APP_ORIGIN)
+    ) {
+      context.addIssue({
+        code: "custom",
+        path: ["OAUTH_PROXY_URL"],
+        message:
+          "OAuth proxy is limited to the stable development site and its own PR previews with matching auth origins",
+      });
+    }
+    if (
+      value.APP_ORIGIN.startsWith("https://deploy-preview-") &&
+      value.GOOGLE_CLIENT_ID &&
+      !value.OAUTH_PROXY_URL
+    ) {
+      context.addIssue({
+        code: "custom",
+        path: ["OAUTH_PROXY_URL"],
+        message:
+          "Google login on a PR preview requires the development OAuth proxy",
+      });
+    }
     if (
       (value.NODE_ENV === "production" ||
         value.SMTP_USER ||
@@ -128,6 +163,7 @@ export interface AppConfig {
   betterAuthSecret: string;
   googleClientId?: string;
   googleClientSecret?: string;
+  oauthProxy?: { url: string; secret: string };
   smtp?: {
     host: string;
     port: number;
@@ -163,6 +199,14 @@ export function readEnv(source: NodeJS.ProcessEnv = process.env): AppConfig {
       : {}),
     ...(parsed.GOOGLE_CLIENT_SECRET
       ? { googleClientSecret: parsed.GOOGLE_CLIENT_SECRET }
+      : {}),
+    ...(parsed.OAUTH_PROXY_URL && parsed.OAUTH_PROXY_SECRET
+      ? {
+          oauthProxy: {
+            url: parsed.OAUTH_PROXY_URL,
+            secret: parsed.OAUTH_PROXY_SECRET,
+          },
+        }
       : {}),
     ...(parsed.SMTP_USER && parsed.SMTP_PASSWORD
       ? {

@@ -1,7 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { PrismaPg } from "@prisma/adapter-pg";
 import request from "supertest";
-import { afterAll, describe, expect, it } from "vitest";
+import { afterAll, describe, expect, it, vi } from "vitest";
 import { PrismaClient } from "../../generated/prisma/client.js";
 import { createDebugClinicAuth } from "../../apps/backend/src/auth/auth.js";
 import type { AuthEmail } from "../../apps/backend/src/auth/email.js";
@@ -50,14 +50,137 @@ const app = createApp({
     }),
 });
 const email = `integration-${randomUUID()}@example.test`;
+const proxyEmail = `proxy-${randomUUID()}@example.test`;
 const origin = config.appOrigin;
 const password = "Test-password-unique-12345";
 afterAll(async () => {
-  await prisma.user.deleteMany({ where: { email } });
+  await prisma.user.deleteMany({
+    where: { email: { in: [email, proxyEmail] } },
+  });
   await prisma.$disconnect();
 });
 
 describe("real PostgreSQL and Better Auth", () => {
+  it("proxies Google through stable dev and creates a secure session only on the originating preview", async () => {
+    const stableOrigin = "https://debugclinic-dev.netlify.app";
+    const previewOrigin =
+      "https://deploy-preview-12--debugclinic-dev.netlify.app";
+    const makeAuth = (origin: string, secret: string) =>
+      createDebugClinicAuth(
+        {
+          ...config,
+          nodeEnv: "production",
+          appOrigin: origin,
+          corsOrigins: [origin],
+          betterAuthUrl: origin,
+          betterAuthSecret: secret,
+          googleClientId: "synthetic-google-client",
+          googleClientSecret: "synthetic-google-secret",
+          oauthProxy: {
+            url: stableOrigin,
+            secret: "shared-development-proxy-secret-32-characters",
+          },
+        },
+        prisma,
+        async () => {},
+      );
+    const stable = makeAuth(
+      stableOrigin,
+      "stable-session-secret-at-least-32-characters",
+    );
+    const preview = makeAuth(
+      previewOrigin,
+      "preview-session-secret-at-least-32-characters",
+    );
+    const provider = (await stable.$context).socialProviders.find(
+      (entry) => entry.id === "google",
+    )!;
+    // Mock only Google's remote exchange; exercise the real proxy crypto, state,
+    // callback handlers, Prisma adapter, and session cookies without network calls.
+    const exchange = vi
+      .spyOn(provider, "validateAuthorizationCode")
+      .mockResolvedValue({
+        accessToken: "synthetic-token",
+        scopes: ["email", "profile", "openid"],
+      });
+    const profile = vi.spyOn(provider, "getUserInfo").mockResolvedValue({
+      user: {
+        email: proxyEmail,
+        emailVerified: true,
+        name: "Proxy learner",
+      },
+      data: { sub: proxyEmail },
+    });
+    try {
+      const start = await preview.handler(
+        new Request(`${previewOrigin}/api/auth/sign-in/social`, {
+          method: "POST",
+          headers: {
+            "content-type": "application/json",
+            origin: previewOrigin,
+          },
+          body: JSON.stringify({
+            provider: "google",
+            callbackURL: `${previewOrigin}/learner`,
+          }),
+        }),
+      );
+      expect(start.status).toBe(200);
+      const authorization = new URL((await start.json()).url as string);
+      expect(authorization.searchParams.get("redirect_uri")).toBe(
+        `${stableOrigin}/api/auth/callback/google`,
+      );
+      const callback = await stable.handler(
+        new Request(
+          `${stableOrigin}/api/auth/callback/google?code=synthetic&state=${encodeURIComponent(authorization.searchParams.get("state")!)}`,
+        ),
+      );
+      expect(callback.status).toBe(302);
+      expect(exchange).toHaveBeenCalledOnce();
+      const completion = new URL(callback.headers.get("location")!);
+      expect(completion.origin).toBe(previewOrigin);
+      expect(completion.pathname).toBe("/api/auth/callback/google/oauth-proxy");
+      expect(await prisma.user.count({ where: { email: proxyEmail } })).toBe(0);
+      const cookies = start.headers
+        .getSetCookie()
+        .map((value) => value.split(";")[0])
+        .join("; ");
+      const tampered = new URL(completion);
+      tampered.searchParams.set("profile", "invalid-encrypted-profile");
+      const rejected = await preview.handler(
+        new Request(tampered, { headers: { cookie: cookies } }),
+      );
+      expect(rejected.headers.getSetCookie().join(";")).not.toContain(
+        "session_token",
+      );
+      expect(await prisma.user.count({ where: { email: proxyEmail } })).toBe(0);
+      const finish = await preview.handler(
+        new Request(completion, { headers: { cookie: cookies } }),
+      );
+      expect(finish.status).toBe(302);
+      expect(finish.headers.get("location")).toBe(`${previewOrigin}/learner`);
+      const sessionCookie = finish.headers
+        .getSetCookie()
+        .find((value) => value.includes("session_token"))!;
+      expect(sessionCookie).toContain("HttpOnly");
+      expect(sessionCookie).toContain("Secure");
+      const session = await preview.api.getSession({
+        headers: new Headers({ cookie: sessionCookie.split(";")[0]! }),
+      });
+      expect(session?.user.email).toBe(proxyEmail);
+      expect(
+        (await prisma.user.findUniqueOrThrow({ where: { email: proxyEmail } }))
+          .role,
+      ).toBe("LEARNER");
+      const stableSession = await stable.api.getSession({
+        headers: new Headers({ cookie: sessionCookie.split(";")[0]! }),
+      });
+      expect(stableSession).toBeNull();
+    } finally {
+      exchange.mockRestore();
+      profile.mockRestore();
+    }
+  });
   it("verifies seeded fixtures and database check constraints", async () => {
     expect(
       await prisma.user.count({

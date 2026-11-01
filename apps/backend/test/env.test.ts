@@ -14,6 +14,57 @@ const validEnv = {
 };
 
 describe("environment configuration", () => {
+  const proxy = {
+    OAUTH_PROXY_URL: "https://debugclinic-dev.netlify.app",
+    OAUTH_PROXY_SECRET: "a-dedicated-proxy-secret-at-least-32-characters",
+    GOOGLE_CLIENT_ID: "synthetic-client",
+    GOOGLE_CLIENT_SECRET: "synthetic-secret",
+  };
+  it.each([
+    "https://debugclinic-dev.netlify.app",
+    "https://deploy-preview-12--debugclinic-dev.netlify.app",
+  ])("accepts the OAuth proxy only on development origin %s", (origin) => {
+    expect(
+      readEnv({
+        ...validEnv,
+        ...proxy,
+        APP_ORIGIN: origin,
+        BETTER_AUTH_URL: origin,
+      }).oauthProxy?.url,
+    ).toBe(proxy.OAUTH_PROXY_URL);
+  });
+  it.each([
+    "https://debugclinic-prod.netlify.app",
+    "https://deploy-preview-12--debugclinic-dev.netlify.app.evil.example",
+    "http://localhost:5173",
+  ])("rejects proxy use on %s", (origin) => {
+    expect(() =>
+      readEnv({
+        ...validEnv,
+        ...proxy,
+        APP_ORIGIN: origin,
+        BETTER_AUTH_URL: origin,
+      }),
+    ).toThrow();
+  });
+  it("rejects incomplete proxy settings and Google previews without a proxy", () => {
+    const origin = "https://deploy-preview-12--debugclinic-dev.netlify.app";
+    for (const settings of [
+      { ...proxy, OAUTH_PROXY_SECRET: "" },
+      { ...proxy, OAUTH_PROXY_URL: "" },
+      { ...proxy, OAUTH_PROXY_SECRET: "short" },
+      { ...proxy, OAUTH_PROXY_URL: "", OAUTH_PROXY_SECRET: "" },
+    ]) {
+      expect(() =>
+        readEnv({
+          ...validEnv,
+          ...settings,
+          APP_ORIGIN: origin,
+          BETTER_AUTH_URL: origin,
+        }),
+      ).toThrow();
+    }
+  });
   it("parses and normalizes valid configuration", () => {
     const config = readEnv(validEnv);
     expect(config.corsOrigins).toEqual([
