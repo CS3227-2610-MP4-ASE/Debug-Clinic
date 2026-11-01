@@ -20,6 +20,8 @@ jobs:
       BETTER_AUTH_SECRET: ${{ secrets.PREVIEW_BETTER_AUTH_SECRET }}
       GOOGLE_CLIENT_ID: ${{ secrets.PREVIEW_GOOGLE_CLIENT_ID }}
       GOOGLE_CLIENT_SECRET: ${{ secrets.PREVIEW_GOOGLE_CLIENT_SECRET }}
+      RESEND_API_KEY: ${{ secrets.PREVIEW_RESEND_API_KEY }}
+      EMAIL_FROM: ${{ vars.PREVIEW_EMAIL_FROM }}
       APP_ORIGIN: ${{ vars.PREVIEW_APP_ORIGIN }}
       CORS_ORIGINS: ${{ vars.PREVIEW_APP_ORIGIN }}
       BETTER_AUTH_URL: ${{ vars.PREVIEW_APP_ORIGIN }}
@@ -34,4 +36,4 @@ jobs:
       - run: npm ci
       - run: npm run db:deploy
       - run: npm run build
-      - run: npx --yes netlify-cli@27.16.1 deploy --dir=apps/frontend/dist --functions=netlify/functions --message="PR ${{ github.event.pull_request.number }}"
+      - run: npx --yes netlify-cli@27.16.1 deploy --context=deploy-preview --alias=deploy-preview-${{ github.event.pull_request.number }} --dir=apps/frontend/dist --functions=netlify/functions --message="PR ${{ github.event.pull_request.number }}"
