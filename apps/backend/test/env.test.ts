@@ -32,4 +32,17 @@ describe("environment configuration", () => {
   it("rejects incomplete SoC LLM configuration", () => {
     expect(() => readEnv({ ...validEnv, AI_PROVIDER: "soc" })).toThrow();
   });
+
+  it("requires real email configuration for production", () => {
+    expect(() => readEnv({ ...validEnv, NODE_ENV: "production" })).toThrow();
+  });
+
+  it("rejects sending provider credentials over plain HTTP", () => {
+    expect(() =>
+      readEnv({
+        ...validEnv,
+        SOC_LLM_ENDPOINT: "http://provider.example/v1/chat/completions",
+      }),
+    ).toThrow();
+  });
 });

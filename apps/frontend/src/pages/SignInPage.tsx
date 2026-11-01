@@ -67,6 +67,12 @@ export function SignInPage() {
         </Typography>
       </div>
       {error && <Alert severity="error">{error}</Alert>}
+      {(location.state as { verificationPending?: boolean } | null)
+        ?.verificationPending && (
+        <Alert severity="info">
+          Check your email and verify your address before signing in.
+        </Alert>
+      )}
       <Button
         variant="outlined"
         startIcon={<Google />}

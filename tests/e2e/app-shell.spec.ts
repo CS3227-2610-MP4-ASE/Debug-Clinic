@@ -1,5 +1,37 @@
 import { expect, test } from "@playwright/test";
 
+test("registration explains required email verification", async ({ page }) => {
+  await page.route("**/api/auth/sign-up/email", async (route) => {
+    await route.fulfill({
+      json: {
+        token: null,
+        user: {
+          id: "test",
+          name: "Test learner",
+          email: "learner@example.test",
+          emailVerified: false,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        },
+      },
+    });
+  });
+  await page.goto("/register");
+  await page.getByRole("textbox", { name: /^Name/ }).fill("Test learner");
+  await page
+    .getByRole("textbox", { name: /^Email/ })
+    .fill("learner@example.test");
+  await page.getByLabel(/^Password/).fill("Test-password-12345");
+  await page
+    .getByRole("button", { name: "Create account", exact: true })
+    .click();
+  await expect(
+    page.getByText(
+      "Check your email and verify your address before signing in.",
+    ),
+  ).toBeVisible();
+});
+
 test("public home page explains the practice loop", async ({ page }) => {
   await page.goto("/");
   await expect(

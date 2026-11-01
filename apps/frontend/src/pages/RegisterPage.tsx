@@ -36,6 +36,13 @@ export function RegisterPage() {
       setBusy(false);
       return;
     }
+    if (!result.data.token) {
+      await navigate("/sign-in", {
+        replace: true,
+        state: { verificationPending: true },
+      });
+      return;
+    }
     await refresh();
     await navigate("/learner", { replace: true });
   }

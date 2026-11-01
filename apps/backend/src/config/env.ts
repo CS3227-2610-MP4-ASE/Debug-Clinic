@@ -19,6 +19,8 @@ const envSchema = z
     BETTER_AUTH_SECRET: z.string().min(32),
     GOOGLE_CLIENT_ID: optionalString,
     GOOGLE_CLIENT_SECRET: optionalString,
+    RESEND_API_KEY: optionalString,
+    EMAIL_FROM: optionalString.pipe(z.string().email().optional()),
     AI_PROVIDER: z.enum(["fake", "soc"]).default("fake"),
     SOC_LLM_ENDPOINT: optionalString.pipe(z.string().url().optional()),
     SOC_LLM_MODEL: optionalString,
@@ -30,6 +32,27 @@ const envSchema = z
       .default("info"),
   })
   .superRefine((value, context) => {
+    if (
+      Boolean(value.RESEND_API_KEY) !== Boolean(value.EMAIL_FROM) ||
+      (value.NODE_ENV === "production" && !value.RESEND_API_KEY)
+    ) {
+      context.addIssue({
+        code: "custom",
+        path: ["RESEND_API_KEY"],
+        message:
+          "RESEND_API_KEY and EMAIL_FROM must be configured together and are required in production",
+      });
+    }
+    if (
+      value.SOC_LLM_ENDPOINT &&
+      new URL(value.SOC_LLM_ENDPOINT).protocol !== "https:"
+    ) {
+      context.addIssue({
+        code: "custom",
+        path: ["SOC_LLM_ENDPOINT"],
+        message: "SoC credentials require an HTTPS endpoint",
+      });
+    }
     if (
       Boolean(value.GOOGLE_CLIENT_ID) !== Boolean(value.GOOGLE_CLIENT_SECRET)
     ) {
@@ -66,6 +89,8 @@ export interface AppConfig {
   betterAuthSecret: string;
   googleClientId?: string;
   googleClientSecret?: string;
+  resendApiKey?: string;
+  emailFrom?: string;
   aiProvider: "fake" | "soc";
   socLlmEndpoint?: string;
   socLlmModel?: string;
@@ -94,6 +119,8 @@ export function readEnv(source: NodeJS.ProcessEnv = process.env): AppConfig {
     ...(parsed.GOOGLE_CLIENT_SECRET
       ? { googleClientSecret: parsed.GOOGLE_CLIENT_SECRET }
       : {}),
+    ...(parsed.RESEND_API_KEY ? { resendApiKey: parsed.RESEND_API_KEY } : {}),
+    ...(parsed.EMAIL_FROM ? { emailFrom: parsed.EMAIL_FROM } : {}),
     aiProvider: parsed.AI_PROVIDER,
     ...(parsed.SOC_LLM_ENDPOINT
       ? { socLlmEndpoint: parsed.SOC_LLM_ENDPOINT }
