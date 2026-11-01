@@ -24,6 +24,10 @@ npm run dev
 
 The frontend runs at `http://localhost:5173`; Vite proxies `/api` to the API at `http://localhost:3001`.
 
+PostgreSQL is bound only to loopback: development uses `127.0.0.1:55432`
+(matching both URLs in `.env.example`), and the test database uses
+`127.0.0.1:5433`. Existing `.env` files must use the same development port.
+
 The example configuration uses the deterministic fake AI provider. Google OAuth, transactional email, the NUS SoC LLM, managed PostgreSQL, and Netlify require human-owned credentials and configuration before they can be verified.
 
 See [CredentialsSetup.md](docs/CredentialsSetup.md) for the exact credential names,
