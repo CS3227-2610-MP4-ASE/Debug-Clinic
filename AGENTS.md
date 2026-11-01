@@ -7,6 +7,7 @@
   as well as PATH. Use the configured Node major for verification.
 - Keep generated TypeScript build-info files ignored. When changing visible
   wording, update affected browser assertions before running the suite.
+  Do not pass `.env` files to Prettier; it has no parser for them.
 - MUI required markers can affect exact label-text matching even when hidden
   from the accessible name. Prefer semantic role/name queries for browser tests.
 - Load every declared non-system font and verify design documentation against
@@ -25,6 +26,12 @@
   setup. Offer a mailbox-based option when the user does not own a domain.
 - Existing lint rules exempt underscore-prefixed arguments, not unused local
   variables. Remove unused destructured test values rather than renaming them.
+- Keep Compose bindings and example database URLs consistent and loopback-only;
+  test their agreement so setup cannot target a different local PostgreSQL server.
+- Header redaction does not protect URL credentials. Sanitize logged URLs,
+  reset-token paths, and redirect headers; omit parsed query/params from logs.
+- Test malformed/oversized raw JSON and authentication failure/retry/logout
+  behavior, not only schema validation and successful sign-in.
 
 # Skill evaluation
 
