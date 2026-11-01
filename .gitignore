@@ -1,0 +1,13 @@
+node_modules/
+dist/
+coverage/
+.env
+.env.*
+!.env.example
+!.env.test.example
+playwright-report/
+test-results/
+.netlify/
+.DS_Store
+generated/prisma/
+.impeccable/review/
