@@ -26,6 +26,11 @@ The frontend runs at `http://localhost:5173`; Vite proxies `/api` to the API at 
 
 The example configuration uses the deterministic fake AI provider. Google OAuth, transactional email, the NUS SoC LLM, managed PostgreSQL, and Netlify require human-owned credentials and configuration before they can be verified.
 
+See [CredentialsSetup.md](docs/CredentialsSetup.md) for the exact credential names,
+Google callback URLs, local `.env` location, Netlify runtime variables, and GitHub
+environment secrets. It also explains using Docker Desktop and an isolated
+Node 24 runtime when those commands are absent from the shell PATH.
+
 ## Common commands
 
 | Command                | Purpose                                             |

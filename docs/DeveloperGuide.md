@@ -28,7 +28,11 @@ Better Auth was selected because its maintained documentation covers Express, Pr
 - Instructor access is assigned through a controlled seed or future administrative process.
 - Frontend route guards improve navigation, but Express authorization middleware is the security boundary.
 
-Email verification, reset delivery, Google credentials, and production callback URLs remain human-owned integration work.
+Verification and reset email delivery use the backend Resend adapter. Configuring
+`RESEND_API_KEY` and `EMAIL_FROM` enables mandatory verification for email/password
+accounts; both are required in production. Google credentials, verified sender
+DNS, and production callback URLs remain team-owned configuration. See
+[CredentialsSetup.md](CredentialsSetup.md).
 
 ## Data model
 
@@ -45,9 +49,17 @@ The requirement that a published version have exactly three approved hints requi
 
 ## AI adapter
 
-`AiProvider` isolates product code from provider-specific transport. Local development and tests use `FakeAiProvider`, which is deterministic and offline. `SocLlmProvider` deliberately returns a safe dependency error until the official NUS SoC LLM endpoint contract is supplied. It does not invent request fields.
+`AiProvider` isolates product code from provider-specific transport. Local
+development and tests use `FakeAiProvider`, which is deterministic and offline.
+`SocLlmProvider` implements the official SoCLaaS bearer-authenticated chat API,
+validates structured message content, owns the response stage/request identity,
+and uses an overall deadline with bounded transient retries. Tests inject an
+offline transport; a live key and chat model are still required for acceptance.
 
-All AI requests originate from the backend. Input and structured output use Zod contracts, errors are mapped to non-secret responses, and request logging redacts learner code and reasoning. Future live work must add bounded timeout/retry logic, quota persistence, and usage-event writes around the confirmed provider contract.
+All AI requests originate from the backend. Input and structured output use Zod
+contracts, errors are mapped to non-secret responses, and request logging redacts
+learner code and reasoning. Quota persistence and usage-event writes remain
+future feature work.
 
 ## Environment separation
 
@@ -60,10 +72,9 @@ All AI requests originate from the backend. Input and structured output use Zod 
 
 `DATABASE_URL` is the direct connection used by Prisma migrations. `DATABASE_URL_POOLED` is preferred by application traffic in Netlify Functions. A preview environment must never reuse either production URL.
 
-Prisma CLI generation and validation fall back to the documented local Compose
-database URL when `.env` is absent. Any CI, preview, or production workflow must
-set `DATABASE_URL` explicitly; the checked-in workflows do so with
-environment-scoped values.
+Only offline Prisma generation, formatting, and validation may use a placeholder
+URL when `.env` is absent. Migrations, seeding, and other database commands require
+an explicit `DATABASE_URL`; there is no implicit database write target.
 
 ## API conventions
 

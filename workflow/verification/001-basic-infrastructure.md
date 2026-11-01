@@ -2,6 +2,10 @@
 
 Date: 2026-11-01
 
+Historical report for the initial scaffold. The limitations below were revisited
+in [Verification 002](002-limitations-resolution.md), which records the current
+Node 24, PostgreSQL 17, dependency audit, and integration status.
+
 ## Verified locally
 
 | Check                       | Result                                                                           |
