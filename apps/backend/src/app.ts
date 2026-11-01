@@ -124,6 +124,30 @@ function createErrorHandler(logger: AppLogger): ErrorRequestHandler {
           message: issue.message,
         })),
       );
+    } else if (
+      error instanceof Error &&
+      "type" in error &&
+      "status" in error &&
+      error.type === "entity.parse.failed" &&
+      error.status === 400
+    ) {
+      appError = new AppError(
+        400,
+        "BAD_REQUEST",
+        "The request body must be valid JSON",
+      );
+    } else if (
+      error instanceof Error &&
+      "type" in error &&
+      "status" in error &&
+      error.type === "entity.too.large" &&
+      error.status === 413
+    ) {
+      appError = new AppError(
+        413,
+        "BAD_REQUEST",
+        "The request body exceeds the 64kb limit",
+      );
     } else {
       logger.error({ err: error, requestId }, "Unhandled request error");
       appError = new AppError(

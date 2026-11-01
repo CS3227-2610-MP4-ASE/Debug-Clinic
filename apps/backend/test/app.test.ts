@@ -176,4 +176,48 @@ describe("DebugClinic API", () => {
     expect(response.body.error.code).toBe("BAD_REQUEST");
     expect(response.body.error.requestId).toBeTruthy();
   });
+
+  it("returns 400 for invalid raw JSON without exposing its contents", async () => {
+    const response = await request(buildApp())
+      .post("/api/v1/ai/hint-preview")
+      .set("content-type", "application/json")
+      .send('{"password":"parser-secret", invalid}')
+      .expect(400);
+    expect(response.body.error.code).toBe("BAD_REQUEST");
+    expect(response.body.error.requestId).toBeTruthy();
+    expect(response.body.error.message).toContain("valid JSON");
+    expect(JSON.stringify(response.body)).not.toContain("parser-secret");
+    expect(response.body).not.toHaveProperty("stack");
+  });
+
+  it("returns 413 for JSON above the 64kb limit", async () => {
+    const response = await request(buildApp())
+      .post("/api/v1/ai/hint-preview")
+      .send({ reasoning: "x".repeat(65 * 1024), password: "large-body-secret" })
+      .expect(413);
+    expect(response.body.error.code).toBe("BAD_REQUEST");
+    expect(response.body.error.requestId).toBeTruthy();
+    expect(response.body.error.message).toContain("64kb");
+    expect(JSON.stringify(response.body)).not.toContain("large-body-secret");
+  });
+
+  it("does not expose unknown errors just because they declare a client status", async () => {
+    const response = await request(
+      buildApp({
+        profileUpdater: async () => {
+          throw Object.assign(new Error("private-internal-error"), {
+            status: 400,
+          });
+        },
+      }),
+    )
+      .patch("/api/v1/profile")
+      .set("authorization", "Bearer learner")
+      .send({ name: "Learner" })
+      .expect(500);
+    expect(response.body.error.code).toBe("INTERNAL_ERROR");
+    expect(JSON.stringify(response.body)).not.toContain(
+      "private-internal-error",
+    );
+  });
 });
