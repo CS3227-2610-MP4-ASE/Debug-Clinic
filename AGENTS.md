@@ -11,6 +11,16 @@
   from the accessible name. Prefer semantic role/name queries for browser tests.
 - Load every declared non-system font and verify design documentation against
   resolved MUI values, including numeric radius multipliers.
+- Build OAuth test fixtures from the installed provider types: provider identity
+  belongs in the raw profile/account subject, not mutable local-user fields.
+- Verify declaration-emitting builds after adding typed auth plugins; successful
+  no-emit typechecks do not catch non-portable inferred export types.
+- Smoke-test the packaged Netlify Function, not just Vite/TypeScript builds;
+  preserve ESM when Prisma's generated client uses `import.meta.url`, and keep
+  platform configuration distinct from runtime application configuration. Web
+  adapters must test cookies and binary bytes; enable serverless-http's binary
+  encoding to avoid lossy UTF-8 conversion. Export compiled JavaScript from
+  workspaces in production; Netlify tracing may not preserve external TS exports.
 - Check domain ownership/DNS access before prescribing a domain-based email
   setup. Offer a mailbox-based option when the user does not own a domain.
 - Existing lint rules exempt underscore-prefixed arguments, not unused local

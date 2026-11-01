@@ -77,8 +77,8 @@ GOOGLE_CLIENT_SECRET=<Google client secret>
 Create separate development and production OAuth clients. Each deployed client
 must have its own exact HTTPS origin and
 `https://<that-host>/api/auth/callback/google` redirect URI. Google does not accept
-wildcards for these callback URLs. A Netlify PR preview needs its exact callback
-registered too; see the preview section below. Gmail login requires neither a
+wildcards for these callback URLs. Development PR previews use the stable dev
+callback through the OAuth proxy described below. Gmail login requires neither a
 Gmail API key nor Gmail mail-sending permission.
 
 Reference: [Google's web-server OAuth instructions](https://developers.google.com/identity/protocols/oauth2/web-server).
@@ -182,21 +182,14 @@ provider's connection panel:
   traffic. Use a Prisma/pg-compatible pooler and retain the provider's TLS
   parameters, typically `sslmode=require`.
 
-For a concrete setup if the team has no existing provider, Neon can supply these
-standard PostgreSQL URLs:
-
-1. Open [Neon Console](https://console.neon.tech/) in the team account and create
-   separate `debugclinic-dev` and `debugclinic-prod` projects. Select PostgreSQL
-   17 and a region close to the Netlify Functions region.
-2. In each project click **Connect**, then select the intended branch, database,
-   and role. Copy the direct string into the corresponding `DATABASE_URL` store.
-3. Select the pooled connection option and copy its string into
-   `DATABASE_URL_POOLED`. The pooled hostname includes `-pooler`.
-4. Retain TLS query parameters exactly as supplied. Apply migrations to the
-   development project first. Keep the production project's URL out of local
-   development files and preview environments.
-
-Reference: [Neon connection instructions](https://neon.com/docs/get-started/connect-neon).
+This repository maps the development Supabase project to
+`fgfcfqbjgtemffpcpsum` and production to `ngacjlbzxfwpcapemdtp`. In Supabase's
+**Connect** panel use the session pooler on port 5432 for `DATABASE_URL` when the
+direct host is unreachable over IPv4, and the transaction pooler on port 6543
+for `DATABASE_URL_POOLED`. URL-encode special characters in the database password
+and retain TLS parameters. The native development build checks both URLs against
+the development project before running migrations; changing providers requires
+updating that explicit mapping in `apps/backend/src/config/deployment.ts`.
 
 Do not paste production URLs into local `.env` for development. The direct
 production URL belongs in the production GitHub environment for migrations;
@@ -216,82 +209,127 @@ values; enable **Builds** too if Netlify performs the build. If the plan does no
 offer granular scopes, retain the default all-scopes setting. Mark credential
 values as secret when the UI offers that option.
 
-| Netlify variable       | Development/preview site              | Production site               |
-| ---------------------- | ------------------------------------- | ----------------------------- |
-| `NODE_ENV`             | `production`                          | `production`                  |
-| `APP_ORIGIN`           | Exact active preview origin           | Production HTTPS origin       |
-| `CORS_ORIGINS`         | Same preview origin                   | Same production origin        |
-| `BETTER_AUTH_URL`      | Same preview origin                   | Same production origin        |
-| `DATABASE_URL`         | Development direct URL                | Production direct URL         |
-| `DATABASE_URL_POOLED`  | Development pooled URL                | Production pooled URL         |
-| `BETTER_AUTH_SECRET`   | Independently generated random secret | Different random secret       |
-| `GOOGLE_CLIENT_ID`     | Development client ID                 | Production client ID          |
-| `GOOGLE_CLIENT_SECRET` | Development client secret             | Production client secret      |
-| `SMTP_HOST`            | `smtp.gmail.com`                      | `smtp.gmail.com`              |
-| `SMTP_PORT`            | `465`                                 | `465`                         |
-| `SMTP_SECURE`          | `true`                                | `true`                        |
-| `SMTP_USER`            | Dedicated development Gmail address   | Dedicated sender address      |
-| `SMTP_PASSWORD`        | Development Gmail app password        | Sender's Gmail app password   |
-| `EMAIL_FROM`           | Same as `SMTP_USER`, or blank         | Same as `SMTP_USER`, or blank |
-| `AI_PROVIDER`          | `fake` initially                      | `soc` after live verification |
-| `SOC_LLM_ENDPOINT`     | Full chat endpoint if using `soc`     | Full chat endpoint            |
-| `SOC_LLM_MODEL`        | Selected model if using `soc`         | Selected model ID             |
-| `SOC_LLM_API_KEY`      | Development key if using `soc`        | Production-authorized key     |
-| `AI_TIMEOUT_MS`        | `10000`                               | `10000`                       |
-| `AI_MAX_RETRIES`       | `2`                                   | `2`                           |
+| Netlify variable       | Development/preview site                | Production site                        |
+| ---------------------- | --------------------------------------- | -------------------------------------- |
+| `NODE_ENV`             | `production`                            | `production`                           |
+| `APP_ORIGIN`           | `https://debugclinic-dev.netlify.app`   | `https://debugclinic-prod.netlify.app` |
+| `CORS_ORIGINS`         | Same stable development origin          | Same production origin                 |
+| `BETTER_AUTH_URL`      | Same stable development origin          | Same production origin                 |
+| `DATABASE_URL`         | Development direct URL                  | Production direct URL                  |
+| `DATABASE_URL_POOLED`  | Development pooled URL                  | Production pooled URL                  |
+| `BETTER_AUTH_SECRET`   | Independently generated random secret   | Different random secret                |
+| `GOOGLE_CLIENT_ID`     | Development client ID                   | Production client ID                   |
+| `GOOGLE_CLIENT_SECRET` | Development client secret               | Production client secret               |
+| `OAUTH_PROXY_URL`      | `https://debugclinic-dev.netlify.app`   | Omit entirely                          |
+| `OAUTH_PROXY_SECRET`   | Dedicated random secret, 32+ characters | Omit entirely                          |
+| `SMTP_HOST`            | `smtp.gmail.com`                        | `smtp.gmail.com`                       |
+| `SMTP_PORT`            | `465`                                   | `465`                                  |
+| `SMTP_SECURE`          | `true`                                  | `true`                                 |
+| `SMTP_USER`            | Dedicated development Gmail address     | Dedicated sender address               |
+| `SMTP_PASSWORD`        | Development Gmail app password          | Sender's Gmail app password            |
+| `EMAIL_FROM`           | Same as `SMTP_USER`, or blank           | Same as `SMTP_USER`, or blank          |
+| `AI_PROVIDER`          | `fake` initially                        | `soc` after live verification          |
+| `SOC_LLM_ENDPOINT`     | Full chat endpoint if using `soc`       | Full chat endpoint                     |
+| `SOC_LLM_MODEL`        | Selected model if using `soc`           | Selected model ID                      |
+| `SOC_LLM_API_KEY`      | Development key if using `soc`          | Production-authorized key              |
+| `AI_TIMEOUT_MS`        | `10000`                                 | `10000`                                |
+| `AI_MAX_RETRIES`       | `2`                                     | `2`                                    |
 
-Configure runtime values for the **Deploy Previews** context on the preview site
-and **Production** context on the production site. Rebuild/redeploy after changing
-Netlify runtime variables. GitHub job environment variables are not automatically
-persisted into Netlify Functions.
+On the development site, configure these for both **Production** (the stable dev
+deployment) and **Deploy Previews**, with **Builds and Functions** scope. The two
+development contexts must use the same Google credentials and `OAUTH_PROXY_SECRET`.
+On the actual production site configure the **Production** context. Rebuild/redeploy
+after changing values. GitHub job variables are not automatically persisted into
+Netlify Functions. There are no required `VITE_*` variables; browser requests use
+same-origin `/api`.
 
-### Exact PR preview origins
+### Automatic preview origins and a fixed Google callback
 
-The workflow uses alias `deploy-preview-<PR number>`. If the development Netlify
-site name is `debugclinic-dev` and the PR is 12, the origin is:
+Native Netlify PR previews use `deploy-preview-<PR number>`. For PR 12:
 
 ```text
 https://deploy-preview-12--debugclinic-dev.netlify.app
 ```
 
-Before enabling authentication on that preview, set its exact origin in the
-three Netlify origin variables and `PREVIEW_APP_ORIGIN` in GitHub, and register
-`https://deploy-preview-12--debugclinic-dev.netlify.app/api/auth/callback/google`
-in the development Google OAuth client. The current shared preview environment
-supports one configured authenticated preview at a time. Multiple simultaneous
-authenticated previews require per-preview environment overrides or separate
-sites; do not add a wildcard trusted origin to work around this.
+No per-PR variable edits are needed. During the build, `SITE_ID`, `CONTEXT`,
+`REVIEW_ID`, and `DEPLOY_PRIME_URL` produce a small public
+`generated/deployment.json` artifact. The Function uses that artifact to override
+the three origin variables for its own deployment. Unsupported sites, branch
+deploys, and mismatched preview URLs fail closed. Preview AI is forced to `fake`.
+No request Host header or shared environment-variable mutation is used.
+
+Do these dashboard steps once:
+
+1. On **debugclinic-dev**, link this repository under **Build & deploy → Continuous
+   deployment**, choose `master` as the stable development branch, and enable
+   Deploy Previews. The committed `netlify.toml` provides build settings. Configure
+   Netlify's GitHub integration/PR deploy notifications if you want its preview
+   comment. Do not run a second GitHub CLI preview deployment. Preview publication
+   is independent of CI; require CI and the Netlify deploy check in GitHub's
+   branch protection before merging.
+2. Generate a fresh secret with `openssl rand -hex 32`. Add `OAUTH_PROXY_SECRET`
+   and `OAUTH_PROXY_URL=https://debugclinic-dev.netlify.app` to the development
+   site's **Production and Deploy Previews** contexts, with Builds/Functions scope.
+   This secret is separate from `BETTER_AUTH_SECRET` and must never be used on
+   the actual production site.
+3. In the **development Google OAuth client**, register the JavaScript origin
+   `https://debugclinic-dev.netlify.app` and the single redirect URI
+   `https://debugclinic-dev.netlify.app/api/auth/callback/google`. Keep the
+   production client's callback separate. Do not register every PR callback.
+4. Deploy this code to the **stable dev URL first**, before testing PR Google
+   login: both ends need the proxy plugin and matching shared secret. If this
+   branch has not reached `master`, bootstrap a reviewed stable dev deployment
+   using Netlify's approved deployment process, or merge this infrastructure
+   change before testing the next PR's OAuth flow.
+5. Open a trusted team PR. Its Netlify build applies development migrations
+   before publishing, then Google redirects through stable dev back to that
+   preview, where its session cookie is created. Email links also use that
+   preview's bundled origin. Concurrent PRs have distinct origins, but share
+   the development database: keep schema changes backward-compatible.
+6. On **debugclinic-prod**, keep native Git-triggered builds stopped/disabled
+   while allowing manual CLI deployments. The protected GitHub production job
+   must remain the only production deployment owner.
+
+Only trusted team code may receive development secrets or use this proxy. A PR
+can execute arbitrary build code and a shared proxy key grants identity assertion
+authority within development. Require review/approval before secret-bearing
+preview builds; do not enable them for untrusted fork PRs. Production neither
+loads the proxy nor trusts the preview wildcard. The proxy's limited development
+origin pattern is for OAuth redirects, not a wildcard Express CORS policy.
+
+References: [Better Auth OAuth proxy](https://better-auth.com/docs/plugins/oauth-proxy),
+[Netlify Functions environment variables](https://docs.netlify.com/build/functions/environment-variables/).
 
 Reference: [Netlify environment-variable configuration](https://docs.netlify.com/build/environment-variables/get-started/).
 
 ## 7. GitHub deployment environments
 
 Open the [repository](https://github.com/CS3227-2610-MP4-ASE/Debug-Clinic), then
-**Settings → Environments**. Create environments named exactly `deploy-preview`
-and `production`. Protect production with the team's required reviewer(s) and
+**Settings → Environments**. Create the environment named exactly `production`.
+The former `deploy-preview` environment and its `PREVIEW_*` entries are no longer
+read by any workflow; previews are owned by native Netlify. Protect production with the team's required reviewer(s) and
 restrict its deployment branch to `master` where your GitHub plan supports
 these protection rules.
 
 Within each environment, use **Environment secrets → Add secret** and
 **Environment variables → Add variable**. These are the exact workflow names:
 
-| Environment      | Secret names                                                                                                                                                                                                                                                                                       |
-| ---------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `deploy-preview` | `NETLIFY_AUTH_TOKEN`, `NETLIFY_SITE_ID`, `PREVIEW_DATABASE_URL`, `PREVIEW_DATABASE_URL_POOLED`, `PREVIEW_BETTER_AUTH_SECRET`, `PREVIEW_GOOGLE_CLIENT_ID`, `PREVIEW_GOOGLE_CLIENT_SECRET`, `PREVIEW_SMTP_USER`, `PREVIEW_SMTP_PASSWORD`                                                             |
-| `production`     | `NETLIFY_AUTH_TOKEN`, `NETLIFY_SITE_ID`, `PRODUCTION_DATABASE_URL`, `PRODUCTION_DATABASE_URL_POOLED`, `PRODUCTION_BETTER_AUTH_SECRET`, `PRODUCTION_GOOGLE_CLIENT_ID`, `PRODUCTION_GOOGLE_CLIENT_SECRET`, `PRODUCTION_SMTP_USER`, `PRODUCTION_SMTP_PASSWORD`, `SOC_LLM_ENDPOINT`, `SOC_LLM_API_KEY` |
+| Environment  | Secret names                                                                                                                                                                                                                                                                                       |
+| ------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `production` | `NETLIFY_AUTH_TOKEN`, `NETLIFY_SITE_ID`, `PRODUCTION_DATABASE_URL`, `PRODUCTION_DATABASE_URL_POOLED`, `PRODUCTION_BETTER_AUTH_SECRET`, `PRODUCTION_GOOGLE_CLIENT_ID`, `PRODUCTION_GOOGLE_CLIENT_SECRET`, `PRODUCTION_SMTP_USER`, `PRODUCTION_SMTP_PASSWORD`, `SOC_LLM_ENDPOINT`, `SOC_LLM_API_KEY` |
 
-| Environment      | Variable names                                                    |
-| ---------------- | ----------------------------------------------------------------- |
-| `deploy-preview` | `PREVIEW_APP_ORIGIN`, `PREVIEW_EMAIL_FROM`                        |
-| `production`     | `PRODUCTION_APP_ORIGIN`, `PRODUCTION_EMAIL_FROM`, `SOC_LLM_MODEL` |
+| Environment  | Variable names                                                    |
+| ------------ | ----------------------------------------------------------------- |
+| `production` | `PRODUCTION_APP_ORIGIN`, `PRODUCTION_EMAIL_FROM`, `SOC_LLM_MODEL` |
 
 `NETLIFY_SITE_ID` is the site's **Project ID**, found under Netlify **Project
-configuration → General → Project details**. Use the development site's ID for
-`deploy-preview` and the production site's ID for `production`.
+configuration → General → Project details**. Set production's `NETLIFY_SITE_ID`
+to `3df9e8cb-b1c3-456a-ac32-60c043756d4c` and `PRODUCTION_APP_ORIGIN` to
+`https://debugclinic-prod.netlify.app`.
 `NETLIFY_AUTH_TOKEN` comes from Netlify **User settings → Applications → Personal
 access tokens** for a team-authorized deployment account.
 
-Although the names differ, each `PREVIEW_*` / `PRODUCTION_*` value must match the
+Although the names differ, each `PRODUCTION_*` value must match the
 corresponding unprefixed Netlify runtime variable. For example,
 `PRODUCTION_BETTER_AUTH_SECRET` in GitHub must equal `BETTER_AUTH_SECRET` on the
 production Netlify site. Keep `NETLIFY_AUTH_TOKEN` only in GitHub; the API runtime

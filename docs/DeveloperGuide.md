@@ -102,15 +102,40 @@ Tests must not call Google, the NUS SoC LLM, Netlify, or production services.
 
 ## Deployment
 
-Netlify publishes `apps/frontend/dist` and packages `netlify/functions/api.ts`. `/api/*` is rewritten to the Express function; other paths fall back to `index.html`.
+Netlify publishes `apps/frontend/dist` and packages `netlify/functions/api.ts`.
+The default Web handler selects the modern ESM runtime for Prisma's
+`import.meta.url`; a tested adapter preserves Express requests and auth cookies.
+`/api/*` is rewritten to the Express function;
+other paths fall back to `index.html`.
+
+The contracts workspace builds first and exports JavaScript in production;
+development conditions retain live TypeScript source. `npm ci` prepares its
+compiled export before tests, so the Function never depends on an external
+workspace TypeScript file being executable in the deployed artifact.
 
 GitHub Actions provides:
 
 - CI for formatting, linting, type-checking, Prisma validation/migrations/seed, tests, and builds;
-- an internal-PR-only deploy-preview workflow using a protected preview environment;
 - a production workflow restricted to `master` and the protected production environment.
 
-The production workflow applies migrations before deploying. A migration failure stops the job. Database schema changes should remain backward-compatible with the currently running deployment because migration and function deployment are not atomic.
+Native Netlify owns stable development and trusted-team PR previews; there is no
+duplicate GitHub preview deployment job. Its `npm run build:netlify` validates
+the development Supabase target, applies migrations, and builds before publishing.
+Build metadata bundles each preview's exact origin with its Function. It contains
+no secrets, and simultaneous PRs do not overwrite shared origin variables.
+
+Google login uses Better Auth's dev-only OAuth proxy through the stable dev
+callback. Configure the same dedicated proxy secret on stable dev and trusted
+previews, and deploy stable dev first. Actual production cannot enable this proxy.
+See [credential setup](CredentialsSetup.md#automatic-preview-origins-and-a-fixed-google-callback)
+for the required one-time dashboard configuration and trust boundaries.
+
+The production workflow installs dev build tools explicitly, applies migrations,
+and deploys the immutable build with `--no-build`. Keep native production Git
+builds disabled so they cannot bypass the protected GitHub environment. A
+migration failure stops publication. Schema changes must remain backward-compatible
+with running deployments because migration and function deployment are not atomic;
+all development previews still share one development database.
 
 ## Security notes
 
