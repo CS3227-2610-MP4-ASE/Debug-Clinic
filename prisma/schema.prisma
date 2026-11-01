@@ -1,0 +1,254 @@
+generator client {
+  provider   = "prisma-client"
+  output     = "../generated/prisma"
+  engineType = "client"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Role {
+  LEARNER
+  INSTRUCTOR
+}
+
+enum ExerciseStatus {
+  DRAFT
+  VERIFIED
+  PUBLISHED
+  ARCHIVED
+}
+
+enum AttemptStatus {
+  DRAFT
+  FINAL_SUBMITTED
+}
+
+enum FeedbackKind {
+  HINT
+  ADVISORY
+}
+
+enum ReviewDecision {
+  APPROVED
+  REVISION_REQUIRED
+  REJECTED
+}
+
+enum AiUsageStatus {
+  SUCCEEDED
+  REJECTED
+  FAILED
+}
+
+enum AuthAuditAction {
+  SIGN_IN
+  SIGN_OUT
+  REGISTRATION
+  SESSION_REVOKED
+  PASSWORD_RESET
+  ROLE_CHANGED
+}
+
+model User {
+  id            String           @id @default(cuid())
+  name          String
+  email         String           @unique
+  emailVerified Boolean          @default(false)
+  image         String?
+  role          Role             @default(LEARNER)
+  createdAt     DateTime         @default(now())
+  updatedAt     DateTime         @updatedAt
+  accounts      Account[]
+  sessions      Session[]
+  exercises     Exercise[]       @relation("ExerciseAuthor")
+  attempts      Attempt[]        @relation("LearnerAttempts")
+  reviews       Review[]         @relation("InstructorReviews")
+  aiUsage       AiUsageEvent[]
+  authAudit     AuthAuditEvent[]
+
+  @@index([role])
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  expiresAt DateTime
+  token     String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  ipAddress String?
+  userAgent String?
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
+}
+
+model Account {
+  id                    String    @id @default(cuid())
+  accountId             String
+  providerId            String
+  userId                String
+  accessToken           String?
+  refreshToken          String?
+  idToken               String?
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope                 String?
+  password              String?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([providerId, accountId])
+  @@index([userId])
+}
+
+model Verification {
+  id         String   @id @default(cuid())
+  identifier String
+  value      String
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([identifier])
+}
+
+model Exercise {
+  id          String            @id @default(cuid())
+  title       String
+  description String
+  status      ExerciseStatus    @default(DRAFT)
+  authorId    String
+  author      User              @relation("ExerciseAuthor", fields: [authorId], references: [id], onDelete: Restrict)
+  versions    ExerciseVersion[]
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+  publishedAt DateTime?
+
+  @@index([authorId, status])
+  @@index([status, publishedAt])
+}
+
+model ExerciseVersion {
+  id               String      @id @default(cuid())
+  exerciseId       String
+  version          Int
+  language         String      @default("python")
+  buggyCode        String
+  expectedBehavior String
+  exercise         Exercise    @relation(fields: [exerciseId], references: [id], onDelete: Cascade)
+  hints            HintStage[]
+  attempts         Attempt[]
+  createdAt        DateTime    @default(now())
+
+  @@unique([exerciseId, version])
+  @@index([exerciseId])
+}
+
+model HintStage {
+  id                String          @id @default(cuid())
+  exerciseVersionId String
+  stage             Int
+  title             String
+  content           String
+  approvedAt        DateTime?
+  exerciseVersion   ExerciseVersion @relation(fields: [exerciseVersionId], references: [id], onDelete: Cascade)
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+
+  @@unique([exerciseVersionId, stage])
+  @@index([exerciseVersionId])
+}
+
+model Attempt {
+  id                String          @id @default(cuid())
+  learnerId         String
+  exerciseVersionId String
+  proposedCode      String
+  reasoning         String
+  status            AttemptStatus   @default(DRAFT)
+  learner           User            @relation("LearnerAttempts", fields: [learnerId], references: [id], onDelete: Restrict)
+  exerciseVersion   ExerciseVersion @relation(fields: [exerciseVersionId], references: [id], onDelete: Restrict)
+  feedback          AiFeedback[]
+  review            Review?
+  aiUsage           AiUsageEvent[]
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+  finalSubmittedAt  DateTime?
+
+  @@index([learnerId, status])
+  @@index([exerciseVersionId, createdAt])
+}
+
+model AiFeedback {
+  id            String       @id @default(cuid())
+  attemptId     String
+  stage         Int
+  kind          FeedbackKind
+  message       String
+  provider      String
+  model         String?
+  promptVersion String
+  requestId     String       @unique
+  inputTokens   Int?
+  outputTokens  Int?
+  latencyMs     Int?
+  attempt       Attempt      @relation(fields: [attemptId], references: [id], onDelete: Cascade)
+  createdAt     DateTime     @default(now())
+
+  @@index([attemptId, createdAt])
+}
+
+model Review {
+  id           String         @id @default(cuid())
+  attemptId    String         @unique
+  instructorId String
+  decision     ReviewDecision
+  comment      String
+  attempt      Attempt        @relation(fields: [attemptId], references: [id], onDelete: Restrict)
+  instructor   User           @relation("InstructorReviews", fields: [instructorId], references: [id], onDelete: Restrict)
+  reviewedAt   DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+
+  @@index([instructorId, reviewedAt])
+}
+
+model AiUsageEvent {
+  id            String        @id @default(cuid())
+  requestId     String        @unique
+  userId        String?
+  attemptId     String?
+  operation     String
+  provider      String
+  model         String?
+  promptVersion String
+  status        AiUsageStatus
+  inputTokens   Int?
+  outputTokens  Int?
+  latencyMs     Int?
+  errorCode     String?
+  user          User?         @relation(fields: [userId], references: [id], onDelete: SetNull)
+  attempt       Attempt?      @relation(fields: [attemptId], references: [id], onDelete: SetNull)
+  createdAt     DateTime      @default(now())
+
+  @@index([userId, createdAt])
+  @@index([attemptId, createdAt])
+  @@index([status, createdAt])
+}
+
+model AuthAuditEvent {
+  id        String          @id @default(cuid())
+  userId    String?
+  action    AuthAuditAction
+  requestId String?
+  metadata  Json?
+  user      User?           @relation(fields: [userId], references: [id], onDelete: SetNull)
+  createdAt DateTime        @default(now())
+
+  @@index([userId, createdAt])
+  @@index([action, createdAt])
+}

@@ -1,0 +1,39 @@
+[build]
+  command = "npm run build:netlify"
+  publish = "apps/frontend/dist"
+  functions = "netlify/functions"
+
+[build.environment]
+  NODE_VERSION = "24"
+  NPM_VERSION = "11"
+  NPM_FLAGS = "--include=dev"
+
+[functions]
+  node_bundler = "esbuild"
+  external_node_modules = ["express"]
+  included_files = ["generated/prisma/**", "generated/deployment.json", "packages/contracts/dist/**"]
+
+[[redirects]]
+  from = "/api/*"
+  to = "/.netlify/functions/api/:splat"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+
+[dev]
+  command = "npm run dev -w @debugclinic/frontend"
+  targetPort = 5173
+  port = 8888
+  framework = "#custom"
+  autoLaunch = false
+
+[context.deploy-preview.environment]
+  NODE_ENV = "production"
+  AI_PROVIDER = "fake"
+
+[context.production.environment]
+  NODE_ENV = "production"
