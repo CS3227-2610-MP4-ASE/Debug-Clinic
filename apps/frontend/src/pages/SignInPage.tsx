@@ -16,7 +16,7 @@ import { useAuth } from "../auth/AuthProvider.js";
 
 export function SignInPage() {
   const [error, setError] = useState<string | null>(null);
-  const [busy, setBusy] = useState(false);
+  const [busy, setBusy] = useState<"email" | "google" | null>(null);
   const { refresh } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
@@ -24,7 +24,7 @@ export function SignInPage() {
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    setBusy(true);
+    setBusy("email");
     setError(null);
     const values = new FormData(event.currentTarget);
     const result = await authClient.signIn.email({
@@ -37,7 +37,7 @@ export function SignInPage() {
         result.error.message ??
           "Sign-in failed. Check your details and try again.",
       );
-      setBusy(false);
+      setBusy(null);
       return;
     }
     await refresh();
@@ -46,10 +46,19 @@ export function SignInPage() {
 
   async function googleSignIn() {
     setError(null);
-    await authClient.signIn.social({
-      provider: "google",
-      callbackURL: destination,
-    });
+    setBusy("google");
+    const fallback = "Google sign-in could not start. Try again or use email.";
+    try {
+      const result = await authClient.signIn.social({
+        provider: "google",
+        callbackURL: destination,
+      });
+      if (result.error) setError(result.error.message || fallback);
+    } catch {
+      setError(fallback);
+    } finally {
+      setBusy(null);
+    }
   }
 
   return (
@@ -77,9 +86,9 @@ export function SignInPage() {
         variant="outlined"
         startIcon={<Google />}
         onClick={() => void googleSignIn()}
-        disabled={busy}
+        disabled={busy !== null}
       >
-        Continue with Google
+        {busy === "google" ? "Connecting to Google…" : "Continue with Google"}
       </Button>
       <Divider>or use email</Divider>
       <Stack
@@ -101,8 +110,8 @@ export function SignInPage() {
           autoComplete="current-password"
           required
         />
-        <Button type="submit" variant="contained" disabled={busy}>
-          {busy ? "Signing in…" : "Sign in"}
+        <Button type="submit" variant="contained" disabled={busy !== null}>
+          {busy === "email" ? "Signing in…" : "Sign in"}
         </Button>
       </Stack>
       <Typography color="text.secondary">

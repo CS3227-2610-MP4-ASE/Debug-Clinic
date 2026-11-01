@@ -2,6 +2,7 @@ import BugReportOutlined from "@mui/icons-material/BugReportOutlined";
 import MenuOutlined from "@mui/icons-material/MenuOutlined";
 import {
   AppBar,
+  Alert,
   Box,
   Button,
   Container,
@@ -12,7 +13,7 @@ import {
   Typography,
 } from "@mui/material";
 import { useState, type PropsWithChildren } from "react";
-import { Link as RouterLink, useLocation } from "react-router-dom";
+import { Link as RouterLink, useLocation, useNavigate } from "react-router-dom";
 
 import { useAuth } from "../auth/AuthProvider.js";
 
@@ -23,7 +24,10 @@ const publicLinks = [
 
 export function AppShell({ children }: PropsWithChildren) {
   const [open, setOpen] = useState(false);
-  const { user } = useAuth();
+  const [signingOut, setSigningOut] = useState(false);
+  const [signOutError, setSignOutError] = useState<string | null>(null);
+  const { user, signOut } = useAuth();
+  const navigate = useNavigate();
   const location = useLocation();
   const links = user
     ? [
@@ -36,6 +40,23 @@ export function AppShell({ children }: PropsWithChildren) {
         },
       ]
     : publicLinks;
+
+  async function handleSignOut() {
+    setSigningOut(true);
+    setSignOutError(null);
+    try {
+      await signOut();
+      setOpen(false);
+      await navigate("/sign-in", { replace: true });
+    } catch {
+      setOpen(false);
+      setSignOutError(
+        "You are not signed out yet. Check your connection and try Sign out again.",
+      );
+    } finally {
+      setSigningOut(false);
+    }
+  }
 
   const navigation = (
     <Stack
@@ -56,6 +77,16 @@ export function AppShell({ children }: PropsWithChildren) {
           {link.label}
         </Button>
       ))}
+      {user && (
+        <Button
+          color="inherit"
+          disabled={signingOut}
+          onClick={() => void handleSignOut()}
+          sx={{ justifyContent: "flex-start" }}
+        >
+          {signingOut ? "Signing out…" : "Sign out"}
+        </Button>
+      )}
     </Stack>
   );
 
@@ -117,6 +148,11 @@ export function AppShell({ children }: PropsWithChildren) {
           </Toolbar>
         </Container>
       </AppBar>
+      {signOutError && (
+        <Container maxWidth="lg" sx={{ mt: 3 }}>
+          <Alert severity="error">{signOutError}</Alert>
+        </Container>
+      )}
       <Drawer
         anchor="right"
         open={open}

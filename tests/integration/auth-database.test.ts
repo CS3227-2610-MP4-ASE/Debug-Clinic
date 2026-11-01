@@ -276,10 +276,26 @@ describe("real PostgreSQL and Better Auth", () => {
       .set("origin", origin)
       .send({ email, password })
       .expect(401);
-    await request(app)
+    const finalSignIn = await request(app)
       .post("/api/auth/sign-in/email")
       .set("origin", origin)
       .send({ email, password: `${password}-new` })
       .expect(200);
+    const finalCookie = (
+      finalSignIn.headers["set-cookie"] as unknown as string[]
+    )
+      .map((value) => value.split(";")[0])
+      .join("; ");
+    await request(app).get("/api/v1/me").set("cookie", finalCookie).expect(200);
+    const signOut = await request(app)
+      .post("/api/auth/sign-out")
+      .set("origin", origin)
+      .set("cookie", finalCookie)
+      .send({})
+      .expect(200);
+    expect(
+      (signOut.headers["set-cookie"] as unknown as string[]).join(";"),
+    ).toContain("Max-Age=0");
+    await request(app).get("/api/v1/me").set("cookie", finalCookie).expect(401);
   }, 20_000);
 });
