@@ -11,7 +11,7 @@ const result = (() => {
       `Google OAuth: ${config.googleClientId ? "configured" : "not configured"}`,
     );
     console.log(
-      `Authentication email: ${config.resendApiKey ? "configured" : "disabled (local development only)"}`,
+      `Authentication email: ${config.smtp ? "SMTP configured" : "disabled (local development only)"}`,
     );
     console.log(`AI provider: ${config.aiProvider}`);
     return 0;

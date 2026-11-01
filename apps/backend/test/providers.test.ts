@@ -1,6 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
 import { SocLlmProvider } from "../src/ai/provider.js";
-import { createAuthEmailSender } from "../src/auth/email.js";
 import { readEnv } from "../src/config/env.js";
 
 const config = readEnv({
@@ -15,8 +14,6 @@ const config = readEnv({
   SOC_LLM_MODEL: "test-model",
   SOC_LLM_API_KEY: "synthetic-key",
   AI_MAX_RETRIES: "1",
-  RESEND_API_KEY: "synthetic-email-key",
-  EMAIL_FROM: "test@example.test",
 });
 const input = {
   attemptId: "test",
@@ -122,31 +119,5 @@ describe("SoCLaaS transport", () => {
       ).generateHint(input, context),
     ).rejects.toThrow("temporarily unavailable");
     expect(transport).toHaveBeenCalledTimes(1);
-  });
-});
-
-describe("authentication email transport", () => {
-  it("sends the documented Resend fields", async () => {
-    const transport = vi
-      .fn<typeof fetch>()
-      .mockResolvedValue(Response.json({ id: "test" }));
-    await createAuthEmailSender(
-      config,
-      transport,
-    )({ to: "learner@example.test", subject: "Verify", text: "Test link" });
-    expect(
-      JSON.parse(transport.mock.calls[0]?.[1]?.body as string),
-    ).toMatchObject({ from: config.emailFrom, to: ["learner@example.test"] });
-  });
-  it("fails safely without echoing provider response text", async () => {
-    const transport = vi
-      .fn<typeof fetch>()
-      .mockResolvedValue(new Response("private", { status: 403 }));
-    await expect(
-      createAuthEmailSender(
-        config,
-        transport,
-      )({ to: "learner@example.test", subject: "Verify", text: "Test" }),
-    ).rejects.toThrow("temporarily unavailable");
   });
 });

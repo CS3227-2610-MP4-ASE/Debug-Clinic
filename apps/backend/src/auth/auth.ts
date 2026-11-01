@@ -10,7 +10,7 @@ export function createDebugClinicAuth(
   prisma: DebugClinicPrisma,
   sendEmail: AuthEmailSender = createAuthEmailSender(config),
 ) {
-  const emailEnabled = Boolean(config.resendApiKey && config.emailFrom);
+  const emailEnabled = Boolean(config.smtp && config.emailFrom);
   const google =
     config.googleClientId && config.googleClientSecret
       ? {

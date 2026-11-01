@@ -19,7 +19,20 @@ const envSchema = z
     BETTER_AUTH_SECRET: z.string().min(32),
     GOOGLE_CLIENT_ID: optionalString,
     GOOGLE_CLIENT_SECRET: optionalString,
-    RESEND_API_KEY: optionalString,
+    SMTP_HOST: z.preprocess(
+      (value) => (value === "" ? undefined : value),
+      z.string().min(1).default("smtp.gmail.com"),
+    ),
+    SMTP_PORT: z.preprocess(
+      (value) => (value === "" ? undefined : value),
+      z.coerce.number().int().min(1).max(65_535).default(465),
+    ),
+    SMTP_SECURE: z.preprocess(
+      (value) => (value === "" ? undefined : value),
+      z.enum(["true", "false"]).default("true"),
+    ),
+    SMTP_USER: optionalString.pipe(z.string().email().optional()),
+    SMTP_PASSWORD: optionalString,
     EMAIL_FROM: optionalString.pipe(z.string().email().optional()),
     AI_PROVIDER: z.enum(["fake", "soc"]).default("fake"),
     SOC_LLM_ENDPOINT: optionalString.pipe(z.string().url().optional()),
@@ -33,14 +46,40 @@ const envSchema = z
   })
   .superRefine((value, context) => {
     if (
-      Boolean(value.RESEND_API_KEY) !== Boolean(value.EMAIL_FROM) ||
-      (value.NODE_ENV === "production" && !value.RESEND_API_KEY)
+      (value.NODE_ENV === "production" ||
+        value.SMTP_USER ||
+        value.SMTP_PASSWORD ||
+        value.EMAIL_FROM) &&
+      !(value.SMTP_USER && value.SMTP_PASSWORD)
     ) {
       context.addIssue({
         code: "custom",
-        path: ["RESEND_API_KEY"],
+        path: ["SMTP_USER"],
         message:
-          "RESEND_API_KEY and EMAIL_FROM must be configured together and are required in production",
+          "SMTP_USER and SMTP_PASSWORD must be configured together and are required in production",
+      });
+    }
+    if (
+      value.SMTP_HOST === "smtp.gmail.com" &&
+      value.EMAIL_FROM &&
+      value.SMTP_USER &&
+      value.EMAIL_FROM.toLowerCase() !== value.SMTP_USER.toLowerCase()
+    ) {
+      context.addIssue({
+        code: "custom",
+        path: ["EMAIL_FROM"],
+        message: "For Gmail SMTP, EMAIL_FROM must match SMTP_USER",
+      });
+    }
+    if (
+      (value.SMTP_PORT === 465 && value.SMTP_SECURE !== "true") ||
+      (value.SMTP_PORT === 587 && value.SMTP_SECURE !== "false")
+    ) {
+      context.addIssue({
+        code: "custom",
+        path: ["SMTP_SECURE"],
+        message:
+          "Use SMTP_SECURE=true for port 465, or false for STARTTLS on port 587",
       });
     }
     if (
@@ -89,7 +128,13 @@ export interface AppConfig {
   betterAuthSecret: string;
   googleClientId?: string;
   googleClientSecret?: string;
-  resendApiKey?: string;
+  smtp?: {
+    host: string;
+    port: number;
+    secure: boolean;
+    user: string;
+    password: string;
+  };
   emailFrom?: string;
   aiProvider: "fake" | "soc";
   socLlmEndpoint?: string;
@@ -119,8 +164,18 @@ export function readEnv(source: NodeJS.ProcessEnv = process.env): AppConfig {
     ...(parsed.GOOGLE_CLIENT_SECRET
       ? { googleClientSecret: parsed.GOOGLE_CLIENT_SECRET }
       : {}),
-    ...(parsed.RESEND_API_KEY ? { resendApiKey: parsed.RESEND_API_KEY } : {}),
-    ...(parsed.EMAIL_FROM ? { emailFrom: parsed.EMAIL_FROM } : {}),
+    ...(parsed.SMTP_USER && parsed.SMTP_PASSWORD
+      ? {
+          smtp: {
+            host: parsed.SMTP_HOST,
+            port: parsed.SMTP_PORT,
+            secure: parsed.SMTP_SECURE === "true",
+            user: parsed.SMTP_USER,
+            password: parsed.SMTP_PASSWORD,
+          },
+          emailFrom: parsed.EMAIL_FROM ?? parsed.SMTP_USER,
+        }
+      : {}),
     aiProvider: parsed.AI_PROVIDER,
     ...(parsed.SOC_LLM_ENDPOINT
       ? { socLlmEndpoint: parsed.SOC_LLM_ENDPOINT }

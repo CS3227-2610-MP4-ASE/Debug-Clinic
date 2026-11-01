@@ -28,7 +28,9 @@ const config = readEnv({
   DATABASE_URL: url,
   BETTER_AUTH_URL: "http://localhost:5173",
   BETTER_AUTH_SECRET: "isolated-auth-integration-secret-at-least-32-characters",
-  RESEND_API_KEY: "synthetic",
+  SMTP_HOST: "smtp.example.test",
+  SMTP_USER: "auth@example.test",
+  SMTP_PASSWORD: "synthetic",
   EMAIL_FROM: "auth@example.test",
   LOG_LEVEL: "silent",
 });
