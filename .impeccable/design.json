@@ -1,0 +1,59 @@
+{
+  "schemaVersion": 1,
+  "surface": "application-shell",
+  "directionSeed": "7f6c67df",
+  "directionCandidate": 3,
+  "world": "annotated clinic case sheet",
+  "form": "restrained case-workbook shell",
+  "signatureInteraction": "evidence handoff",
+  "tokens": {
+    "palette": {
+      "canvas": "#f5f3ed",
+      "surface": "#ffffff",
+      "ink": "#171b25",
+      "mutedInk": "#565f70",
+      "primary": "#2457c5",
+      "verified": "#237a57",
+      "error": "#b42318",
+      "divider": "#d9d7d0",
+      "focusInner": "#ffffff",
+      "focusOuter": "#17213a"
+    },
+    "typography": {
+      "family": "Manrope Variable",
+      "h1Weight": 750,
+      "h2Weight": 720,
+      "controlWeight": 700
+    },
+    "spacingBasePx": 8,
+    "radiusPx": 12,
+    "boundedSurfaceShadow": "0 14px 40px rgba(33, 39, 55, 0.08)",
+    "minimumTargetPx": 44,
+    "breakpoints": {
+      "xs": 0,
+      "sm": 600,
+      "md": 900,
+      "lg": 1200,
+      "xl": 1536
+    }
+  },
+  "motion": {
+    "durationMs": 160,
+    "decorativeLoops": false,
+    "honorReducedMotion": true
+  },
+  "qualityBar": [
+    "honest implementation claims",
+    "self-hosted declared fonts",
+    "visible keyboard focus",
+    "responsive 320px layout",
+    "standard accessible MUI controls"
+  ],
+  "componentRules": {
+    "appShell": "72px header with mobile drawer below sm",
+    "buttons": "contained primary, outlined secondary, disabled future actions",
+    "emptyState": "one honest bounded surface without fabricated metrics",
+    "errors": "recovery copy and retry action when repeatable",
+    "focus": "white inner ring and deep-ink outer ring"
+  }
+}
