@@ -11,6 +11,10 @@
   from the accessible name. Prefer semantic role/name queries for browser tests.
 - Load every declared non-system font and verify design documentation against
   resolved MUI values, including numeric radius multipliers.
+- Check domain ownership/DNS access before prescribing a domain-based email
+  setup. Offer a mailbox-based option when the user does not own a domain.
+- Existing lint rules exempt underscore-prefixed arguments, not unused local
+  variables. Remove unused destructured test values rather than renaming them.
 
 # Skill evaluation
 

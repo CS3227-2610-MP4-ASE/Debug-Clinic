@@ -28,10 +28,13 @@ Better Auth was selected because its maintained documentation covers Express, Pr
 - Instructor access is assigned through a controlled seed or future administrative process.
 - Frontend route guards improve navigation, but Express authorization middleware is the security boundary.
 
-Verification and reset email delivery use the backend Resend adapter. Configuring
-`RESEND_API_KEY` and `EMAIL_FROM` enables mandatory verification for email/password
-accounts; both are required in production. Google credentials, verified sender
-DNS, and production callback URLs remain team-owned configuration. See
+Verification and reset email delivery use Nodemailer over authenticated SMTP,
+defaulting to a dedicated Gmail mailbox over TLS on port 465. Configuring
+`SMTP_USER` and `SMTP_PASSWORD` enables mandatory verification for email/password
+accounts; both are required in production. `EMAIL_FROM` defaults to `SMTP_USER`
+and must match it when using Gmail. Gmail app-password setup and production
+callback URLs remain team-owned configuration. No domain/DNS setup is needed for
+the Gmail sender. See
 [CredentialsSetup.md](CredentialsSetup.md).
 
 ## Data model

@@ -20,7 +20,11 @@ jobs:
       BETTER_AUTH_SECRET: ${{ secrets.PREVIEW_BETTER_AUTH_SECRET }}
       GOOGLE_CLIENT_ID: ${{ secrets.PREVIEW_GOOGLE_CLIENT_ID }}
       GOOGLE_CLIENT_SECRET: ${{ secrets.PREVIEW_GOOGLE_CLIENT_SECRET }}
-      RESEND_API_KEY: ${{ secrets.PREVIEW_RESEND_API_KEY }}
+      SMTP_HOST: smtp.gmail.com
+      SMTP_PORT: "465"
+      SMTP_SECURE: "true"
+      SMTP_USER: ${{ secrets.PREVIEW_SMTP_USER }}
+      SMTP_PASSWORD: ${{ secrets.PREVIEW_SMTP_PASSWORD }}
       EMAIL_FROM: ${{ vars.PREVIEW_EMAIL_FROM }}
       APP_ORIGIN: ${{ vars.PREVIEW_APP_ORIGIN }}
       CORS_ORIGINS: ${{ vars.PREVIEW_APP_ORIGIN }}

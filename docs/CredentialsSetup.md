@@ -85,33 +85,61 @@ Reference: [Google's web-server OAuth instructions](https://developers.google.co
 
 ## 3. Authentication email
 
-The backend now supports Resend for verification and password-reset emails.
+The backend uses Gmail SMTP through Nodemailer for coursework/development.
+You do not need a custom domain, DNS records, or a Resend account.
 
-1. Open [Resend](https://resend.com/), use a team-owned account, and add a sender
-   domain under **Domains**.
-2. Add the DNS records Resend supplies at your domain's DNS provider. Wait until
-   Resend reports the domain as verified.
-3. Under **API Keys**, create a sending key scoped to that domain. Use separate
-   development and production keys where possible.
-4. Set these values in root `.env`:
+1. Create or choose a dedicated Gmail mailbox for DebugClinic. Sign in to that
+   mailbox's Google Account, not the learner's account.
+2. Open **Google Account → Security → 2-Step Verification** and enable it.
+3. Open [App passwords](https://myaccount.google.com/apppasswords), name a new
+   app password `DebugClinic`, and generate it. If this option is unavailable,
+   check Google's account-policy restrictions; school/work accounts or Advanced
+   Protection can prevent app passwords. An eligible dedicated Gmail account
+   is needed for this setup.
+4. Copy the generated app password into `SMTP_PASSWORD` without display spaces.
+   This is separate from both your Google login password and OAuth client secret.
+5. Replace the old `RESEND_API_KEY` entry in root `.env` with these settings:
 
 ```dotenv
-RESEND_API_KEY=<Resend sending API key>
-EMAIL_FROM=no-reply@<your verified domain>
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=465
+SMTP_SECURE=true
+SMTP_USER=your-debugclinic-mailbox@gmail.com
+SMTP_PASSWORD=your16characterapppassword
+EMAIL_FROM=your-debugclinic-mailbox@gmail.com
 ```
 
-`EMAIL_FROM` must be a bare email address, not `DebugClinic <address>`. A Resend
-test sender is suitable only for recipients allowed by your Resend account;
-verify a domain before supporting real users.
+Use your actual dedicated mailbox in both address fields. `EMAIL_FROM` can also
+be left blank to use `SMTP_USER` automatically. Do not put an address at a domain
+you do not own here. Google OAuth client ID/secret settings remain unchanged.
 
-When both values are present, new email/password accounts must verify their
+When SMTP credentials are present, new email/password accounts must verify their
 email before login. Password reset is available through Better Auth's
 `POST /api/auth/request-password-reset` and `POST /api/auth/reset-password`
 endpoints. A dedicated reset form is a later UI task; configuring delivery alone
-does not add that screen. In local development, leaving both fields empty keeps
-email verification disabled. Production startup requires both values.
+does not add that screen. In local development, leaving both SMTP credential
+fields and `EMAIL_FROM` empty keeps email verification disabled. Production
+startup requires SMTP credentials even for a coursework deployment on Netlify.
 
-References: [Resend sending API](https://resend.com/docs/api-reference/emails/send-email),
+Restart the application after changing `.env`, then run with Node 24:
+
+```bash
+npm run config:check
+npm run email:verify
+```
+
+`email:verify` checks the SMTP connection and authentication without sending a
+message. Then register a synthetic learner with an inbox you control and confirm
+the verification email arrives. Gmail delivery is subject to Google's sending
+limits and account/security policies; it is suitable for this small coursework
+setup rather than bulk sending. Deployment from a new location may require
+reviewing the mailbox's Google security alerts.
+
+For a provider using STARTTLS on port 587, set `SMTP_PORT=587` and
+`SMTP_SECURE=false`; the adapter still requires encryption and valid certificates.
+
+References: [Google app passwords](https://support.google.com/accounts/answer/185833),
+[Nodemailer SMTP](https://nodemailer.com/smtp),
 [Better Auth email flows](https://better-auth.com/docs/concepts/email).
 
 ## 4. NUS SoCLaaS
@@ -199,8 +227,12 @@ values as secret when the UI offers that option.
 | `BETTER_AUTH_SECRET`   | Independently generated random secret | Different random secret       |
 | `GOOGLE_CLIENT_ID`     | Development client ID                 | Production client ID          |
 | `GOOGLE_CLIENT_SECRET` | Development client secret             | Production client secret      |
-| `RESEND_API_KEY`       | Development sending key               | Production sending key        |
-| `EMAIL_FROM`           | Verified development sender           | Verified production sender    |
+| `SMTP_HOST`            | `smtp.gmail.com`                      | `smtp.gmail.com`              |
+| `SMTP_PORT`            | `465`                                 | `465`                         |
+| `SMTP_SECURE`          | `true`                                | `true`                        |
+| `SMTP_USER`            | Dedicated development Gmail address   | Dedicated sender address      |
+| `SMTP_PASSWORD`        | Development Gmail app password        | Sender's Gmail app password   |
+| `EMAIL_FROM`           | Same as `SMTP_USER`, or blank         | Same as `SMTP_USER`, or blank |
 | `AI_PROVIDER`          | `fake` initially                      | `soc` after live verification |
 | `SOC_LLM_ENDPOINT`     | Full chat endpoint if using `soc`     | Full chat endpoint            |
 | `SOC_LLM_MODEL`        | Selected model if using `soc`         | Selected model ID             |
@@ -243,10 +275,10 @@ these protection rules.
 Within each environment, use **Environment secrets → Add secret** and
 **Environment variables → Add variable**. These are the exact workflow names:
 
-| Environment      | Secret names                                                                                                                                                                                                                                                                |
-| ---------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `deploy-preview` | `NETLIFY_AUTH_TOKEN`, `NETLIFY_SITE_ID`, `PREVIEW_DATABASE_URL`, `PREVIEW_DATABASE_URL_POOLED`, `PREVIEW_BETTER_AUTH_SECRET`, `PREVIEW_GOOGLE_CLIENT_ID`, `PREVIEW_GOOGLE_CLIENT_SECRET`, `PREVIEW_RESEND_API_KEY`                                                          |
-| `production`     | `NETLIFY_AUTH_TOKEN`, `NETLIFY_SITE_ID`, `PRODUCTION_DATABASE_URL`, `PRODUCTION_DATABASE_URL_POOLED`, `PRODUCTION_BETTER_AUTH_SECRET`, `PRODUCTION_GOOGLE_CLIENT_ID`, `PRODUCTION_GOOGLE_CLIENT_SECRET`, `PRODUCTION_RESEND_API_KEY`, `SOC_LLM_ENDPOINT`, `SOC_LLM_API_KEY` |
+| Environment      | Secret names                                                                                                                                                                                                                                                                                       |
+| ---------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `deploy-preview` | `NETLIFY_AUTH_TOKEN`, `NETLIFY_SITE_ID`, `PREVIEW_DATABASE_URL`, `PREVIEW_DATABASE_URL_POOLED`, `PREVIEW_BETTER_AUTH_SECRET`, `PREVIEW_GOOGLE_CLIENT_ID`, `PREVIEW_GOOGLE_CLIENT_SECRET`, `PREVIEW_SMTP_USER`, `PREVIEW_SMTP_PASSWORD`                                                             |
+| `production`     | `NETLIFY_AUTH_TOKEN`, `NETLIFY_SITE_ID`, `PRODUCTION_DATABASE_URL`, `PRODUCTION_DATABASE_URL_POOLED`, `PRODUCTION_BETTER_AUTH_SECRET`, `PRODUCTION_GOOGLE_CLIENT_ID`, `PRODUCTION_GOOGLE_CLIENT_SECRET`, `PRODUCTION_SMTP_USER`, `PRODUCTION_SMTP_PASSWORD`, `SOC_LLM_ENDPOINT`, `SOC_LLM_API_KEY` |
 
 | Environment      | Variable names                                                    |
 | ---------------- | ----------------------------------------------------------------- |
