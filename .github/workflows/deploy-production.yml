@@ -18,6 +18,7 @@ jobs:
     runs-on: ubuntu-latest
     environment: production
     env:
+      CONTEXT: production
       NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
       NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
       DATABASE_URL: ${{ secrets.PRODUCTION_DATABASE_URL }}
@@ -57,7 +58,7 @@ jobs:
         run: >-
           npx --yes netlify-cli@27.16.1 deploy
           --filter=@debugclinic/frontend
-          --no-build --context=production --prod
+          --no-build --prod
           --dir="$GITHUB_WORKSPACE/apps/frontend/dist"
           --functions="$GITHUB_WORKSPACE/netlify/functions"
           --message="${{ github.sha }}"
