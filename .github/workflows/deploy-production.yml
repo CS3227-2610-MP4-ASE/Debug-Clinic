@@ -54,4 +54,10 @@ jobs:
       - name: Apply database migrations
         run: npm run db:deploy
       - name: Deploy immutable production build
-        run: npx --yes netlify-cli@27.16.1 deploy --no-build --context=production --prod --dir=apps/frontend/dist --functions=netlify/functions --message="${{ github.sha }}"
+        run: >-
+          npx --yes netlify-cli@27.16.1 deploy
+          --filter=@debugclinic/frontend
+          --no-build --context=production --prod
+          --dir="$GITHUB_WORKSPACE/apps/frontend/dist"
+          --functions="$GITHUB_WORKSPACE/netlify/functions"
+          --message="${{ github.sha }}"

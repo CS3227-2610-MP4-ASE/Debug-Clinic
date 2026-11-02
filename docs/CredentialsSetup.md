@@ -261,8 +261,12 @@ No request Host header or shared environment-variable mutation is used.
 Do these dashboard steps once:
 
 1. On **debugclinic-dev**, link this repository under **Build & deploy → Continuous
-   deployment**, choose `master` as the stable development branch, and enable
-   Deploy Previews. The committed `netlify.toml` provides build settings. Configure
+   deployment**, keep builds **Active**, and enable Deploy Previews for trusted
+   team PRs targeting `master`. Under **Branches and deploy contexts**, disable
+   branch deploys. `master` remains the target branch for PR discovery; the
+   committed ignore command skips this site's production-context master builds,
+   so it publishes only PR preview URLs. Do not stop all builds on this site,
+   because that would also disable previews. The committed `netlify.toml` provides build settings. Configure
    Netlify's GitHub integration/PR deploy notifications if you want its preview
    comment. Do not run a second GitHub CLI preview deployment. Preview publication
    is independent of CI; require CI and the Netlify deploy check in GitHub's
@@ -278,9 +282,10 @@ Do these dashboard steps once:
    production client's callback separate. Do not register every PR callback.
 4. Deploy this code to the **stable dev URL first**, before testing PR Google
    login: both ends need the proxy plugin and matching shared secret. If this
-   branch has not reached `master`, bootstrap a reviewed stable dev deployment
-   using Netlify's approved deployment process, or merge this infrastructure
-   change before testing the next PR's OAuth flow.
+   callback has already been deployed, retain it. Otherwise bootstrap it once
+   through an explicitly reviewed manual deployment. Master pushes no longer
+   refresh the stable dev URL. This callback service is required by the current
+   Google preview-login design; removing it requires a different callback design.
 5. Open a trusted team PR. Its Netlify build applies development migrations
    before publishing, then Google redirects through stable dev back to that
    preview, where its session cookie is created. Email links also use that
@@ -289,6 +294,11 @@ Do these dashboard steps once:
 6. On **debugclinic-prod**, keep native Git-triggered builds stopped/disabled
    while allowing manual CLI deployments. The protected GitHub production job
    must remain the only production deployment owner.
+   Open **Project configuration → Developer settings → Continuous deployment →
+   Build settings → Configure**, set **Build status → Stopped builds**, and save.
+   This is different from stopping auto publishing. Leave `debugclinic-dev`
+   builds active. A native production build that throws "Production must use the
+   protected GitHub workflow" means this dashboard step has not taken effect.
 
 Only trusted team code may receive development secrets or use this proxy. A PR
 can execute arbitrary build code and a shared proxy key grants identity assertion

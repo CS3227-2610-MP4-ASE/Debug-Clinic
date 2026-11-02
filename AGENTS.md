@@ -22,6 +22,11 @@
   adapters must test cookies and binary bytes; enable serverless-http's binary
   encoding to avoid lossy UTF-8 conversion. Export compiled JavaScript from
   workspaces in production; Netlify tracing may not preserve external TS exports.
+- Netlify CLI commands in CI must select the monorepo workspace explicitly.
+  Workspace selection changes relative Functions paths; use absolute artifact
+  paths and check the pinned CLI's path-resolution behavior before deploying.
+  Validate flags against that version's command help; internal option reads do
+  not prove a flag is exposed (for example, this CLI rejects `--config`).
 - Check domain ownership/DNS access before prescribing a domain-based email
   setup. Offer a mailbox-based option when the user does not own a domain.
 - Existing lint rules exempt underscore-prefixed arguments, not unused local
