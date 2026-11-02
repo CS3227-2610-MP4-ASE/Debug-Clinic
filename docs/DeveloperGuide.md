@@ -146,6 +146,9 @@ The production CLI command explicitly selects `@debugclinic/frontend` using
 `--filter`; otherwise a noninteractive runner stops at workspace selection.
 It passes absolute publish and Functions paths because selecting a
 workspace changes the CLI working directory for relative Functions arguments.
+Netlify CLI 27.16.1 rejects `--context` together with `--no-build`. The job sets
+`CONTEXT=production` in its environment and uses `--no-build --prod` to upload
+the existing artifact without invoking another build.
 
 If `debugclinic-prod` reports "Production must use the protected GitHub workflow,
 not a native Netlify build", its native builds are still active. On that site,

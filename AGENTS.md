@@ -27,6 +27,9 @@
   paths and check the pinned CLI's path-resolution behavior before deploying.
   Validate flags against that version's command help; internal option reads do
   not prove a flag is exposed (for example, this CLI rejects `--config`).
+  Exercise deploy-command validation itself: a build dry-run missed that
+  `--no-build` rejects `--context`. Use `CONTEXT=production` in the job environment
+  and `--no-build --prod` for prebuilt production uploads.
 - Check domain ownership/DNS access before prescribing a domain-based email
   setup. Offer a mailbox-based option when the user does not own a domain.
 - Existing lint rules exempt underscore-prefixed arguments, not unused local
