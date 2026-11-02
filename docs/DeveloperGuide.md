@@ -118,8 +118,10 @@ GitHub Actions provides:
 - CI for formatting, linting, type-checking, Prisma validation/migrations/seed, tests, and builds;
 - a production workflow restricted to `master` and the protected production environment.
 
-Native Netlify owns stable development and trusted-team PR previews; there is no
-duplicate GitHub preview deployment job. Its `npm run build:netlify` validates
+Native Netlify owns trusted-team PR previews on the development site; there is no
+duplicate GitHub preview deployment job. The dependency-free ignore command allows
+only that site's `deploy-preview` context. It skips native master, branch, and
+production-site builds before the build command runs. Its `npm run build:netlify` validates
 the development Supabase target, applies migrations, and builds before publishing.
 Build metadata bundles each preview's exact origin with its Function. It contains
 no secrets, and simultaneous PRs do not overwrite shared origin variables.
@@ -127,6 +129,9 @@ no secrets, and simultaneous PRs do not overwrite shared origin variables.
 Google login uses Better Auth's dev-only OAuth proxy through the stable dev
 callback. Configure the same dedicated proxy secret on stable dev and trusted
 previews, and deploy stable dev first. Actual production cannot enable this proxy.
+The stable dev callback is a separately bootstrapped service; it is not updated
+automatically on master pushes. Retain its existing deployment for Google preview
+login, or explicitly replace this callback design before removing it.
 See [credential setup](CredentialsSetup.md#automatic-preview-origins-and-a-fixed-google-callback)
 for the required one-time dashboard configuration and trust boundaries.
 
@@ -136,6 +141,23 @@ builds disabled so they cannot bypass the protected GitHub environment. A
 migration failure stops publication. Schema changes must remain backward-compatible
 with running deployments because migration and function deployment are not atomic;
 all development previews still share one development database.
+
+The production CLI command explicitly selects `@debugclinic/frontend` using
+`--filter`; otherwise a noninteractive runner stops at workspace selection.
+It passes absolute publish and Functions paths because selecting a
+workspace changes the CLI working directory for relative Functions arguments.
+
+If `debugclinic-prod` reports "Production must use the protected GitHub workflow,
+not a native Netlify build", its native builds are still active. On that site,
+open **Project configuration → Developer settings → Continuous deployment → Build
+settings → Configure**, then set **Build status → Stopped builds**. This still
+allows GitHub's CLI deployment. Keep native builds active on `debugclinic-dev`.
+Do not remove the production guard or confuse this setting with stopping auto
+publishing. After the corrected workflow reaches `master`, run **Deploy production**
+from GitHub Actions on `master`; retrying an old failed job uses its old workflow.
+
+References: [Netlify deploy flags](https://cli.netlify.com/commands/deploy/),
+[stopping native builds while allowing CLI deploys](https://docs.netlify.com/build/configure-builds/stop-or-activate-builds/).
 
 ## Security notes
 
