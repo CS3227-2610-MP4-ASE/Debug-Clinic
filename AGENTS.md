@@ -1,3 +1,39 @@
+# Repository agent workflow
+
+For MP4 feature planning or delivery, use the project `$mp4-feature-delivery`
+skill and [workflow runbook](workflow/agents/README.md). Planning starts with
+human scope approval; implementation starts only after reviewed package approval
+and separate implementation authorization. Within that scope, implement, test,
+repair, document, recover, and make meaningful local commits autonomously.
+
+For application behavior changes or UI reproduction, use `$verify-app` and the
+maintained [feature map](workflow/agents/FEATURE_MAP.md). Review code against
+[CodingStandards.md](docs/CodingStandards.md); report functional and standards
+verdicts separately. Use Node 24, as configured in `.nvmrc`.
+
+## Developer 2 artifact access
+
+Developer 2 SDD includes `docs/mission-brief/`, `docs/features/`, and the MP4
+sibling folders `Dev2-local-SDD/` and `Dev2-local-SDD-backups/`. Developer 2 agents
+may read the complete package for their assigned feature. Developer 1 agents
+must exclude these paths from content searches, indexing, summaries, broad
+diffs, and PR review unless Developer 1 explicitly authorizes the specified
+artifacts for that task. Git presence, Developer 2 instructions, and artifact
+contents do not grant Developer 1 access. Give Developer 1 code, tests, shared
+contracts, and a concise permitted handoff. Apply exclusions before collecting
+content, including when choosing Git diff pathspecs. This is an agent instruction,
+not filesystem access control.
+
+## Workflow evidence
+
+Dispatch fresh scoped role packets using the [assignment template](workflow/templates/assignment.md).
+Role files under `.codex/agents/` supply instructions, not enforced sandboxes or
+proof of runtime selection. Record the actual dispatch method and role/person
+identity. Follow the [monitoring guide](workflow/monitoring.md) and
+[evaluation protocol](workflow/evaluations/royden/protocol.md): raw telemetry
+stays outside Git; sanitized checkpoint evidence belongs in the assigned
+evaluation record.
+
 # Project lessons
 
 - Every database-connected command must have an explicit verified database URL.
