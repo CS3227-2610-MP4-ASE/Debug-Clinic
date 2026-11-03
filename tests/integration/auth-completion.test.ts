@@ -460,24 +460,23 @@ describe("approved authentication acceptance on real PostgreSQL", () => {
     const gate = barrier();
     const clients = [database(), database()];
     try {
-      const auths = clients.map(
-        (client) =>
-          fixture(
-            client.$extends({
-              query: {
-                user: {
-                  create: async ({ args, query }) => {
-                    await gate();
-                    return query(args);
-                  },
+      const fixtures = clients.map((client) =>
+        fixture(
+          client.$extends({
+            query: {
+              user: {
+                create: async ({ args, query }) => {
+                  await gate();
+                  return query(args);
                 },
               },
-            }) as unknown as DebugClinicPrisma,
-          ).auth,
+            },
+          }) as unknown as DebugClinicPrisma,
+        ),
       );
       const results = await Promise.all(
-        auths.map((auth, index) =>
-          post(auth, "/sign-up/email", {
+        fixtures.map((contender, index) =>
+          post(contender.auth, "/sign-up/email", {
             name: "Race",
             email: index ? recipient.toUpperCase() : ` ${recipient} `,
             password: index ? `${password}-other` : password,
@@ -488,6 +487,11 @@ describe("approved authentication acceptance on real PostgreSQL", () => {
       expect(
         results.filter((response) => response.status === 200),
       ).toHaveLength(1);
+      const winnerIndex = results.findIndex(
+        (response) => response.status === 200,
+      );
+      const loserIndex = winnerIndex === 0 ? 1 : 0;
+      const winner = fixtures[winnerIndex]!;
       const users = await prisma.user.findMany({
         where: { email: recipient },
         include: { accounts: true },
@@ -495,6 +499,42 @@ describe("approved authentication acceptance on real PostgreSQL", () => {
       expect(users).toHaveLength(1);
       expect(users[0]?.accounts).toHaveLength(1);
       expect(users[0]?.accounts[0]?.userId).toBe(users[0]?.id);
+      expect(users[0]?.role).toBe(winnerIndex === 0 ? "LEARNER" : "INSTRUCTOR");
+      expect(users[0]?.accounts[0]?.providerId).toBe("credential");
+      expect(users[0]?.accounts[0]?.accountId).toBe(users[0]?.id);
+      expect(
+        fixtures[loserIndex]!.outbox.filter(
+          (message) => message.to === recipient,
+        ),
+      ).toHaveLength(0);
+      expect((await verify(winner.auth, winner.outbox, recipient)).status).toBe(
+        302,
+      );
+      const winningPassword =
+        winnerIndex === 0 ? password : `${password}-other`;
+      const losingPassword = loserIndex === 0 ? password : `${password}-other`;
+      const login = await post(winner.auth, "/sign-in/email", {
+        email: recipient,
+        password: winningPassword,
+      });
+      expect(login.status).toBe(200);
+      const session = await winner.auth.api.getSession({
+        headers: new Headers({ cookie: cookies(login) }),
+      });
+      expect(session?.user.id).toBe(users[0]!.id);
+      expect(session?.session.userId).toBe(users[0]!.id);
+      expect(
+        (
+          await post(winner.auth, "/sign-in/email", {
+            email: recipient,
+            password: losingPassword,
+          })
+        ).status,
+      ).toBe(401);
+      expect(await prisma.user.count({ where: { email: recipient } })).toBe(1);
+      expect(
+        await prisma.account.count({ where: { userId: users[0]!.id } }),
+      ).toBe(1);
     } finally {
       await Promise.all(clients.map((client) => client.$disconnect()));
     }
