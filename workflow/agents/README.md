@@ -13,14 +13,14 @@ eventual repository paths: `docs/mission-brief/<feature-id>-<name>.md` and
 `docs/features/<feature-id>/{GrillingDecisions,PRD,TDD,RequirementsToTests}.md`.
 Grilling decisions are optional; the other package artifacts are required.
 
-| Gate | Required completion evidence | Next authorized work |
-| --- | --- | --- |
-| Scope | Human approves exact Mission Brief scope; reference/date recorded | Draft PRD |
-| Requirements | Human approves complete PRD with stable requirement IDs; product decisions resolved and approval reference recorded | Draft TDD and RTT |
-| Design and tests | TDD defines interfaces/ownership/failures; RTT maps every acceptance criterion to a test or named manual observation | Independent package review |
-| Package review | Independent spec reviewer checks complete package, contradictions, coverage, privacy, contracts; blocking findings resolved | Human package decision |
-| Package approval | Human approval reference binds exact bytes; ledger has SHA-256 per artifact and verified external backup | Commit approved snapshot |
-| Implementation | Separate human authorization identifies package/version and scope | Implement assigned scope |
+| Gate             | Required completion evidence                                                                                                | Next authorized work       |
+| ---------------- | --------------------------------------------------------------------------------------------------------------------------- | -------------------------- |
+| Scope            | Human approves exact Mission Brief scope; reference/date recorded                                                           | Draft PRD                  |
+| Requirements     | Human approves complete PRD with stable requirement IDs; product decisions resolved and approval reference recorded         | Draft TDD and RTT          |
+| Design and tests | TDD defines interfaces/ownership/failures; RTT maps every acceptance criterion to a test or named manual observation        | Independent package review |
+| Package review   | Independent spec reviewer checks complete package, contradictions, coverage, privacy, contracts; blocking findings resolved | Human package decision     |
+| Package approval | Human approval reference binds exact bytes; ledger has SHA-256 per artifact and verified external backup                    | Commit approved snapshot   |
+| Implementation   | Separate human authorization identifies package/version and scope                                                           | Implement assigned scope   |
 
 Use fresh scoped tasks for Mission Brief, PRD, TDD, and RTT; each writer receives
 its preceding artifacts and owns only its assigned local draft. Resolve draft
@@ -137,18 +137,18 @@ out of test artifacts and logs.
 
 ## Roles and evidence
 
-| Role | Writable scope / completion |
-| --- | --- |
-| coordinator | Assigned ledger, integration artifacts; gate evidence and green integration |
-| implementer | Assigned source/unit tests; verified coherent commits |
-| acceptance_test_author | Assigned acceptance tests and frozen interpretation; independent cases and test handoff |
-| independent_reviewer | Read-only; separate functional and standards reports |
-| security_reviewer | Read-only; risk findings and limitations |
-| spec_reviewer | Read-only; complete-package readiness for human review |
-| developer_guide_writer | `docs/DeveloperGuide.md`; actual verified architecture |
-| user_guide_writer | `docs/UserGuide.md`; actual verified user behavior |
-| interaction_logger | Assigned feature log under `logs/royden/`; attributed factual checkpoints |
-| evaluation_analyst | Assigned derived reports under `workflow/evaluations/royden/` and assigned entries in `docs/Reflections.md`; measured analysis and blind spots |
+| Role                   | Writable scope / completion                                                                                                                    |
+| ---------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
+| coordinator            | Assigned ledger, integration artifacts; gate evidence and green integration                                                                    |
+| implementer            | Assigned source/unit tests; verified coherent commits                                                                                          |
+| acceptance_test_author | Assigned acceptance tests and frozen interpretation; independent cases and test handoff                                                        |
+| independent_reviewer   | Read-only; separate functional and standards reports                                                                                           |
+| security_reviewer      | Read-only; risk findings and limitations                                                                                                       |
+| spec_reviewer          | Read-only; complete-package readiness for human review                                                                                         |
+| developer_guide_writer | `docs/DeveloperGuide.md`; actual verified architecture                                                                                         |
+| user_guide_writer      | `docs/UserGuide.md`; actual verified user behavior                                                                                             |
+| interaction_logger     | Assigned feature log under `logs/royden/`; attributed factual checkpoints                                                                      |
+| evaluation_analyst     | Assigned derived reports under `workflow/evaluations/royden/` and assigned entries in `docs/Reflections.md`; measured analysis and blind spots |
 
 Guide writers use verified implementation rather than planned capabilities.
 The logger preserves chronology and missing-evidence labels, without inventing

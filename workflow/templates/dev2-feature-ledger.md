@@ -16,13 +16,13 @@ feature; approved snapshots and derived evidence travel with the feature branch.
 Record actual human reply references/dates bound to exact bytes. A header alone
 is insufficient. Material revisions reopen affected review and approval.
 
-| Repository artifact (mirrored in local trees) | Status/version | SHA-256 | Human approval reference/date | Independent review |
-| --- | --- | --- | --- | --- |
-| `docs/mission-brief/<feature-id>-<name>.md` | Draft | — | Scope approval | — |
-| `docs/features/<feature-id>/GrillingDecisions.md` (if used) | Draft | — | — | — |
-| `docs/features/<feature-id>/PRD.md` | Draft | — | Package approval | — |
-| `docs/features/<feature-id>/TDD.md` | Draft | — | Package approval | — |
-| `docs/features/<feature-id>/RequirementsToTests.md` | Draft | — | Package approval | — |
+| Repository artifact (mirrored in local trees)               | Status/version | SHA-256 | Human approval reference/date | Independent review |
+| ----------------------------------------------------------- | -------------- | ------- | ----------------------------- | ------------------ |
+| `docs/mission-brief/<feature-id>-<name>.md`                 | Draft          | —       | Scope approval                | —                  |
+| `docs/features/<feature-id>/GrillingDecisions.md` (if used) | Draft          | —       | —                             | —                  |
+| `docs/features/<feature-id>/PRD.md`                         | Draft          | —       | Package approval              | —                  |
+| `docs/features/<feature-id>/TDD.md`                         | Draft          | —       | Package approval              | —                  |
+| `docs/features/<feature-id>/RequirementsToTests.md`         | Draft          | —       | Package approval              | —                  |
 
 - Full-package independent review / resolved findings / human package approval:
 - Separate implementation authorization (reference/date/exact scope):
@@ -33,8 +33,8 @@ is insufficient. Material revisions reopen affected review and approval.
 ## Assignments and execution
 
 | Assignment / role / actual agent | Actual dispatch method | Worktree/base SHA | Owned paths / dependencies | Soft duration/token budgets / checkpoint | Result / events |
-| --- | --- | --- | --- | --- | --- |
-| | | | | | |
+| -------------------------------- | ---------------------- | ----------------- | -------------------------- | ---------------------------------------- | --------------- |
+|                                  |                        |                   |                            |                                          |                 |
 
 - Topology choice and reason (single builder or stable-interface parallel):
 - Acceptance author's frozen interpretation commit/time and pre-diff provenance:
@@ -45,8 +45,8 @@ is insufficient. Material revisions reopen affected review and approval.
 ## Slices and evidence
 
 | Slice / requirement | Child commit (mark expected-red) | Exact checks / runtime / results | Green integration commit | Evidence / gaps |
-| --- | --- | --- | --- | --- |
-| | | | | |
+| ------------------- | -------------------------------- | -------------------------------- | ------------------------ | --------------- |
+|                     |                                  |                                  |                          |                 |
 
 - Manual RTT observations / accessibility / responsive cases / pending evidence:
 - Node 24 CI run or explicit pending state:

@@ -1,0 +1,8 @@
+export type Actor = { id: string; role: 'LEARNER' | 'INSTRUCTOR' } | null;
+export type Hint = { stage: number; approved: boolean; content: string };
+export type Exercise = { ownerId: string; status: 'DRAFT' | 'PUBLISHED'; hints: readonly Hint[] };
+export type Decision = { ok: true } | { ok: false; code: 'UNAUTHENTICATED' | 'FORBIDDEN' | 'CONFLICT' | 'INVALID_HINTS' };
+
+export function publicationEligibility(actor: Actor, exercise: Exercise): Decision {
+  throw new Error('Implement the synthetic task');
+}

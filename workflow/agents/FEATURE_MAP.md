@@ -5,18 +5,18 @@ journeys, API boundaries, or verification prerequisites change. Read route and
 test definitions before choosing a check; this map distinguishes delivered
 foundation from intended future behavior.
 
-| Surface | Current source / boundary | Evidence route and limitation |
-| --- | --- | --- |
-| Public home `/` | `apps/frontend/src/pages/HomePage.tsx` | `tests/e2e/app-shell.spec.ts`: public copy and navigation; described practice loop is intended product behavior |
-| `/sign-in`, `/register` | frontend pages and `src/auth/auth-client.ts`; Better Auth `/api/auth/*` | Both e2e files cover entry, verification feedback, Google error/retry; browser registration/provider feedback uses intercepted responses |
-| Session restore / sign-out | frontend `AuthProvider`, `AppShell`, `lib/api`; backend session resolver | `tests/e2e/auth-feedback.spec.ts` covers delayed/failing sign-out and route protection with mocked session endpoints; integration covers real sessions/revocation |
-| `/learner`, `/instructor` | role routes and dashboard pages | Current dashboards are empty workspaces; `app-shell.spec.ts` checks unauthenticated learner redirect. Authoring, attempt, coaching, and review journeys are future feature work |
-| `/forbidden`, unknown routes | frontend ForbiddenPage / NotFoundPage | Inspect route and role guard; add targeted assertions when affected |
-| `/api/health`, `/api/ready` | `apps/backend/src/app.ts` | backend `app.test.ts`; readiness uses injected DB probe in unit/API tests |
-| `/api/v1/me`, `/api/v1/profile`, instructor ping | backend app, Better Auth, shared contracts | backend `app.test.ts` and `tests/integration/auth-database.test.ts`: role enforcement, profile validation, DB-backed sessions |
-| `/api/v1/ai/hint-preview` | backend app, `ai/provider.ts`, contracts | backend `app.test.ts` / `providers.test.ts`: fake provider, transport-injected SoC adapter, safe failures. Real SoC acceptance and future usage accounting remain separate evidence |
-| PostgreSQL data and auth | `prisma/schema.prisma`, migrations, seed | integration fixture/schema/session tests; seed creates synthetic user records, not usable password-login credentials |
-| Netlify function | `netlify/functions/api.ts`, backend web handler/build policy | backend web-handler/netlify-build-policy/deployment tests; test deployment package when affected; no implied deployment permission |
+| Surface                                          | Current source / boundary                                                | Evidence route and limitation                                                                                                                                                       |
+| ------------------------------------------------ | ------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Public home `/`                                  | `apps/frontend/src/pages/HomePage.tsx`                                   | `tests/e2e/app-shell.spec.ts`: public copy and navigation; described practice loop is intended product behavior                                                                     |
+| `/sign-in`, `/register`                          | frontend pages and `src/auth/auth-client.ts`; Better Auth `/api/auth/*`  | Both e2e files cover entry, verification feedback, Google error/retry; browser registration/provider feedback uses intercepted responses                                            |
+| Session restore / sign-out                       | frontend `AuthProvider`, `AppShell`, `lib/api`; backend session resolver | `tests/e2e/auth-feedback.spec.ts` covers delayed/failing sign-out and route protection with mocked session endpoints; integration covers real sessions/revocation                   |
+| `/learner`, `/instructor`                        | role routes and dashboard pages                                          | Current dashboards are empty workspaces; `app-shell.spec.ts` checks unauthenticated learner redirect. Authoring, attempt, coaching, and review journeys are future feature work     |
+| `/forbidden`, unknown routes                     | frontend ForbiddenPage / NotFoundPage                                    | Inspect route and role guard; add targeted assertions when affected                                                                                                                 |
+| `/api/health`, `/api/ready`                      | `apps/backend/src/app.ts`                                                | backend `app.test.ts`; readiness uses injected DB probe in unit/API tests                                                                                                           |
+| `/api/v1/me`, `/api/v1/profile`, instructor ping | backend app, Better Auth, shared contracts                               | backend `app.test.ts` and `tests/integration/auth-database.test.ts`: role enforcement, profile validation, DB-backed sessions                                                       |
+| `/api/v1/ai/hint-preview`                        | backend app, `ai/provider.ts`, contracts                                 | backend `app.test.ts` / `providers.test.ts`: fake provider, transport-injected SoC adapter, safe failures. Real SoC acceptance and future usage accounting remain separate evidence |
+| PostgreSQL data and auth                         | `prisma/schema.prisma`, migrations, seed                                 | integration fixture/schema/session tests; seed creates synthetic user records, not usable password-login credentials                                                                |
+| Netlify function                                 | `netlify/functions/api.ts`, backend web handler/build policy             | backend web-handler/netlify-build-policy/deployment tests; test deployment package when affected; no implied deployment permission                                                  |
 
 ## Existing check routes
 

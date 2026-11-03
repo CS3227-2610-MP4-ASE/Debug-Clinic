@@ -4,4 +4,6 @@ coverage
 generated
 playwright-report
 test-results
+# Verbatim synthetic participant snapshots; hashes and blind scores use original bytes.
+workflow/evaluations/royden/pilot/artifacts/
 package-lock.json

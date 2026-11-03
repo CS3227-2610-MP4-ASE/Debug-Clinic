@@ -1,0 +1,2 @@
+# Preserve byte-for-byte synthetic evidence across Windows and Unix checkouts.
+workflow/evaluations/royden/pilot/artifacts/** -text whitespace=cr-at-eol

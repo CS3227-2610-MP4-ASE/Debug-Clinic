@@ -1,0 +1,83 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { publicationEligibility } from './publication-guard.ts';
+
+const owner = { id: 'owner', role: 'INSTRUCTOR' };
+const draft = () => ({
+  ownerId: 'owner',
+  status: 'DRAFT',
+  hints: [1, 2, 3].map(stage => ({ stage, approved: true, content: '  useful hint\n' })),
+});
+const denied = code => ({ ok: false, code });
+
+test('authentication wins over ownership, status, and hint errors', () => {
+  assert.deepEqual(publicationEligibility(null, {
+    ownerId: 'someone-else', status: 'PUBLISHED', hints: [],
+  }), denied('UNAUTHENTICATED'));
+});
+
+test('a learner cannot publish even when they own a valid draft', () => {
+  assert.deepEqual(publicationEligibility({ id: 'owner', role: 'LEARNER' }, draft()), denied('FORBIDDEN'));
+});
+
+test('an instructor cannot publish another instructor\'s draft', () => {
+  assert.deepEqual(publicationEligibility({ id: 'other', role: 'INSTRUCTOR' }, draft()), denied('FORBIDDEN'));
+});
+
+for (const actor of [{ id: 'owner', role: 'LEARNER' }, { id: 'other', role: 'INSTRUCTOR' }]) {
+  test(`forbidden ${actor.role} ${actor.id} wins over status and hint errors`, () => {
+    assert.deepEqual(publicationEligibility(actor, { ...draft(), status: 'PUBLISHED', hints: [] }), denied('FORBIDDEN'));
+  });
+}
+
+test('published exercises conflict even with valid hints', () => {
+  assert.deepEqual(publicationEligibility(owner, { ...draft(), status: 'PUBLISHED' }), denied('CONFLICT'));
+});
+
+test('status errors win over hint errors', () => {
+  assert.deepEqual(publicationEligibility(owner, { ...draft(), status: 'PUBLISHED', hints: [] }), denied('CONFLICT'));
+});
+
+for (const count of [0, 1, 2, 4]) {
+  test(`rejects ${count} hints`, () => {
+    const exercise = draft();
+    exercise.hints = Array.from({ length: count }, (_, index) => ({ stage: index + 1, approved: true, content: 'hint' }));
+    assert.deepEqual(publicationEligibility(owner, exercise), denied('INVALID_HINTS'));
+  });
+}
+
+for (const stages of [[2, 1, 3], [3, 2, 1], [1, 1, 3], [0, 2, 3], [1, 2, 4], [1, 2.5, 3]]) {
+  test(`rejects stages ${stages.join(',')} in supplied array order`, () => {
+    const exercise = draft();
+    exercise.hints.forEach((hint, index) => { hint.stage = stages[index]; });
+    assert.deepEqual(publicationEligibility(owner, exercise), denied('INVALID_HINTS'));
+  });
+}
+
+for (const index of [0, 1, 2]) {
+  test(`rejects an unapproved hint at position ${index + 1}`, () => {
+    const exercise = draft();
+    exercise.hints[index].approved = false;
+    assert.deepEqual(publicationEligibility(owner, exercise), denied('INVALID_HINTS'));
+  });
+  for (const content of ['', ' \t\r\n', '\u00a0\u2003']) {
+    test(`rejects blank content ${JSON.stringify(content)} at position ${index + 1}`, () => {
+      const exercise = draft();
+      exercise.hints[index].content = content;
+      assert.deepEqual(publicationEligibility(owner, exercise), denied('INVALID_HINTS'));
+    });
+  }
+}
+
+for (const stages of [[1, 2, 3], [2, 1, 3]]) {
+  test(`preserves frozen inputs with stages ${stages.join(',')}`, () => {
+    const exercise = draft();
+    exercise.hints.forEach((hint, index) => { hint.stage = stages[index]; Object.freeze(hint); });
+    Object.freeze(exercise.hints);
+    Object.freeze(exercise);
+    const actor = Object.freeze({ ...owner });
+    const before = structuredClone({ actor, exercise });
+    assert.deepEqual(publicationEligibility(actor, exercise), stages[0] === 1 ? { ok: true } : denied('INVALID_HINTS'));
+    assert.deepEqual({ actor, exercise }, before);
+  });
+}
