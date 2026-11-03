@@ -24,8 +24,17 @@ Better Auth was selected because its maintained documentation covers Express, Pr
 - Session identifiers remain in `HttpOnly` cookies. Production cookies are `Secure` and use `SameSite=Lax`.
 - Better Auth's CSRF/origin protections remain enabled. Trusted origins come from validated environment variables.
 - Session cookie caching is disabled so server-side revocation is not delayed by a client cache.
-- Public registration cannot supply `role`; new accounts default to `LEARNER`.
-- Instructor access is assigned through a controlled seed or future administrative process.
+- Initial registration requires the explicit `registrationRole` command, either
+  `LEARNER` or `INSTRUCTOR`. The stored `role` remains non-input; later sign-in,
+  recovery, association and profile updates cannot change it.
+- Auth email ingress trims JavaScript whitespace and lowercases consistently.
+  Dots and aliases remain distinct. The existing unique email constraint arbitrates
+  competing registrations; credentials and roles are never overwritten to resolve a duplicate.
+- Google sign-in disallows implicit new-user creation. Explicit Google registration
+  binds the selected role to a signed browser cookie and expiring database intent.
+  A conditional root-client claim is consumed independently of provisioning.
+  Verified same-email association requires both local and incoming ownership;
+  direct link/unlink bypasses are disabled.
 - Frontend route guards improve navigation, but Express authorization middleware is the security boundary.
 
 Verification and reset email delivery use Nodemailer over authenticated SMTP,
@@ -36,6 +45,30 @@ and must match it when using Gmail. Gmail app-password setup and production
 callback URLs remain team-owned configuration. No domain/DNS setup is needed for
 the Gmail sender. See
 [CredentialsSetup.md](CredentialsSetup.md).
+
+Verification resend and recovery use fixed application callbacks and safe,
+non-enumerating acceptance responses. Delivery exceptions are caught without
+returning recipient-specific failures or promising delivery. Google-first users
+can establish a password through recovery. Recovery revokes existing sessions;
+verification does not automatically sign in a user. The adapter enables real
+transactions for provisioning/reset invariants. Controlled Google and SMTP
+acceptance on the deployed runtime remain deployment-owner checks.
+
+The exact compatible `@better-auth/core` dependency is declared in the backend
+and at the root: the backend uses its public request-state API, and Netlify's
+flattened packaged module must resolve it from the package root. Declaration
+builds and extracted-package execution check different compatibility boundaries.
+
+`scripts/normalize-auth-identities.ts` is an owner-operated **local rehearsal**
+utility. Its CLI accepts only an explicit loopback `_test` database. Preflight
+checks all canonical collisions before any changes; apply requires paused writers
+and a protected, new `AUTH_NORMALIZATION_MAP` file outside Git. It preserves IDs,
+roles and relationships while revoking sessions and database-backed verification
+artifacts in a transaction. Stateless email-verification JWTs are not globally
+revoked by deleting database rows. Windows operators must protect the map location
+with filesystem permissions; a POSIX file mode alone does not establish Windows ACLs.
+Production transition/rollback requires the database owner's separately authorized
+target validation and operator procedure; do not point local tests at production.
 
 ## Data model
 
@@ -99,6 +132,20 @@ Every response carries an `x-request-id`. Error bodies contain a stable code, re
 - CI runs PostgreSQL 17, applies committed migrations, seeds fixtures, and performs all deterministic checks before deployment.
 
 Tests must not call Google, the NUS SoC LLM, Netlify, or production services.
+
+Local packaging checks use the pinned CLI's real packager without site linkage or
+deployment. After a local build, install/locate Netlify CLI 27.16.1, then run
+`node scripts/package-netlify-artifact.mjs <absolute-netlify-cli-package.json>`.
+The helper reads `netlify.toml`, retains included/external file settings, and emits
+a ZIP and manifest under a fresh ignored `.netlify/auth-smoke-*` directory. Extract
+the ZIP and pass its `netlify/functions/api.mjs` to
+`node --import tsx scripts/verify-netlify-artifact.ts <absolute-extracted-api.mjs>`.
+Set explicit identical `TEST_DATABASE_URL`, `DATABASE_URL` and
+`DATABASE_URL_POOLED` to an owned, migrated loopback `_test` database first. The
+runner disables external credentials, creates/deletes only its synthetic user,
+and checks readiness, both allowed/denied role access, cookies and revocation.
+This executes the packaged application Web handler; it does not exercise AWS's
+bootstrap or establish deployed-platform, live Google or SMTP correctness.
 
 ## Deployment
 
