@@ -238,7 +238,7 @@ class MonitorTests(unittest.TestCase):
         self.assertEqual(set(actual["budget_warnings"]), {"tokens_soft_budget_reached", "elapsed_seconds_soft_budget_reached"})
         self.assertEqual(actual["tasks"]["task-a"]["scope_violations"], 1)
         self.assertIsNone(actual["overall"]["quality"]["failed_checks"])
-        self.assertEqual(actual["overall"]["quality"]["missing_requirement_evidence"], ["req-a"])
+        self.assertEqual(actual["overall"]["quality"]["missing_requirement_evidence"], ["task-a:req-a"])
 
     def test_verified_commands_and_spawn_activities_no_raw_content(self):
         command = {"type": "event_msg", "payload": {"type": "item_completed", "thread_id": "thread-a", "item": {
@@ -290,14 +290,68 @@ class MonitorTests(unittest.TestCase):
     def test_incremental_collector_reads_only_appended_lines(self):
         self.append(usage())
         self.collect()
-        read = self.state["collector"]["bytes_read"]
+        read = self.state["collector"]["session_bytes_processed"]
         self.collect()
-        self.assertEqual(self.state["collector"]["bytes_read"], read)
+        self.assertEqual(self.state["collector"]["session_bytes_processed"], read)
         self.append(usage("r2"))
         self.collect()
-        self.assertGreater(self.state["collector"]["bytes_read"], read)
+        self.assertGreater(self.state["collector"]["session_bytes_processed"], read)
+        self.assertGreater(self.state["collector"]["bytes_read"], self.state["collector"]["session_bytes_processed"])
         self.assertEqual(self.state["collector"]["calls"], 3)
         self.assertGreaterEqual(self.state["collector"]["seconds"], 0)
+
+    def test_collection_since_bounds_actual_owner_and_preserves_safe_context(self):
+        self.manifest["agents"][0]["since"] = "2026-01-01T00:00:02Z"
+        context = {"timestamp": "2026-01-01T00:00:00Z", "type": "turn_context", "payload": {"turn_id": "turn-a", "model": "example-model", "effort": "high"}}
+        newer, missing = usage("r2"), usage("r3")
+        newer["timestamp"] = "2026-01-01T00:00:02Z"
+        del missing["timestamp"]
+        self.append(context, usage(), newer, missing)
+        self.collect()
+        actual = self.derived()
+        self.assertEqual(actual["overall"]["tokens"]["total"], 120)
+        self.assertEqual(actual["agents"]["agent-a"]["collection_since"], "2026-01-01T00:00:02Z")
+        self.assertEqual(actual["agents"]["agent-a"]["model_context"]["effort"], "high")
+        self.assertEqual(actual["diagnostics"]["timestamp_required_for_bound"], 1)
+
+    def test_reporting_applies_new_bounds_and_historical_as_of(self):
+        first, second = usage(), usage("r2")
+        second["timestamp"] = "2026-01-01T00:00:20Z"
+        self.append(first, second)
+        self.collect()
+        self.assertEqual(self.derived(10)["overall"]["tokens"]["total"], 120)
+        self.manifest["agents"][0]["since"] = "2026-01-01T00:00:10Z"
+        self.assertEqual(self.derived()["overall"]["tokens"]["total"], 120)
+        self.assertIsNone(self.derived(10)["overall"]["tokens"]["total"])
+
+    def test_task_budgets_from_manifest_and_assignment_events(self):
+        self.manifest["tasks"][0]["budgets"] = {"tokens": 200, "elapsed_seconds": 100}
+        self.state["events"] = [event("assignment", 0, token_budget=100, elapsed_budget_seconds=5), event("start", 1)]
+        self.append(usage())
+        self.collect()
+        actual = self.derived()
+        self.assertEqual(set(actual["tasks"]["task-a"]["budget_warnings"]), {"tokens_soft_budget_reached", "elapsed_seconds_soft_budget_reached"})
+        self.assertEqual(actual["budget_warnings"], [])
+
+    def test_state_schema_rejects_private_unexpected_fields(self):
+        self.initialize()
+        state = monitor.read_json(self.private / "state.json")
+        state["diagnostics"]["SECRET_SENTINEL"] = 1
+        monitor.write_json(self.private / "state.json", state)
+        result = self.cli("report", "--state-dir", str(self.private), "--output-dir", str(self.base / "output"))
+        self.assertEqual(result[0], 2)
+        self.assertNotIn("SECRET_SENTINEL", result[2])
+        self.assertFalse((self.base / "output").exists())
+
+    def test_concurrent_writer_lock_fails_without_modifying_state(self):
+        self.initialize()
+        before = (self.private / "state.json").read_bytes()
+        with monitor.exclusive_state(self.private):
+            result = self.cli("collect", "--state-dir", str(self.private))
+        self.assertEqual(result[0], 2)
+        self.assertIn("busy", result[2])
+        self.assertEqual((self.private / "state.json").read_bytes(), before)
+        self.assertFalse((self.private / ".monitor.lock").exists())
 
 
 if __name__ == "__main__":

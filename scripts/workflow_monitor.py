@@ -8,10 +8,12 @@ from __future__ import annotations
 
 import argparse
 import collections
+from contextlib import contextmanager
 from datetime import datetime, timezone
 import hashlib
 import json
 import math
+import os
 from pathlib import Path
 import re
 import sys
@@ -22,7 +24,7 @@ ID = re.compile(r"[A-Za-z0-9][A-Za-z0-9_.:-]{0,127}\Z")
 TAG = re.compile(r"[A-Za-z0-9][A-Za-z0-9_.:/-]{0,79}\Z")
 COMPONENTS = ("input", "cached_input", "cache_write", "output", "reasoning_output", "total")
 EVENT_TYPES = {"assignment", "start", "dependency_wait", "owner_wait", "completion", "abort", "retry", "test_result", "review_finding", "integration", "commit", "handoff", "disagreement"}
-EVENT_KEYS = {"type", "timestamp", "feature", "task", "agent", "run", "result", "requirement", "check", "retry_group", "attempt", "scope_violation", "elapsed_estimate_seconds", "token_estimate"}
+EVENT_KEYS = {"type", "timestamp", "feature", "task", "agent", "run", "result", "requirement", "check", "retry_group", "attempt", "scope_violation", "elapsed_estimate_seconds", "token_estimate", "token_budget", "elapsed_budget_seconds"}
 RESULTS = {"pass", "fail", "open", "resolved", "success", "failure"}
 
 
@@ -86,31 +88,38 @@ def validate_manifest(manifest, state_dir):
     require(isinstance(manifest.get("tasks"), list) and manifest["tasks"], "tasks required")
     tasks = set()
     for task in manifest["tasks"]:
-        require(isinstance(task, dict) and set(task) <= {"id", "requirements"}, "invalid task schema")
+        require(isinstance(task, dict) and set(task) <= {"id", "requirements", "budgets"}, "invalid task schema")
         task_id = safe_id(task.get("id"))
         require(task_id not in tasks, "duplicate task")
         tasks.add(task_id)
         require(isinstance(task.get("requirements", []), list), "invalid requirements")
         for requirement in task.get("requirements", []):
             safe_id(requirement)
+        validate_budgets(task.get("budgets", {}))
     require(isinstance(manifest.get("agents"), list) and manifest["agents"], "agents required")
     agents, threads, paths = set(), set(), set()
     for agent in manifest["agents"]:
-        require(isinstance(agent, dict) and set(agent) == {"id", "thread_id", "task", "session_path"}, "invalid agent schema")
+        require(isinstance(agent, dict) and {"id", "thread_id", "task", "session_path"} <= set(agent)
+                and set(agent) <= {"id", "thread_id", "task", "session_path", "since"}, "invalid agent schema")
         agent_id, thread_id = safe_id(agent.get("id")), safe_id(agent.get("thread_id"))
         require(agent_id not in agents and thread_id not in threads, "duplicate agent or thread")
         require(agent.get("task") in tasks, "agent references unknown task")
         path = Path(agent.get("session_path", ""))
         require(path.is_absolute(), "session path must be absolute")
         require(str(path.resolve()) not in paths, "duplicate session path")
+        if "since" in agent:
+            timestamp(agent["since"])
         agents.add(agent_id)
         threads.add(thread_id)
         paths.add(str(path.resolve()))
-    budgets = manifest.get("budgets", {})
+    validate_budgets(manifest.get("budgets", {}))
+    return manifest
+
+
+def validate_budgets(budgets):
     require(isinstance(budgets, dict) and set(budgets) <= {"elapsed_seconds", "tokens"}, "invalid budgets")
     for value in budgets.values():
         number(value)
-    return manifest
 
 
 def validate_event(event, manifest):
@@ -134,13 +143,14 @@ def validate_event(event, manifest):
         require("result" in event and "check" in event, "quality event requires check and result")
     if event["type"] == "retry":
         require("retry_group" in event and "attempt" in event and "check" in event, "retry requires group, check and attempt")
-    for key in ("attempt", "token_estimate"):
+    for key in ("attempt", "token_estimate", "token_budget"):
         if key in event:
             number(event[key], integer=True)
     if "attempt" in event:
         require(event["attempt"] >= 1, "attempt starts at one")
-    if "elapsed_estimate_seconds" in event:
-        number(event["elapsed_estimate_seconds"])
+    for key in ("elapsed_estimate_seconds", "elapsed_budget_seconds"):
+        if key in event:
+            number(event[key])
     if "scope_violation" in event:
         require(isinstance(event["scope_violation"], bool), "invalid scope violation")
     return event
@@ -150,13 +160,94 @@ def load_state(directory):
     directory = Path(directory).resolve()
     manifest = validate_manifest(read_json(directory / "manifest.json"), directory)
     state = read_json(directory / "state.json")
-    require(isinstance(state, dict) and state.get("schema_version") == VERSION, "invalid state version")
+    validate_state(state, manifest)
     return directory, manifest, state
 
 
 def empty_state():
     return {"schema_version": VERSION, "files": {}, "responses": {}, "events": [], "diagnostics": {},
-            "models": {}, "contexts": {}, "lineage": {}, "items": {}, "collector": {"calls": 0, "bytes_read": 0, "seconds": 0.0}}
+            "models": {}, "contexts": {}, "lineage": {}, "items": {}, "collector": {"calls": 0, "bytes_read": 0, "session_bytes_processed": 0, "seconds": 0.0}}
+
+
+DIAGNOSTICS = {"non_object_record", "legacy_cumulative_tokens_unsupported_v1", "token_identity_missing", "unmapped_token_owner",
+               "response_usage_unavailable", "conflicting_response_duplicate", "item_identity_missing", "item_duration_unavailable",
+               "unknown_record_schema", "session_restarted", "malformed_complete_line", "session_unavailable", "timestamp_required_for_bound"}
+
+
+def validate_state(state, manifest):
+    required = {"schema_version", "files", "responses", "events", "diagnostics", "models", "contexts", "lineage", "items", "collector"}
+    require(isinstance(state, dict) and required <= set(state) and set(state) <= required | {"collected_at"}
+            and state.get("schema_version") == VERSION, "invalid state schema")
+    agents = {agent["id"]: agent for agent in manifest["agents"]}
+    threads = {agent["thread_id"] for agent in manifest["agents"]}
+    for field in required - {"schema_version", "events"}:
+        require(isinstance(state[field], dict), "invalid state field")
+    require(isinstance(state["events"], list), "invalid event list")
+    for event in state["events"]:
+        validate_event(event, manifest)
+    require(set(state["diagnostics"]) <= DIAGNOSTICS, "invalid diagnostic")
+    for count in state["diagnostics"].values():
+        number(count, integer=True)
+    require(set(state["collector"]) == {"calls", "bytes_read", "session_bytes_processed", "seconds"}, "invalid collector schema")
+    for key, value in state["collector"].items():
+        number(value, integer=key != "seconds")
+    if "collected_at" in state:
+        timestamp(state["collected_at"])
+    for key, row in state["responses"].items():
+        require(isinstance(key, str) and len(key.split("/")) == 2, "invalid response key")
+        thread, response = key.split("/")
+        safe_id(response)
+        require(thread in threads, "unknown response owner")
+        require(isinstance(row, dict) and set(row) == {"agent", "task", "timestamp", "tokens"}, "invalid response schema")
+        require(row["agent"] in agents and agents[row["agent"]]["thread_id"] == thread and agents[row["agent"]]["task"] == row["task"], "response owner mismatch")
+        if row["timestamp"] is not None:
+            number(row["timestamp"])
+        require(isinstance(row["tokens"], dict) and set(row["tokens"]) == set(COMPONENTS), "invalid token schema")
+        for value in row["tokens"].values():
+            if value is not None:
+                number(value, integer=True)
+    for field in ("models", "contexts"):
+        for key, context in state[field].items():
+            safe_id(key)
+            require(field != "models" or key in agents, "unknown model owner")
+            require(isinstance(context, dict) and set(context) <= {"model", "effort"}, "invalid model schema")
+            require(all(isinstance(value, str) and TAG.fullmatch(value) for value in context.values()), "invalid model tag")
+    for agent, parent in state["lineage"].items():
+        require(agent in agents and parent in threads, "invalid lineage")
+    for key, item in state["items"].items():
+        require(isinstance(key, str) and len(key.split("/")) == 2, "invalid item key")
+        thread, identity = key.split("/")
+        safe_id(identity)
+        require(thread in threads and isinstance(item, dict) and set(item) == {"agent", "task", "type", "duration_seconds"}, "invalid item schema")
+        require(item["agent"] in agents and agents[item["agent"]]["thread_id"] == thread and item["task"] == agents[item["agent"]]["task"], "item owner mismatch")
+        require(item["type"] in {"CommandExecution", "SubAgentActivity"}, "invalid item type")
+        if item["duration_seconds"] is not None:
+            number(item["duration_seconds"])
+    for agent, cursor in state["files"].items():
+        require(agent in agents and isinstance(cursor, dict) and set(cursor) == {"offset", "identity", "prefix_size", "prefix", "boundary", "pending_bytes"}, "invalid cursor schema")
+        for field in ("offset", "identity", "prefix_size", "pending_bytes"):
+            number(cursor[field], integer=True)
+        require(cursor["prefix_size"] <= min(cursor["offset"], 4096), "invalid cursor prefix")
+        require(all(isinstance(cursor[field], str) and re.fullmatch(r"[0-9a-f]{64}", cursor[field]) for field in ("prefix", "boundary")), "invalid cursor digest")
+
+
+@contextmanager
+def exclusive_state(directory):
+    """Fail safely on concurrent writers instead of losing another event/update.
+
+    A crash can leave .monitor.lock; after verifying no collector is running, the
+    coordinator may remove that empty private lock file and retry.
+    """
+    lock = directory / ".monitor.lock"
+    try:
+        descriptor = os.open(lock, os.O_CREAT | os.O_EXCL | os.O_WRONLY, 0o600)
+    except FileExistsError as exc:
+        raise Invalid("monitor state busy; check for active writer or stale private lock") from exc
+    try:
+        os.close(descriptor)
+        yield
+    finally:
+        lock.unlink()
 
 
 def diagnostic(state, code):
@@ -185,6 +276,16 @@ def consume(record, mapped_agent, manifest, state):
         return
     kind = record.get("type")
     payload = record.get("payload") if isinstance(record.get("payload"), dict) else record
+    owners = {agent["thread_id"]: agent for agent in manifest["agents"]}
+    owner = owners.get(payload.get("thread_id"))
+    if kind == "token_usage_record" or (kind == "event_msg" and payload.get("type") == "item_completed"):
+        if owner and "since" in owner:
+            try:
+                if timestamp(record.get("timestamp")) < timestamp(owner["since"]):
+                    return
+            except Invalid:
+                diagnostic(state, "timestamp_required_for_bound")
+                return
     if kind == "event_msg" and payload.get("type") == "token_count":
         diagnostic(state, "legacy_cumulative_tokens_unsupported_v1")
         return
@@ -196,7 +297,6 @@ def consume(record, mapped_agent, manifest, state):
         except Invalid:
             diagnostic(state, "token_identity_missing")
             return
-        owners = {agent["thread_id"]: agent for agent in manifest["agents"]}
         if thread_id not in owners:
             diagnostic(state, "unmapped_token_owner")
             return
@@ -234,7 +334,6 @@ def consume(record, mapped_agent, manifest, state):
         if selected and isinstance(turn, str) and ID.fullmatch(turn):
             state["contexts"][turn] = selected
     elif kind == "event_msg" and payload.get("type") == "item_completed":
-        owners = {agent["thread_id"]: agent for agent in manifest["agents"]}
         item = payload.get("item", {})
         owner = owners.get(payload.get("thread_id"))
         if not owner or not isinstance(item, dict) or item.get("type") not in {"CommandExecution", "SubAgentActivity"}:
@@ -275,6 +374,7 @@ def collect(directory, manifest, state):
                 prefix = source.read(prefix_size)
                 source.seek(max(0, offset - 128))
                 boundary = source.read(min(offset, 128))
+                state["collector"]["bytes_read"] += len(prefix) + len(boundary)
                 changed = (stat.st_size < offset or previous.get("identity", stat.st_ino) != stat.st_ino
                            or (prefix_size and digest(prefix) != previous.get("prefix"))
                            or (offset and digest(boundary) != previous.get("boundary")))
@@ -288,6 +388,7 @@ def collect(directory, manifest, state):
                     if not line or not line.endswith(b"\n"):
                         break  # Keep offset before any incomplete JSON or UTF-8 line.
                     offset += len(line)
+                    state["collector"]["session_bytes_processed"] += len(line)
                     try:
                         record = json.loads(line.decode("utf-8"))
                     except (UnicodeDecodeError, ValueError):
@@ -299,6 +400,7 @@ def collect(directory, manifest, state):
                 prefix = source.read(prefix_size)
                 source.seek(max(0, offset - 128))
                 boundary = source.read(min(offset, 128))
+                state["collector"]["bytes_read"] += len(prefix) + len(boundary)
                 state["files"][agent["id"]] = {"offset": offset, "identity": stat.st_ino, "prefix_size": prefix_size,
                     "prefix": digest(prefix), "boundary": digest(boundary), "pending_bytes": max(0, stat.st_size - offset)}
         except OSError:
@@ -387,18 +489,51 @@ def quality(events, requirements):
             "quality_evidence_available": bool(checks or findings)}
 
 
+def wall_time(events, as_of):
+    runs = {(event["agent"], event["run"]) for event in events}
+    timings = [intervals([event for event in events if (event["agent"], event["run"]) == run], as_of) for run in runs]
+    starts = [timestamp(event["timestamp"]) for event in events if event["type"] == "start"]
+    if not starts:
+        return None
+    closed = bool(timings) and all(item["open_interval"] is None and item["wall_seconds"] is not None for item in timings)
+    terminal = [timestamp(event["timestamp"]) for event in events if event["type"] in {"completion", "abort"}]
+    return (max(terminal) if closed else as_of) - min(starts)
+
+
+def budget_warnings(budgets, events, responses, elapsed, include_assignments=True):
+    budgets = dict(budgets)
+    for event in sorted(events, key=lambda item: timestamp(item["timestamp"])):
+        for field, key in (("token_budget", "tokens"), ("elapsed_budget_seconds", "elapsed_seconds")):
+            if include_assignments and field in event:
+                budgets[key] = event[field]
+    warnings = []
+    rows = list(responses)
+    known_total = sum(row["tokens"]["total"] for row in rows if row["tokens"]["total"] is not None) if rows else None
+    for key, measured in (("tokens", known_total), ("elapsed_seconds", elapsed)):
+        budget = budgets.get(key)
+        estimates = [event.get("token_estimate" if key == "tokens" else "elapsed_estimate_seconds") for event in events]
+        estimate = max((value for value in estimates if value is not None), default=None)
+        if budget is not None and any(value is not None and value >= budget for value in (measured, estimate)):
+            warnings.append(key + "_soft_budget_reached")
+    return warnings
+
+
 def report(manifest, state, as_of=None):
     as_of = timestamp(as_of) if as_of else time.time()
     for event in state["events"]:
         validate_event(event, manifest)
     events = [event for event in state["events"] if timestamp(event["timestamp"]) <= as_of]
-    responses = list(state["responses"].values())
+    bounds = {agent["id"]: timestamp(agent["since"]) for agent in manifest["agents"] if "since" in agent}
+    responses = [row for row in state["responses"].values()
+                 if (row["timestamp"] is None or row["timestamp"] <= as_of)
+                 and (row["agent"] not in bounds or (row["timestamp"] is not None and row["timestamp"] >= bounds[row["agent"]]))]
     result = {"schema_version": VERSION, "feature": manifest["feature"], "generated_at": datetime.fromtimestamp(as_of, timezone.utc).isoformat(),
               "measurement_policy": "response_usage_v1; cached_input and reasoning_output are subsets; legacy cumulative unsupported",
               "diagnostics": state["diagnostics"], "collector": state["collector"], "overall": measurements(responses),
               "tasks": {}, "agents": {}, "runs": [], "tool_count": None, "tool_duration_seconds": None,
               "tool_metrics_status": "unavailable: no verified tool lifecycle correlation", "budget_warnings": []}
     requirements = {task["id"]: task.get("requirements", []) for task in manifest["tasks"]}
+    task_budgets = {task["id"]: task.get("budgets", {}) for task in manifest["tasks"]}
     for dimension in ("task", "agent"):
         keys = requirements if dimension == "task" else {agent["id"]: [] for agent in manifest["agents"]}
         for key in keys:
@@ -412,6 +547,8 @@ def report(manifest, state, as_of=None):
                             "summed_agent_active_seconds": sum(item["active_seconds"] or 0 for item in timings) if any(item["active_seconds"] is not None for item in timings) else None,
                             "summed_dependency_wait_seconds": sum(item["dependency_wait_seconds"] or 0 for item in timings) if any(item["dependency_wait_seconds"] is not None for item in timings) else None,
                             "summed_owner_wait_seconds": sum(item["owner_wait_seconds"] or 0 for item in timings) if any(item["owner_wait_seconds"] is not None for item in timings) else None})
+            metrics["wall_seconds"] = wall_time(selected, as_of)
+            metrics["budget_warnings"] = budget_warnings(task_budgets.get(key, {}), selected, [row for row in responses if row[dimension] == key], metrics["wall_seconds"])
             result[dimension + "s"][key] = metrics
             items = [item for item in state["items"].values() if item[dimension] == key]
             commands = [item for item in items if item["type"] == "CommandExecution"]
@@ -420,26 +557,20 @@ def report(manifest, state, as_of=None):
             metrics["observed_subagent_activity_count"] = sum(item["type"] == "SubAgentActivity" for item in items) if items else None
             if dimension == "agent":
                 metrics["model_context"] = state["models"].get(key)
+                metrics["collection_since"] = next(agent.get("since") for agent in manifest["agents"] if agent["id"] == key)
     for agent, run in sorted({(event["agent"], event["run"]) for event in events}):
         selected = [event for event in events if event["agent"] == agent and event["run"] == run]
         result["runs"].append({"agent": agent, "run": run, "task": selected[0]["task"], **intervals(selected, as_of),
                                "tokens": None, "token_status": "unavailable: no explicit response-to-run mapping",
                                "quality": quality(selected, [])})
-    timed = [timestamp(event["timestamp"]) for event in events if event["type"] in {"start", "completion", "abort"} and timestamp(event["timestamp"]) <= as_of]
-    starts = [timestamp(event["timestamp"]) for event in events if event["type"] == "start" and timestamp(event["timestamp"]) <= as_of]
-    all_closed = bool(result["runs"]) and all(run["open_interval"] is None and run["wall_seconds"] is not None for run in result["runs"])
-    elapsed = (max(timed) if all_closed else as_of) - min(starts) if starts else None
+    elapsed = wall_time(events, as_of)
     result["overall"]["wall_seconds"] = elapsed
     result["overall"]["observed_responses"] = len(responses)
     result["overall"]["known_total_token_lower_bound"] = sum(row["tokens"]["total"] for row in responses if row["tokens"]["total"] is not None) if responses else None
     result["overall"]["pending_session_bytes"] = sum(file.get("pending_bytes", 0) for file in state["files"].values())
     result["overall"]["quality"] = quality(events, [requirement for values in requirements.values() for requirement in values])
-    for key, measured in (("tokens", result["overall"]["known_total_token_lower_bound"]), ("elapsed_seconds", elapsed)):
-        budget = manifest.get("budgets", {}).get(key)
-        estimates = [event.get("token_estimate" if key == "tokens" else "elapsed_estimate_seconds") for event in events]
-        estimate = max((value for value in estimates if value is not None), default=None)
-        if budget is not None and any(value is not None and value >= budget for value in (measured, estimate)):
-            result["budget_warnings"].append(key + "_soft_budget_reached")
+    result["overall"]["quality"]["missing_requirement_evidence"] = [task + ":" + requirement for task, value in result["tasks"].items() for requirement in value["quality"]["missing_requirement_evidence"]]
+    result["budget_warnings"] = budget_warnings(manifest.get("budgets", {}), events, responses, elapsed, include_assignments=False)
     return result
 
 
@@ -480,9 +611,10 @@ def parser():
             sub.add_argument("--result", choices=sorted(RESULTS))
             for key in ("requirement", "check", "retry-group"):
                 sub.add_argument("--" + key)
-            for key in ("attempt", "token-estimate"):
+            for key in ("attempt", "token-estimate", "token-budget"):
                 sub.add_argument("--" + key, type=int)
             sub.add_argument("--elapsed-estimate-seconds", type=float)
+            sub.add_argument("--elapsed-budget-seconds", type=float)
             sub.add_argument("--scope-violation", action="store_true", default=None)
     return root
 
@@ -493,32 +625,32 @@ def main(argv=None):
         if args.command == "init":
             directory = args.state_dir.resolve()
             manifest = validate_manifest(read_json(args.manifest), directory)
-            require(not (directory / "state.json").exists(), "state already initialized")
-            write_json(directory / "manifest.json", manifest)
-            write_json(directory / "state.json", empty_state())
-            print(json.dumps({"status": "initialized", "schema_version": VERSION}))
-            return 0
-        directory, manifest, state = load_state(args.state_dir)
-        if args.command == "collect":
-            collect(directory, manifest, state)
-        elif args.command == "event":
-            event = {key: value for key, value in vars(args).items() if key in EVENT_KEYS and value is not None}
-            event["feature"], event["timestamp"] = manifest["feature"], args.timestamp or now()
-            validate_event(event, manifest)
-            state["events"].append(event)
-            write_json(directory / "state.json", state)
-        elif args.command == "report":
-            derived = report(manifest, state, args.as_of)
-            write_json(args.output_dir / "report.json", derived)
-            (args.output_dir / "report.md").write_text(markdown(derived), encoding="utf-8")
-            print(json.dumps({"status": "reported", "budget_warnings": derived["budget_warnings"]}))
-            return 0
-        elif args.command == "validate":
-            for event in state["events"]:
+            directory.mkdir(parents=True, exist_ok=True)
+            with exclusive_state(directory):
+                require(not (directory / "state.json").exists(), "state already initialized")
+                write_json(directory / "manifest.json", manifest)
+                write_json(directory / "state.json", empty_state())
+                print(json.dumps({"status": "initialized", "schema_version": VERSION}))
+                return 0
+        with exclusive_state(args.state_dir.resolve()):
+            directory, manifest, state = load_state(args.state_dir)
+            if args.command == "collect":
+                collect(directory, manifest, state)
+            elif args.command == "event":
+                event = {key: value for key, value in vars(args).items() if key in EVENT_KEYS and value is not None}
+                event["feature"], event["timestamp"] = manifest["feature"], args.timestamp or now()
                 validate_event(event, manifest)
-        derived = report(manifest, state)
-        print(json.dumps({"status": "valid" if args.command == "validate" else "recorded", "budget_warnings": derived["budget_warnings"]}))
-        return 0
+                state["events"].append(event)
+                write_json(directory / "state.json", state)
+            derived = report(manifest, state, args.as_of if args.command == "report" else None)
+            status = "valid" if args.command == "validate" else "recorded"
+            if args.command == "report":
+                write_json(args.output_dir / "report.json", derived)
+                (args.output_dir / "report.md").write_text(markdown(derived), encoding="utf-8")
+                status = "reported"
+            print(json.dumps({"status": status, "budget_warnings": derived["budget_warnings"],
+                              "task_budget_warnings": {key: value["budget_warnings"] for key, value in derived["tasks"].items() if value["budget_warnings"]}}))
+            return 0
     except (Invalid, OSError, KeyError, TypeError) as exc:
         # Do not echo paths, arbitrary JSON values, tool arguments, or OS errors.
         message = str(exc) if isinstance(exc, Invalid) else "invalid or inaccessible monitor state"
