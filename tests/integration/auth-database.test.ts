@@ -109,7 +109,7 @@ describe("real PostgreSQL and Better Auth", () => {
         emailVerified: true,
         name: "Proxy learner",
       },
-      data: { sub: proxyEmail },
+      data: { sub: proxyEmail, email: proxyEmail, email_verified: true },
     });
     try {
       const start = await preview.handler(
@@ -121,11 +121,18 @@ describe("real PostgreSQL and Better Auth", () => {
           },
           body: JSON.stringify({
             provider: "google",
+            requestSignUp: true,
+            additionalData: { registrationRole: "LEARNER" },
             callbackURL: `${previewOrigin}/learner`,
           }),
         }),
       );
       expect(start.status).toBe(200);
+      expect(
+        start.headers
+          .getSetCookie()
+          .some((value) => value.includes("debugclinic_intent")),
+      ).toBe(true);
       const authorization = new URL((await start.json()).url as string);
       expect(authorization.searchParams.get("redirect_uri")).toBe(
         `${stableOrigin}/api/auth/callback/google`,
@@ -158,7 +165,9 @@ describe("real PostgreSQL and Better Auth", () => {
         new Request(completion, { headers: { cookie: cookies } }),
       );
       expect(finish.status).toBe(302);
-      expect(finish.headers.get("location")).toBe(`${previewOrigin}/learner`);
+      expect(finish.headers.get("location")).toBe(
+        `${previewOrigin}/auth/complete`,
+      );
       const sessionCookie = finish.headers
         .getSetCookie()
         .find((value) => value.includes("session_token"))!;
@@ -219,7 +228,7 @@ describe("real PostgreSQL and Better Auth", () => {
         name: "Integration learner",
         email,
         password,
-        role: "INSTRUCTOR",
+        registrationRole: "LEARNER",
       })
       .expect(200);
     expect(
