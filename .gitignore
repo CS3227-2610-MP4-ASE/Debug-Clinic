@@ -13,3 +13,8 @@ generated/prisma/
 generated/deployment.json
 *.tsbuildinfo
 .impeccable/review/
+
+# Live agent telemetry stays local; commit only derived milestone evidence.
+.workflow-state/
+__pycache__/
+*.pyc
