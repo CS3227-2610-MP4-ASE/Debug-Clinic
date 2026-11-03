@@ -17,6 +17,7 @@ test("registration explains required email verification", async ({ page }) => {
     });
   });
   await page.goto("/register");
+  await page.getByRole("radio", { name: "Learner", exact: true }).check();
   await page.getByRole("textbox", { name: /^Name/ }).fill("Test learner");
   await page
     .getByRole("textbox", { name: /^Email/ })
@@ -26,9 +27,7 @@ test("registration explains required email verification", async ({ page }) => {
     .getByRole("button", { name: "Create account", exact: true })
     .click();
   await expect(
-    page.getByText(
-      "Check your email and verify your address before signing in.",
-    ),
+    page.getByText(/If verification is needed, check your email/),
   ).toBeVisible();
 });
 
@@ -43,7 +42,7 @@ test("public home page explains the practice loop", async ({ page }) => {
     }),
   ).toBeVisible();
   await expect(
-    page.getByRole("link", { name: "Create a learner account" }),
+    page.getByRole("link", { name: "Create an account" }),
   ).toBeVisible();
 });
 
@@ -52,9 +51,9 @@ test("authentication entry points are reachable", async ({ page }) => {
   await expect(
     page.getByRole("heading", { name: "Continue your debugging practice" }),
   ).toBeVisible();
-  await page.getByRole("link", { name: "Create a learner account" }).click();
+  await page.getByRole("link", { name: "Create an account" }).click();
   await expect(
-    page.getByRole("heading", { name: "Create a learner account" }),
+    page.getByRole("heading", { name: "Create an account" }),
   ).toBeVisible();
 });
 

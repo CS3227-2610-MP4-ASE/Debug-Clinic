@@ -17,7 +17,7 @@ interface AuthState {
   user: CurrentUser | null;
   isLoading: boolean;
   error: string | null;
-  refresh: () => Promise<void>;
+  refresh: () => Promise<CurrentUser | null>;
   signOut: () => Promise<void>;
 }
 
@@ -35,13 +35,16 @@ export function AuthProvider({ children }: PropsWithChildren) {
     setError(null);
     try {
       const currentUser = await getCurrentUser();
-      if (version === requestVersion.current) setUser(currentUser);
+      if (version !== requestVersion.current) return null;
+      setUser(currentUser);
+      return currentUser;
     } catch {
-      if (version !== requestVersion.current) return;
+      if (version !== requestVersion.current) return null;
       setUser(null);
       setError(
         "We could not restore your session. Check the API connection and try again.",
       );
+      return null;
     } finally {
       if (version === requestVersion.current) setIsLoading(false);
     }

@@ -44,6 +44,7 @@ const testEnvironment = {
   VITE_API_BASE_URL: "",
   AI_PROVIDER: "fake",
   LOG_LEVEL: "silent",
+  E2E_AUTH_COMPLETION: process.env["E2E_AUTH_COMPLETION"] === "1" ? "1" : "",
 };
 
 export default defineConfig({
@@ -66,7 +67,9 @@ export default defineConfig({
   webServer: [
     {
       command:
-        "node --conditions=development --import tsx apps/backend/src/server.ts",
+        process.env["E2E_AUTH_COMPLETION"] === "1"
+          ? "node --conditions=development --import tsx tests/support/browser-auth-server.ts"
+          : "node --conditions=development --import tsx apps/backend/src/server.ts",
       url: `http://127.0.0.1:${testEnvironment.PORT}/api/health`,
       reuseExistingServer: false,
       timeout: 120_000,

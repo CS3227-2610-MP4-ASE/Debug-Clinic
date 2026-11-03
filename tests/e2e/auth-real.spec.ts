@@ -23,6 +23,7 @@ test("real password registration, session restore, denied login, retry, and logo
 
   expect((await page.request.get("/api/ready")).status()).toBe(200);
   await page.goto("/register");
+  await page.getByRole("radio", { name: "Learner", exact: true }).check();
   await page.getByRole("textbox", { name: /^Name/ }).fill("Browser learner");
   await page.getByRole("textbox", { name: /^Email/ }).fill(email);
   await page.getByLabel(/^Password/).fill(password);

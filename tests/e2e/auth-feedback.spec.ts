@@ -17,7 +17,7 @@ test("Google sign-in errors are visible and email input is preserved", async ({
       status: 400,
       json: {
         code: "PROVIDER_NOT_FOUND",
-        message: "Google is not configured. Use email to sign in.",
+        message: "Google sign-in could not start. Try again or use email.",
       },
     }),
   );
@@ -27,7 +27,7 @@ test("Google sign-in errors are visible and email input is preserved", async ({
     .fill("learner@example.test");
   await page.getByRole("button", { name: "Continue with Google" }).click();
   await expect(page.getByRole("alert")).toHaveText(
-    "Google is not configured. Use email to sign in.",
+    "Google sign-in could not start. Try again or use email.",
   );
   await expect(page.getByRole("textbox", { name: /^Email/ })).toHaveValue(
     "learner@example.test",

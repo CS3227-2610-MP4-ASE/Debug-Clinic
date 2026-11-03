@@ -1,8 +1,20 @@
 import { describe, expect, it } from "vitest";
 import { normalizeEmail } from "../src/auth/policy.js";
 import { normalizationPlan } from "../../../scripts/normalize-auth-identities.js";
+import { safeAuthMessage } from "../../frontend/src/auth/feedback-policy.js";
 
 describe("canonical authentication identity", () => {
+  it.each([
+    "__proto__",
+    "constructor",
+    "toString",
+    "PRIVATE_CANARY",
+    undefined,
+  ])("maps only own allowlisted error codes safely: %s", (code) => {
+    expect(safeAuthMessage(code, "Safe retry guidance")).toBe(
+      "Safe retry guidance",
+    );
+  });
   it.each([
     ["  Learner@Example.TEST  ", "learner@example.test"],
     ["\u00a0\u2003INSTRUCTOR@EXAMPLE.TEST\ufeff", "instructor@example.test"],

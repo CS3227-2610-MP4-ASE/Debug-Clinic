@@ -232,7 +232,7 @@ export function createDebugClinicAuth(
               String(returned.body?.code),
             )
           )
-            return ctx.json({ status: true });
+            return Response.json({ status: true }, { status: 200 });
         }
       }),
     },
