@@ -38,15 +38,26 @@ npm 11 are required. Common entry points are:
   absent or nonlocal target. This command alone does not provision the database.
 - `npm run test:e2e` (optionally `-- --grep "<journey>"`): current Playwright
   Chromium desktop and mobile projects. If missing, install the browser with
-  `npx playwright install chromium`. Existing configuration starts `npm run dev`
-  and may reuse an existing server outside CI. Inspect that server's identity and
-  environment before reuse; leave unrelated processes untouched.
+  `npx playwright install chromium`. The configuration starts its own backend and frontend
+  and waits for their health checks. Keep its required ports free; leave unrelated
+  processes untouched.
 
-Playwright's current base URL is `127.0.0.1:5173`; its synthetic environment has
-auth-origin settings at `127.0.0.1:4173`. Existing mocked browser tests do not
-establish real auth correctness under that configuration. Plan a verified
-isolated runtime setup for new real-auth journeys and record this limitation
-instead of claiming end-to-end authentication from the smoke set.
+Playwright uses `http://127.0.0.1:5173` consistently for the browser and auth
+origins. It starts a direct Node/tsx backend without watch or `.env` loading,
+awaits backend health, then starts strict-port Vite and awaits proxied API health.
+It refuses reuse of an unknown existing server. External Google, SMTP, and OAuth
+proxy credentials are blanked in this synthetic runtime.
+
+`tests/e2e/auth-real.spec.ts` is opt-in with `E2E_REAL_AUTH=1`. Prepare an owned,
+migrated loopback PostgreSQL database ending in `_test`; set
+`E2E_TEST_DATABASE_URL` when its port differs from the default 5433. The override
+rejects malformed, remote, non-PostgreSQL, and non-test targets. Run
+`npm run test:e2e -- tests/e2e/auth-real.spec.ts --workers=1` with those explicit
+settings. This spec uses real database-backed password registration, session
+restoration, denied login, retry and logout with no network interception. SMTP
+is disabled; it does not establish email verification, Google or production
+correctness. The default browser smoke set still uses intercepted responses;
+real-auth cases are explicitly skipped unless opted in.
 
 ## Evidence handling
 

@@ -95,7 +95,7 @@ Every response carries an `x-request-id`. Error bodies contain a stable code, re
 - Contract tests cover accepted and rejected shared schemas.
 - Vitest covers configuration parsing and AI response validation.
 - Supertest covers probes, safe errors, unauthenticated access, revoked sessions, role checks, role-escalation rejection, deterministic AI output, and provider failures.
-- Playwright covers the public page, authentication entry points, responsive rendering, and unauthenticated role-route behavior.
+- Playwright covers the public page, authentication entry points, responsive rendering, and unauthenticated role-route behavior. Its opt-in `auth-real.spec.ts` additionally checks real local PostgreSQL password registration, session restoration, denied login, retry, and logout on desktop/mobile without response interception. Set `E2E_REAL_AUTH=1` and an owned migrated loopback `_test` target through `E2E_TEST_DATABASE_URL`; the default target is port 5433. Both browser/auth origins are 5173, and the harness awaits backend and proxied API health. SMTP/Google are disabled in this synthetic runtime; live-provider and production acceptance remain separate.
 - CI runs PostgreSQL 17, applies committed migrations, seeds fixtures, and performs all deterministic checks before deployment.
 
 Tests must not call Google, the NUS SoC LLM, Netlify, or production services.
