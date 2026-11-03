@@ -27,6 +27,7 @@
     "test": "vitest run",
     "test:api": "vitest run apps/backend/test",
     "test:integration": "vitest run --config vitest.integration.config.ts",
+    "test:workflow": "python -B -m unittest discover -s tests/workflow -v",
     "test:e2e": "playwright test",
     "format": "prettier --write .",
     "format:check": "prettier --check .",

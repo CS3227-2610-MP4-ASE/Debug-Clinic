@@ -12,7 +12,7 @@ Identify the current gate in the feature ledger before acting. This skill covers
 planning and delivery; invoking it does not grant implementation authorization.
 
 1. For planning, draft in the MP4 sibling `Dev2-local-SDD/` tree. Follow human
-   scope approval → PRD → TDD and Requirements-to-Tests → independent package
+   scope approval → human-approved PRD → TDD and Requirements-to-Tests → independent package
    review → human package approval → separate implementation authorization.
    Advance only when the gate's evidence is recorded. Copy exact approved bytes
    into the feature worktree, hash them, verify a dated external backup, and commit

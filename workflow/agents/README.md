@@ -16,7 +16,7 @@ Grilling decisions are optional; the other package artifacts are required.
 | Gate | Required completion evidence | Next authorized work |
 | --- | --- | --- |
 | Scope | Human approves exact Mission Brief scope; reference/date recorded | Draft PRD |
-| Requirements | Complete PRD with stable requirement IDs and explicit open decisions | Draft TDD and RTT |
+| Requirements | Human approves complete PRD with stable requirement IDs; product decisions resolved and approval reference recorded | Draft TDD and RTT |
 | Design and tests | TDD defines interfaces/ownership/failures; RTT maps every acceptance criterion to a test or named manual observation | Independent package review |
 | Package review | Independent spec reviewer checks complete package, contradictions, coverage, privacy, contracts; blocking findings resolved | Human package decision |
 | Package approval | Human approval reference binds exact bytes; ledger has SHA-256 per artifact and verified external backup | Commit approved snapshot |
@@ -148,7 +148,7 @@ out of test artifacts and logs.
 | developer_guide_writer | `docs/DeveloperGuide.md`; actual verified architecture |
 | user_guide_writer | `docs/UserGuide.md`; actual verified user behavior |
 | interaction_logger | Assigned feature log under `logs/royden/`; attributed factual checkpoints |
-| evaluation_analyst | Assigned derived reports under `workflow/evaluations/royden/`; measured analysis and blind spots |
+| evaluation_analyst | Assigned derived reports under `workflow/evaluations/royden/` and assigned entries in `docs/Reflections.md`; measured analysis and blind spots |
 
 Guide writers use verified implementation rather than planned capabilities.
 The logger preserves chronology and missing-evidence labels, without inventing
