@@ -1,5 +1,65 @@
 # Authentication local implementation evidence
 
+Final local status, recorded4November2026: **complete and independently reviewed**
+at application checkpoint `a1645b9d42ccaed896bf94ba571713dbd9eb6a41`. Functional,
+standards and security verdicts pass. [Acceptance](acceptance.md) maps all34 assessed
+criteria and preserves coverage boundaries; [review history](implementation-reviews.md)
+retains initial findings and both repair batches. The checkpoints below are chronological;
+earlier pending statements are superseded by this final record.
+
+## Final coordinator integrated verification
+
+Node24.14.0/npm11.9.0; owned PG16.15 at127.0.0.1:55434/auth_completion_test;
+actual frontend/auth origin127.0.0.1:5173. Private raw logs are under the feature
+run's `verification-root` directory outside Git. Each command used the verified
+explicit test targets where applicable and stopped dependent work on failure.
+
+| Actual final command/layer                                                                                          | Result                                                          | Raw log leaf                                 |
+| ------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------- | -------------------------------------------- |
+| `npm test`                                                                                                          | 142/142,15files                                                 | test-final.log                               |
+| `npm run lint`                                                                                                      | Pass                                                            | lint-final.log                               |
+| `npm run typecheck`                                                                                                 | Pass                                                            | typecheck-final.log                          |
+| `npm run format:check`                                                                                              | Pass                                                            | format-check-final.log                       |
+| `npm run test:integration`                                                                                          | 42/42,fivefiles                                                 | integration-final.log                        |
+| `E2E_AUTH_COMPLETION=1`, explicit target, `npm run test:e2e -- tests/e2e/auth-completion.spec.ts --workers=1`       | 10/10 desktop/Pixel7,38.4s                                      | browser-real-final.log                       |
+| Completion flag cleared, `npm run test:e2e -- --workers=2`                                                          | 58pass/12explicit skips,44.9s                                   | browser-feedback-final.log                   |
+| `NODE_ENV=production npm run build` with explicit local configuration                                               | Pass, Prisma generation/contracts/backend declarations/frontend | build-production-final.log                   |
+| `node --import tsx scripts/verify-built-frontend.ts`                                                                | 16routes/viewports plus deep keyboard/focus pass                | built-frontend-production-final.log          |
+| Pinned CLI packager helper, extract ZIP, `node --import tsx scripts/verify-netlify-artifact.ts <extracted-api.mjs>` | All packaged Web-handler smoke checks pass                      | package-final.log; package-runtime-final.log |
+| Existing `python -B -m unittest discover -s tests/workflow -v`                                                      | 34/34pass                                                       | Coordinator tool result                      |
+
+Final ZIP SHA256 is `43ab4fa6d7bb58212e2649d061e2779bfea073e27c9001fc00e1d13b99b27f1b`,
+retained under `.netlify/node_modules/auth-smoke-815fb3cf-c6a4-47a8-bac9-fb1fa3d803fc`.
+The build keeps the ordinary641kB/201kB gzip size warning; no initialization error,
+external asset or horizontal clipping occurred. The actual package Web handler
+passes startup/readiness, canonical instructor registration, cookies/identity,
+allowed/denied role access, sign-out/revocation and safe malformed JSON.
+
+Private captured-outbox BW and typed provider doubles are not live-provider proof;
+Google authorization is controller-substituted and BF is intercepted. Human auditory
+AT, AWS bootstrap, CI, real Google/SMTP and deployed readiness are not claimed.
+The separately retained earlier worker-exit and implementation/review failures are
+not counted as passes. The original overall soft estimates were exceeded; monitoring
+coverage and late lifecycle capture limit time/cost interpretation and establish
+neither billing nor quota attribution.
+
+All source changes are committed. Final artifact updates after the application
+checkpoint are documentation/evidence only. Owned PG PID46456/data directory/port55434
+was verified then stopped; app/preview ports3001/5173/5174 are clear. No pre-existing
+service or original worktree was changed. Stopped disposable data and raw packages
+are retained ignored. Dev1's separately authorized production work remains the next
+handoff action; no push/merge/deployment/production mutation occurred.
+
+Final derived [monitoring report](monitoring/report.md) and authoritative JSON retain
+the original soft-budget overruns, including implementation/review token estimates.
+They count supported observed response usage, including repeated/cached context;
+they are not billing or account-quota totals. Diagnostics include913 unsupported
+legacy cumulative records and241 unknown-schema records. Tool lifecycle correlation
+is unavailable. Several lifecycle events were captured late, so reported activity/
+wait intervals must not be read as exact human wait or actual agent working time.
+The report cutoff precedes this closing documentation turn; unavailable tail data
+is not fabricated. No acceptance requirement was reduced to meet an estimate.
+
 Package `MP4-D2-AUTH-20261103-R2`; approved snapshot `9011d4664d873789677ca658e397e2f7e2f77a4e` on `royden/auth-completion`, stacked on prerequisite checkpoint `441838145f719f02810737fc435c4b59c2682901`. The owner separately approved the exact package and authorized local implementation. Approved four-artifact hashes remain unchanged.
 
 ## Resumption checkpoint

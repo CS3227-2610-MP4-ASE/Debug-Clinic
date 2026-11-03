@@ -1,4 +1,4 @@
-# Authentication completion — 3 November 2026
+# Authentication completion — 3–4 November 2026
 
 ## Owner decisions
 
@@ -21,4 +21,25 @@ The complete reviewed `MP4-D2-AUTH-20261103-R2` package received **Approve packa
 
 ## Evidence boundaries
 
-Full-feature real database/browser checks, declaration builds, actual packaged runtime, and independent functional, standards and security reviews remain pending until recorded in [implementation evidence](../../workflow/evaluations/royden/MP4-D2-AUTH/implementation.md). Production readiness 503 has an unknown cause; local changes cannot establish either reported production failure's root cause. Real Google, SMTP receipt and CI are unobserved. Private telemetry preserves original exceeded soft estimates and coverage limits; it is not billing or quota attribution.
+Final closure recorded4November2026: application codea1645b9d42ccaed896bf94ba571713dbd9eb6a41,
+all three independent reviews pass after two targeted repair batches. Initial review
+found unsafe legacy/pooled fixture targets and raw unexpected auth/session logging;
+targeted evidence added reset boundaries, actual Google mapper/callback substitution
+and deeper keyboard observation. Re-review found callback API-JSON recovery unsuitable
+for navigational failures; the second repair returns known GET callbacks to the fixed
+app error page. Findings and independent reproductions remain in the review record.
+
+Coordinator final results:142unit/API,42realPG,10complete desktop/mobile journeys,
+58feedback passes/12opt-in skips, lint/typecheck/format, production build/declarations,
+16emitted route/viewport plus deep keyboard checks and actual extracted package smoke
+all pass. Existing workflow suite34/34 passes; approved hashes and machinery unchanged.
+The first root unit worker-exit log is retained; unchanged rerun and final run pass.
+Owned PG55434 was verified/stopped; test app/preview ports are clear. Source guides,
+feature map, acceptance/evaluation/ledger and permitted Dev1 handoff are updated.
+Nothing was pushed, merged or deployed; production/provider/CI evidence remains deferred.
+
+Final evidence is in [implementation evidence](../../workflow/evaluations/royden/MP4-D2-AUTH/implementation.md).
+Production readiness503 has an unknown cause; local changes cannot establish either
+reported production failure's root cause. Real Google, SMTP receipt and CI are
+unobserved. Private telemetry preserves original exceeded soft estimates and coverage
+limits; it is not billing or quota attribution.

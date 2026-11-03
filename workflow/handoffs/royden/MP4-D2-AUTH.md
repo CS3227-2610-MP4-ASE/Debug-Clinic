@@ -1,7 +1,39 @@
 # Authentication completion: current feature ledger
 
 Feature MP4-D2-AUTH. Owner Royden / Developer 2. Date 3 November 2026, Asia/Singapore.
-Current gate: approved snapshot commit, then authorized local implementation. Both owner decisions have been received and bound to the exact package hashes.
+Current gate: local delivery complete, with independent functional, standards and security pass. Both owner decisions remain bound to the unchanged approved package hashes. Earlier pending/future-tense passages below are historical checkpoints, superseded by the final closure.
+
+## Final local closure — 4 November 2026
+
+Application checkpoint `a1645b9d42ccaed896bf94ba571713dbd9eb6a41` on
+`royden/auth-completion`. Final integrated Node24 results: unit142/142, isolated
+PG42/42, complete desktop/mobile BW10/10, default feedback58pass/12explicit opt-in
+skips; full lint/typecheck/format, production build/declarations,16 emitted page/viewport
+plus deep keyboard checks, and actual extracted packaged Web-handler smoke pass.
+Existing workflow regression suite34/34 passes; workflow machinery and shared
+contracts/schema are unchanged. All34 criteria have complementary local evidence;
+not every catalog permutation is claimed individually executed.
+
+Independent functional, coding-standards and security verdicts are each **pass** at
+that source checkpoint. Two targeted repair batches closed strict target admission,
+raw-error containment, targeted policy/provider test gaps and recoverable callback
+navigation. No blocking finding remains. Guides, feature map, interaction log,
+review/acceptance/evaluation records and permitted Dev1 handoff are updated.
+
+Details: [acceptance](../../evaluations/royden/MP4-D2-AUTH/acceptance.md),
+[review history](../../evaluations/royden/MP4-D2-AUTH/implementation-reviews.md),
+[implementation evidence](../../evaluations/royden/MP4-D2-AUTH/implementation.md),
+[Dev1-safe handoff](MP4-D2-AUTH-DEV1.md). Approved four-artifact bytes and external
+backup remain unchanged; documentation closure does not reopen the package.
+
+Owned PG55434 was checked by PID/data-directory/port and stopped;3001/5173/5174
+are clear. Private raw logs, ZIPs and stopped disposable data remain local/ignored.
+The original branch and pre-existing database service were not changed.
+
+Next owner action: Dev1 diagnosis and separately authorized data transition,
+configuration/release and controlled real Google/SMTP acceptance. Production
+readiness503 retains an unknown cause; CI/deployment/provider results are unobserved.
+No push, merge, deployment or production mutation was performed or authorized.
 
 ## Authority and current scope
 

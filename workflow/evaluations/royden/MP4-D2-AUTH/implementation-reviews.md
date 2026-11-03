@@ -85,3 +85,47 @@ observations above. Functional reviewer inspected the actual script diff/log and
 accepted that specific gap once committed. Independent closure of the guard,
 logging and remaining evidence findings awaits repair-head re-review; this is the
 first targeted repair batch, not a waiver of either initial verdict.
+
+## First repair re-review and second targeted batch
+
+At `0174272b7452a229ef5947a49417983935e655d5`, standards independently remains **pass**.
+Security changes to **pass**, closing AUTH-SEC-LOG-01 and the shared guard finding.
+Its independent database-free reproduction observes handler/fetch safe500 with zero
+console calls, expected role400, safe session503 without raw cause, and rejected
+hostile direct/pooled targets. It found no new security regression. These are
+independent observations, separate from builder assertions.
+
+Functional closes the guard, reset-boundary evidence and related actual Google
+mapper/callback-substitution/M03 gaps. Its verdict remains **changes required** for
+one new P2, **AUTH-FUNC-CALLBACK-03**: the new catch-all boundary returned JSON500
+on a navigational Google callback exception (`auth.ts:406–412`, actual provider-throw
+regression at `auth-review-boundaries.test.ts:309–317`). It exposed no sensitive
+data, but left the user on an API document without the approved restart/sign-in UI.
+AUTH-08-AC3 / G04 requires trusted navigation back to the configured `/auth/error`.
+
+The builder receives the second and final allowed targeted repair batch: known GET
+Google/originating-proxy callback failures go only to the configured application
+error page; API actions retain safe JSON. Regressions must preserve privacy, deny
+unintended sessions and prevent untrusted redirects. This is an in-scope feedback
+repair, not a requirement change. Independent closure and final integrated evidence
+are pending; initial verdict history remains intact.
+
+## Final independent closure
+
+At application checkpoint `a1645b9d42ccaed896bf94ba571713dbd9eb6a41` all three
+independent verdicts are **pass**. Functional closes AUTH-FUNC-CALLBACK-03 after
+reviewing actual direct/current-proxy/legacy-proxy failure tests and fixed configured
+recovery redirects. Standards finds no regression in the final three-file diff.
+Security independently fault-checks all three GET paths without a database/server:
+fixed trusted redirect despite hostile hosts/parameters, no cookies, no console/private
+payload; POST API actions retain safe JSON. Prior guard/logging/evidence closures remain.
+Two targeted repair batches were used; no blocking finding remains.
+
+The functional reviewer independently inspected final coordinator raw results:
+142 unit/API,42 real PG,10 complete desktop/mobile journeys,58 feedback passes plus12
+explicit skips, full lint/typecheck/format, production build/declarations,16 emitted
+route/viewport plus deep keyboard checks, and extracted packaged runtime all pass.
+The final ZIP hash was independently compared. [Acceptance](acceptance.md) records
+all34 assessed criteria and precise complementary evidence/coverage limits; it does
+not claim every frozen catalog permutation was separately run. Live Google/SMTP,
+CI and deployed readiness remain the already-authorized external deferrals.
