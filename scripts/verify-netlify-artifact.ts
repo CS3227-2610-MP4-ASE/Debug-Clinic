@@ -170,6 +170,8 @@ async function smoke(artifact: string): Promise<number> {
 
 async function main(): Promise<void> {
   const environment = verifiedEnvironment();
+  // Apply isolation even if a caller inherited the internal worker marker.
+  Object.assign(process.env, environment);
   const artifact = process.argv[2];
   if (
     !artifact ||

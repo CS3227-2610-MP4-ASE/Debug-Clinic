@@ -1,9 +1,19 @@
-# Authentication prerequisite handoff for Dev 1
+# Authentication local-delivery handoff for Dev 1
 
-Status: local prerequisite repair verified and independently reviewed; production diagnosis remains pending owner access.
+Status: backend/package checkpoint verified; expanded local acceptance and independent feature reviews are in progress. Production diagnosis remains pending owner access.
 Date: 3 November 2026, Asia/Singapore.
-Branch: royden/auth-prerequisites. Parent: 579e43cbb69758a385a4f3792b4b58afca987975.
+Branch: royden/auth-completion. Stacked parent: prerequisite checkpoint441838145f719f02810737fc435c4b59c2682901.
 This concise handoff uses application code, tests, and sanitized observations; it does not include Developer 2 SDD.
+
+## Current application checkpoint
+
+Backend commit0c1625af6b9bc89939ebb4dfb826cbf766fc6047 supports explicit initial Learner/Instructor registration, canonical trim/lowercase email handling, preserved existing roles, verified Google association, browser-bound Google role intent and transactional authentication. Direct account linking/unlinking bypasses are blocked. Verification resend and recovery return safe acceptance without promising delivery; Google-first identities establish a password through recovery. Expanded UI/browser acceptance is still in progress at this checkpoint.
+
+Writer-local checks: API116/116, isolated PostgreSQL3/3 and backend declaration build pass. Coordinator commit98e41026ce9d80804ef0161e54056011ebc93ffe adds real packaged-runtime tools. Extracted ESM Web-handler smoke passes against owned PG55434: readiness, canonical instructor registration, cookie roundtrip, allowed/denied role access, sign-out/revocation and malformed input. This does not exercise AWS bootstrap or establish live Google/SMTP behavior. Final integrated checks and independent functional/standards/security verdicts remain pending.
+
+The new exact compatible core dependency must remain at both backend and root runtime locations. An initial real package failed because the flattened function could not resolve backend-only core; rebuilding after root placement passes. Do not deploy a lockfile/manifest combination different from the verified build. Initial registration now requires `registrationRole`; release compatible frontend/backend together.
+
+Before an authorized rollout, the database owner must pause old and new authentication writers, back up, preflight **all** JavaScript-canonical emails and stop on any collision. Never merge users, choose a winning role or overwrite an identity automatically. Rehearse the normalization transition on synthetic data, preserve stable IDs/roles/relationships, revoke sessions and database-backed reset/OAuth/intent artifacts, then enable compatible canonical writers. Existing verification JWTs are stateless and may remain valid until expiry only for their intended identity. The supplied CLI is deliberately restricted to local loopback `_test` rehearsals; a production operator must separately validate/authorize the real target and protected rollback-map procedure. Do not weaken the test-target guard to run a test suite against production. Rollback must not restore old sessions/tokens or re-enable incompatible writers.
 
 ## Production observations and required owner checks
 

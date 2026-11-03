@@ -31,7 +31,14 @@ if (deployment.kind !== "local")
   throw new Error(
     "Build local deployment metadata before this synthetic smoke",
   );
-const destination = join(root, ".netlify", `auth-smoke-${randomUUID()}`);
+// Generated copies contain traced dependencies; keep the whole tree under a
+// node_modules segment so repository lint never scans packaged vendor sources.
+const destination = join(
+  root,
+  ".netlify",
+  "node_modules",
+  `auth-smoke-${randomUUID()}`,
+);
 await mkdir(destination, { recursive: true });
 const functionsConfig = normalizeFunctionsConfig({
   functionsConfig: { "*": config.functions },

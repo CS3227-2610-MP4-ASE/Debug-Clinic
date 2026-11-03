@@ -26,6 +26,83 @@ Dependency placement repair adds exact compatible core at the root, retaining th
 
 Actual package metadata: API v2, ESM, `nft` bundler, pinned CLI 27.16.1. Ignored artifact directory `.netlify/auth-smoke-c1cb56db-6cad-456e-b496-c307ba80ef0c`; raw package/manifests remain local. This executes the extracted packaged **application Web handler**, not Netlify/AWS bootstrap or a deployed platform. Library malformed-JSON diagnostic was static and contained no supplied body. The first package failure remains recorded; one dependency-placement repair resolved it. Repackage if subsequent backend changes affect the artifact.
 
+Subsequent tool isolation check: coordinator applies the sanitized environment even when an internal worker marker is inherited. Rerunning the same artifact with that marker, production mode and deliberately invalid synthetic Google/SMTP values inherited still passed all smoke checks; no external provider/mail configuration was used. This tests the runner's isolation repair, not the later application resend-status change. Packaged copies caused repository-wide ESLint to scan traced vendor files because Git ignore does not govern ESLint. All three owned package trees were moved, with resolved source/destination paths verified first, under `.netlify/node_modules/`; future package output uses that ignored subtree. No ESLint/workflow machinery changed and no artifact was deleted. The retained passing artifact is now `.netlify/node_modules/auth-smoke-c1cb56db-6cad-456e-b496-c307ba80ef0c`.
+
+Expanded writer checkpoint: full typecheck and PostgreSQL **23/23** (20 new cases plus three baseline) reported passing. Resend tests established that body-only after-hook replacement retained a prior error status; returning an explicit HTTP200 Response repaired the required uniform acceptance. This source change requires a final rebuilt package. Desktop/mobile browser and remaining adversarial matrix work continue; no complete-feature acceptance is inferred from the count.
+
+### Built frontend defect and repair
+
+Coordinator `npm run build` passed with explicit synthetic local configuration,
+including Prisma generation and declarations, but emitted a vendor/React circular
+chunk warning. A real browser loading the emitted files on an owned Vite preview
+showed a blank `/` and `Cannot set properties of undefined (setting 'AsyncMode')`.
+The same public heading was present under the development server. No credentials
+or account input were used in this diagnostic; raw output stays in the local
+session. The first preview invocation used the monorepo root and correctly failed
+because its `dist` is in the frontend workspace; correcting that working directory
+enabled the runtime reproduction.
+
+One meaningful repair removed the hand-written `manualChunks` graph from
+`apps/frontend/vite.config.ts`, allowing Rollup to arrange dependencies. Rebuilding
+the frontend then running `node --import tsx scripts/verify-built-frontend.ts`
+passed **16 public route/viewport loads** (eight routes × desktop1280×720 and
+Pixel7). This committed regression tool serves emitted files on an owned ephemeral
+preview, with only a local synthetic anonymous API; it checks heading rendering,
+JavaScript errors, external assets and horizontal clipping. It creates no database
+connection and records no account/token traces. Its preview/browser close in
+`finally`; the earlier owned port5174 preview was also stopped. Focused lint and
+format pass. The replacement bundle is about641kB/201kB gzip; the ordinary size
+warning remains visible. This is a confirmed local bundle defect and repair, not
+proof of the reported deployed failure's cause. A final complete build and review
+remain required.
+
+### Expanded browser and adversarial writer evidence
+
+Writer reports **10/10 BW** on desktop/Pixel7: both password roles with captured
+verification/resend/recovery/reset, URL-token removal, retry, restore and logout;
+both Google-controller roles with real local callback/cookies/database, recovery,
+password signin and immutable returning role; labelled keyboard/overflow checks.
+No browser interception or live Google/SMTP was used. External Google authorization
+is explicitly controller-substituted; provider exchange/profile are server doubles.
+The outbox is private filesystem state, not an HTTP debug route. Sensitive journey
+trace/screenshot capture is disabled.
+
+Writer also reports default smoke/feedback **54 passed /12 explicit opt-in skips**,
+including six actions × typed/unknown/network failures with pending-lock/retry
+checks on both projects. Combined PG **30/30** passed, then two additional proxy
+security cases **2/2** passed separately. These add cross-method/Google registration
+races, association preservation, direct/proxy callback races and post-claim rollback,
+second-tab/cookie/ciphertext/expiry checks, verification-JWT ownership and Google-first
+reset races. Final combined run after remaining privacy tests is still pending.
+
+### Committed builder checkpoint
+
+`a276f61804dda752c92b7fa4217d1544594b8d11` records the coupled UI and expanded
+tests after backend commit0c1625a and coordinator package-tool commit98e4102.
+Final writer-local results on Node24.14.0/npm11.9.0: full lint, typecheck and format
+pass; `npm test` **126/126**; explicit owned-target `npm run test:integration`
+**34/34** across four files; completion BW command above **10/10** after the final
+refresh/completion repair; default `npm run test:e2e -- --workers=2` **58 passed,
+12 explicit opt-in skips**. These results are writer-local until coordinator's
+integrated rerun below. One existing signup-race oracle is being strengthened to
+assert the precise winning role/password before review; it does not change behavior.
+
+The last BW rerun exposed a real ordering failure: initial AuthProvider restoration
+could supersede completion's authoritative read and leave navigation stuck despite
+a signed-in header. Completion now waits for initial loading to settle and guards
+its one automatic attempt; the repaired BW rerun passed10/10. Session refresh returns
+its authoritative user or null and stale request versions cannot authorize navigation.
+Feedback mappings reject inherited object keys; action errors receive keyboard focus.
+Private captured-outbox journeys disable sensitive traces/screenshots.
+
+Coordinator rebuilt the final backend ZIP after the resend status repair; its
+extracted Web-handler smoke passed again. Retained artifact:
+`.netlify/node_modules/auth-smoke-c5c3af00-8b0a-44c9-b68f-3af3cc81d412/api.zip`,
+SHA256 `2bd7567dfb6adda29245d732e70687536e9f401135357192305e1b940397057c`.
+Backend source has not changed since this package. Coordinator also ran the existing
+workflow regression suite: **34/34 passed**, with no workflow machinery changes.
+Independent reviews and final integrated full build/checks remain pending.
+
 Full integrated unit/API, expanded PostgreSQL, captured-outbox/provider-double, desktop/mobile browser, full declaration/build, final packaged runtime and independent functional/standards/security results are **pending**. The scoped backend/package checkpoint above is separate from complete acceptance. Prerequisite results remain in [prerequisites.md](prerequisites.md) and do not count as expanded-feature acceptance.
 
 No real Google authorization, SMTP receipt, CI or production readiness result has been observed for this implementation. Dev 1 owns the deferred production diagnosis, configuration/data transition and controlled live-provider acceptance. Production readiness 503 remains an observation with unknown cause, not proof of either reported authentication failure's root cause.

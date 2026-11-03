@@ -133,11 +133,27 @@ Every response carries an `x-request-id`. Error bodies contain a stable code, re
 
 Tests must not call Google, the NUS SoC LLM, Netlify, or production services.
 
+`E2E_AUTH_COMPLETION=1` selects the private captured-outbox browser runtime.
+Use an explicit owned `E2E_TEST_DATABASE_URL` and run
+`npm run test:e2e -- tests/e2e/auth-completion.spec.ts --workers=1`; leave the
+separate no-SMTP `E2E_REAL_AUTH` flag unset. Both role journeys use real local
+HTTP, cookies and PostgreSQL without browser interception. Google authorization
+is substituted by the test controller, with typed server exchange/profile
+doubles; it is not live Google or successful UI initiation evidence. The
+six-action feedback suite deliberately intercepts error/pending responses.
+
+After a build, `node --import tsx scripts/verify-built-frontend.ts` checks the
+emitted frontend on desktop/mobile using an owned ephemeral local preview with
+only a synthetic anonymous API. It rejects page errors, external assets and
+horizontal clipping across public auth routes. Hand-selected vendor chunks once
+produced a circular initialization failure despite passing dev-server journeys;
+Rollup now chooses the chunk graph. A bundle size warning is not suppressed.
+
 Local packaging checks use the pinned CLI's real packager without site linkage or
 deployment. After a local build, install/locate Netlify CLI 27.16.1, then run
 `node scripts/package-netlify-artifact.mjs <absolute-netlify-cli-package.json>`.
 The helper reads `netlify.toml`, retains included/external file settings, and emits
-a ZIP and manifest under a fresh ignored `.netlify/auth-smoke-*` directory. Extract
+a ZIP and manifest under a fresh ignored `.netlify/node_modules/auth-smoke-*` directory. Extract
 the ZIP and pass its `netlify/functions/api.mjs` to
 `node --import tsx scripts/verify-netlify-artifact.ts <absolute-extracted-api.mjs>`.
 Set explicit identical `TEST_DATABASE_URL`, `DATABASE_URL` and

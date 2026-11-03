@@ -1,22 +1,26 @@
 # DebugClinic feature and verification map
 
-Maintained against the foundation on 2026-11-03. Update this map when routes,
+Maintained against local authentication implementation on 2026-11-03. Update this map when routes,
 journeys, API boundaries, or verification prerequisites change. Read route and
 test definitions before choosing a check; this map distinguishes delivered
 foundation from intended future behavior.
 
-| Surface                                          | Current source / boundary                                                | Evidence route and limitation                                                                                                                                                       |
-| ------------------------------------------------ | ------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Public home `/`                                  | `apps/frontend/src/pages/HomePage.tsx`                                   | `tests/e2e/app-shell.spec.ts`: public copy and navigation; described practice loop is intended product behavior                                                                     |
-| `/sign-in`, `/register`                          | frontend pages and `src/auth/auth-client.ts`; Better Auth `/api/auth/*`  | Both e2e files cover entry, verification feedback, Google error/retry; browser registration/provider feedback uses intercepted responses                                            |
-| Session restore / sign-out                       | frontend `AuthProvider`, `AppShell`, `lib/api`; backend session resolver | `tests/e2e/auth-feedback.spec.ts` covers delayed/failing sign-out and route protection with mocked session endpoints; integration covers real sessions/revocation                   |
-| `/learner`, `/instructor`                        | role routes and dashboard pages                                          | Current dashboards are empty workspaces; `app-shell.spec.ts` checks unauthenticated learner redirect. Authoring, attempt, coaching, and review journeys are future feature work     |
-| `/forbidden`, unknown routes                     | frontend ForbiddenPage / NotFoundPage                                    | Inspect route and role guard; add targeted assertions when affected                                                                                                                 |
-| `/api/health`, `/api/ready`                      | `apps/backend/src/app.ts`                                                | backend `app.test.ts`; readiness uses injected DB probe in unit/API tests                                                                                                           |
-| `/api/v1/me`, `/api/v1/profile`, instructor ping | backend app, Better Auth, shared contracts                               | backend `app.test.ts` and `tests/integration/auth-database.test.ts`: role enforcement, profile validation, DB-backed sessions                                                       |
-| `/api/v1/ai/hint-preview`                        | backend app, `ai/provider.ts`, contracts                                 | backend `app.test.ts` / `providers.test.ts`: fake provider, transport-injected SoC adapter, safe failures. Real SoC acceptance and future usage accounting remain separate evidence |
-| PostgreSQL data and auth                         | `prisma/schema.prisma`, migrations, seed                                 | integration fixture/schema/session tests; seed creates synthetic user records, not usable password-login credentials                                                                |
-| Netlify function                                 | `netlify/functions/api.ts`, backend web handler/build policy             | backend web-handler/netlify-build-policy/deployment tests; test deployment package when affected; no implied deployment permission                                                  |
+| Surface                                          | Current source / boundary                                                | Evidence route and limitation                                                                                                                                                           |
+| ------------------------------------------------ | ------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Public home `/`                                  | `apps/frontend/src/pages/HomePage.tsx`                                   | `tests/e2e/app-shell.spec.ts`: public copy and navigation; described practice loop is intended product behavior                                                                         |
+| `/sign-in`, `/register`                          | frontend pages and `src/auth/actions.ts`; Better Auth `/api/auth/*`      | Explicit initial learner/instructor selection; full local captured-outbox/browser journeys in `auth-completion.spec.ts`, plus intercepted action-feedback matrices                      |
+| `/verification`, `/verification/result`          | `RecoveryPages`, auth verification/resend boundary                       | Real signed verification and non-enumerating resend in isolated PG/BW; invalid/expired and delivery-failure cases remain distinct from live SMTP proof                                  |
+| `/forgot-password`, `/reset-password`            | `RecoveryPages`, Better Auth reset routes                                | Captured recovery links, password replacement/Google-first establishment, token history removal and session revocation; no public outbox endpoint                                       |
+| `/auth/complete`, `/auth/error`                  | session refresh/completion and safe result pages                         | Google transport doubles with real local state/cookies/PG; controller substitutes external authorization hop. UI failure tests are separately intercepted                               |
+| Session restore / sign-out                       | frontend `AuthProvider`, `AppShell`, `lib/api`; backend session resolver | `tests/e2e/auth-feedback.spec.ts` covers delayed/failing sign-out and route protection with mocked session endpoints; integration covers real sessions/revocation                       |
+| `/learner`, `/instructor`                        | role routes and dashboard pages                                          | Current dashboards are empty workspaces; `app-shell.spec.ts` checks unauthenticated learner redirect. Authoring, attempt, coaching, and review journeys are future feature work         |
+| `/forbidden`, unknown routes                     | frontend ForbiddenPage / NotFoundPage                                    | Inspect route and role guard; add targeted assertions when affected                                                                                                                     |
+| `/api/health`, `/api/ready`                      | `apps/backend/src/app.ts`                                                | backend `app.test.ts`; readiness uses injected DB probe in unit/API tests                                                                                                               |
+| `/api/v1/me`, `/api/v1/profile`, instructor ping | backend app, Better Auth, shared contracts                               | backend `app.test.ts` and `tests/integration/auth-database.test.ts`: role enforcement, profile validation, DB-backed sessions                                                           |
+| `/api/v1/ai/hint-preview`                        | backend app, `ai/provider.ts`, contracts                                 | backend `app.test.ts` / `providers.test.ts`: fake provider, transport-injected SoC adapter, safe failures. Real SoC acceptance and future usage accounting remain separate evidence     |
+| PostgreSQL data and auth                         | unchanged schema; auth policy and normalization rehearsal utility        | Real PG tests in `auth-database`, `auth-completion`, `auth-failures`: roles, canonical identity, linking, races, rollback and token behavior; seed records are not password credentials |
+| Netlify function                                 | `netlify/functions/api.ts`, backend web handler/build policy             | backend web-handler/netlify-build-policy/deployment tests; test deployment package when affected; no implied deployment permission                                                      |
+| Built frontend                                   | Vite production output; `scripts/verify-built-frontend.ts`               | Real browser loads emitted assets for eight public routes × desktop/mobile with a local anonymous API stub. This catches chunk initialization failures hidden by the dev server         |
 
 ## Existing check routes
 
@@ -58,6 +62,25 @@ restoration, denied login, retry and logout with no network interception. SMTP
 is disabled; it does not establish email verification, Google or production
 correctness. The default browser smoke set still uses intercepted responses;
 real-auth cases are explicitly skipped unless opted in.
+
+For complete local verification/recovery journeys, set `E2E_AUTH_COMPLETION=1`
+and the explicit owned `E2E_TEST_DATABASE_URL`, then run
+`npm run test:e2e -- tests/e2e/auth-completion.spec.ts --workers=1`. Leave
+`E2E_REAL_AUTH` unset: its separate foundation fixture assumes SMTP is disabled.
+The completion fixture injects delivery into a private filesystem channel and
+uses typed Google transport doubles. No browser interception is used in these
+journeys. The controller starts the Google flow through the browser's real cookie
+jar and navigates the local callback instead of visiting external Google. This
+does not prove real Google authorization or UI initiation success. Six-action
+failure/pending/retry matrices in `auth-action-feedback.spec.ts` use interception
+and are reported separately. Sensitive journeys disable traces/screenshots.
+
+After `npm run build`, run `node --import tsx scripts/verify-built-frontend.ts`
+under Node24. It starts/stops an owned ephemeral local preview and browser, uses
+only a synthetic anonymous API, and rejects JavaScript errors, external assets
+and horizontal clipping. Run extracted Netlify artifact checks separately using
+the tools and explicit database procedure in `docs/DeveloperGuide.md`; a build,
+source-handler test or frontend preview is not packaged-backend evidence.
 
 ## Evidence handling
 
