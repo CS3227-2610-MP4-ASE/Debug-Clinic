@@ -88,12 +88,95 @@ try {
           `${label} ${route}: runtime or asset failure`,
         );
       }
+      // M03: inspect real keyboard flow and semantic feedback on emitted pages.
+      await page.goto(`${origin}/register`);
+      await page
+        .getByRole("radiogroup", { name: /Choose your role/ })
+        .waitFor();
+      const learner = page.getByRole("radio", { name: "Learner", exact: true });
+      const instructor = page.getByRole("radio", {
+        name: "Instructor",
+        exact: true,
+      });
+      for (let step = 0; step < 12; step++) {
+        await page.keyboard.press("Tab");
+        if (await learner.evaluate((node) => node === document.activeElement))
+          break;
+      }
+      assert.equal(
+        await learner.evaluate((node) => node === document.activeElement),
+        true,
+      );
+      await page.keyboard.press("ArrowDown");
+      assert.equal(await instructor.isChecked(), true);
+      await page.keyboard.press("ArrowUp");
+      assert.equal(await learner.isChecked(), true);
+      await page.keyboard.press("Tab");
+      assert.equal(
+        await page
+          .getByRole("button", { name: "Continue with Google", exact: true })
+          .evaluate((node) => node === document.activeElement),
+        true,
+      );
+      for (const name of [/^Name/, /^Email/, /^Password/]) {
+        await page.keyboard.press("Tab");
+        assert.equal(
+          await page
+            .getByLabel(name)
+            .evaluate((node) => node === document.activeElement),
+          true,
+        );
+      }
+      await page.keyboard.press("Tab");
+      assert.equal(
+        await page
+          .getByRole("button", { name: "Create account", exact: true })
+          .evaluate((node) => node === document.activeElement),
+        true,
+      );
+
+      await page.goto(`${origin}/register`);
+      await page.getByLabel(/^Name/).fill("Keyboard synthetic");
+      await page.getByLabel(/^Email/).fill("keyboard@example.test");
+      await page.getByLabel(/^Password/).fill("Synthetic-keyboard-only-12345");
+      await page
+        .getByRole("button", { name: "Create account", exact: true })
+        .click();
+      const alert = page.getByRole("alert");
+      await alert.waitFor();
+      assert.match(await alert.innerText(), /Choose Learner or Instructor/);
+      await page.waitForFunction(
+        () => document.activeElement?.getAttribute("role") === "alert",
+      );
+      // No role was selected, so this failure happens before any auth API call.
+      const menu = page.getByRole("button", {
+        name: "Open navigation",
+        exact: true,
+      });
+      if (await menu.isVisible()) {
+        await menu.focus();
+        await page.keyboard.press("Enter");
+        await page.getByText("Navigate", { exact: true }).waitFor();
+        await page.keyboard.press("Escape");
+        await page
+          .getByText("Navigate", { exact: true })
+          .waitFor({ state: "hidden" });
+        assert.equal(
+          await menu.evaluate((node) => node === document.activeElement),
+          true,
+        );
+      }
+      assert.deepEqual(
+        errors,
+        [],
+        `${label}: keyboard feedback or asset failure`,
+      );
     } finally {
       await context.close();
     }
   }
   process.stdout.write(
-    "Built frontend: 16 public route/viewport loads passed; no page errors or external assets.\n",
+    "Built frontend: 16 public route/viewport loads and desktop/mobile keyboard, role-choice, focused-alert and mobile navigation checks passed; no page errors or external assets.\n",
   );
 } finally {
   await browser?.close();

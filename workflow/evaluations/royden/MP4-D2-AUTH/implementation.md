@@ -103,6 +103,30 @@ Backend source has not changed since this package. Coordinator also ran the exis
 workflow regression suite: **34/34 passed**, with no workflow machinery changes.
 Independent reviews and final integrated full build/checks remain pending.
 
+### Coordinator integrated static/build and initial independent review
+
+At clean head6519252, coordinator full lint, format and typecheck passed. The first
+unit run had an unexpected worker exit (117/126, no failing assertion); the unchanged
+`npm test` rerun alone passed126/126. Both raw logs are retained privately; no source
+or expected outcome was changed to obtain green. The worker-exit cause is unknown.
+Coordinator full build with explicit synthetic local configuration passed; its
+emitted frontend passed the strengthened M03 keyboard and exact-page checks. The
+final production-mode build and post-repair database/browser/package runs follow
+the review repair checkpoint.
+
+Independent standards review passes at6519252. Functional/security reviews require
+changes: strict legacy/pooled fixture target guards, containment of actual raw auth
+exception logging, and targeted frozen test evidence. [Independent review record](implementation-reviews.md)
+preserves exact verdicts, severity, scope and limitations. The first targeted repair
+batch is underway; no local-complete verdict or production readiness is claimed.
+
+First review repair is committed as `b30c32a29c65caf85828b20b38a907b50a73e4c1`.
+Writer-local focused guard/privacy units16/16, targeted old/new PG9/9, full typecheck,
+backend declarations and scoped lint/format pass. The new handler/session exception
+boundaries require rebuilding and executing the backend package again. Coordinator's
+deeper M03 emitted-file keyboard checks pass; independent repair-head review and
+final complete unit/PG/browser/production-mode build checks follow this checkpoint.
+
 Full integrated unit/API, expanded PostgreSQL, captured-outbox/provider-double, desktop/mobile browser, full declaration/build, final packaged runtime and independent functional/standards/security results are **pending**. The scoped backend/package checkpoint above is separate from complete acceptance. Prerequisite results remain in [prerequisites.md](prerequisites.md) and do not count as expanded-feature acceptance.
 
 No real Google authorization, SMTP receipt, CI or production readiness result has been observed for this implementation. Dev 1 owns the deferred production diagnosis, configuration/data transition and controlled live-provider acceptance. Production readiness 503 remains an observation with unknown cause, not proof of either reported authentication failure's root cause.
