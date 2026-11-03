@@ -20,7 +20,7 @@ is insufficient. Material revisions reopen affected review and approval.
 | ----------------------------------------------------------- | -------------- | ------- | ----------------------------- | ------------------ |
 | `docs/mission-brief/<feature-id>-<name>.md`                 | Draft          | —       | Scope approval                | —                  |
 | `docs/features/<feature-id>/GrillingDecisions.md` (if used) | Draft          | —       | —                             | —                  |
-| `docs/features/<feature-id>/PRD.md`                         | Draft          | —       | Package approval              | —                  |
+| `docs/features/<feature-id>/PRD.md`                         | Draft          | —       | PRD and package approvals     | —                  |
 | `docs/features/<feature-id>/TDD.md`                         | Draft          | —       | Package approval              | —                  |
 | `docs/features/<feature-id>/RequirementsToTests.md`         | Draft          | —       | Package approval              | —                  |
 

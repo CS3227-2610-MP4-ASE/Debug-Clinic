@@ -169,4 +169,5 @@ automatic approval. Report significant overruns at the next checkpoint.
 Complete the [feature ledger](../templates/dev2-feature-ledger.md) and
 [handoff](../templates/handoff.md), including approval hashes, commits, actual
 checks, review verdicts, guides/logs, outstanding manual/CI/provider cases, and
-next authorized action. Keep the Developer 1 handoff concise and SDD-safe.
+next authorized action. Include the exact final integrated verification command
+and result separately from writer-local checks. Keep the Developer 1 handoff concise and SDD-safe.

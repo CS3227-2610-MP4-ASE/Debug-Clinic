@@ -63,3 +63,11 @@ npm run netlify:dev
 Netlify serves the Vite app and rewrites `/api/*` to the Express-backed function. Configure environment variables through Netlify contexts; never upload a production database URL into a deploy-preview context.
 
 See [DeveloperGuide.md](docs/DeveloperGuide.md) for architecture and security decisions and [UserGuide.md](docs/UserGuide.md) for currently working behavior.
+
+## Agent-assisted development
+
+Use the [MP4 workflow](workflow/agents/README.md) for SDD approvals, scoped agents,
+independent review and autonomous local commits. The [monitoring guide](workflow/monitoring.md)
+documents the Python 3.11+ collector and `npm run test:workflow` checks.
+See the [four-run pilot](workflow/evaluations/royden/pilot/REPORT.md) and
+[reflections](docs/Reflections.md) for measured outcomes and limitations.

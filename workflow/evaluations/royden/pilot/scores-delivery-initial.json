@@ -1,0 +1,37 @@
+{
+  "samples": {
+    "sample-17": {
+      "scores": {
+        "correctness": 2,
+        "failure_security": 2,
+        "test_validity": 2,
+        "interface_standards": 2,
+        "handoff_evidence": 2
+      },
+      "total": 10,
+      "qualifies": true,
+      "findings": []
+    },
+    "sample-42": {
+      "scores": {
+        "correctness": 2,
+        "failure_security": 2,
+        "test_validity": 2,
+        "interface_standards": 2,
+        "handoff_evidence": 1
+      },
+      "total": 9,
+      "qualifies": true,
+      "findings": [
+        "Handoff traceability gap: handoff.md records only 33 passing tests and a command including unit.test.mjs, while verification.md reports 141 passing integrated checks and two test artifacts are supplied. The handoff does not document the command for the final supplied test set or identify any commit, despite the task requesting commands, results, limitations and commits. This is an evidence gap, not an implementation defect."
+      ]
+    }
+  },
+  "limitations": [
+    "Evaluation used only delivery-task.md and the supplied implementation, test, handoff and verification artifacts in sample-17 and sample-42. No candidate files were modified and no other fixture, history, resource, evaluator or product data was inspected.",
+    "Tests were reviewed statically, not independently executed in this review. Supplied verification reports Node v24.14.0, all integrated checks passing, and the same 12 held-out checks passing for each sample; these reports are supporting evidence, not independently reproduced results.",
+    "No separate TypeScript compiler/typecheck was run by either sample or this review. Node runtime execution does not establish compiler compatibility under an unspecified tsconfig.",
+    "Assessment assumes inputs satisfy the supplied TypeScript interfaces. Transport parsing and malformed runtime shapes are outside the task scope.",
+    "No separate repository coding-standard document was supplied within the permitted artifacts. The coding-standards verdict is limited to the task's supplied types, public surface, purity and input-preservation requirements."
+  ]
+}
