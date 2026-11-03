@@ -241,10 +241,10 @@ class MonitorTests(unittest.TestCase):
         self.assertEqual(actual["overall"]["quality"]["missing_requirement_evidence"], ["task-a:req-a"])
 
     def test_verified_commands_and_spawn_activities_no_raw_content(self):
-        command = {"type": "event_msg", "payload": {"type": "item_completed", "thread_id": "thread-a", "item": {
+        command = {"timestamp": "2026-01-01T00:00:01Z", "type": "event_msg", "payload": {"type": "item_completed", "thread_id": "thread-a", "item": {
             "type": "CommandExecution", "id": "command-a", "command": "SECRET_SENTINEL", "aggregated_output": "SECRET_SENTINEL",
             "duration": {"secs": 1, "nanos": 500000000}}}}
-        spawn = {"type": "event_msg", "payload": {"type": "item_completed", "thread_id": "thread-a", "item": {"type": "SubAgentActivity", "id": "spawn-a", "agent_path": "/SECRET_SENTINEL"}}}
+        spawn = {"timestamp": "2026-01-01T00:00:01Z", "type": "event_msg", "payload": {"type": "item_completed", "thread_id": "thread-a", "item": {"type": "SubAgentActivity", "id": "spawn-a", "agent_path": "/SECRET_SENTINEL"}}}
         self.append(command, command, spawn)
         self.collect()
         actual = self.derived()
@@ -352,6 +352,103 @@ class MonitorTests(unittest.TestCase):
         self.assertIn("busy", result[2])
         self.assertEqual((self.private / "state.json").read_bytes(), before)
         self.assertFalse((self.private / ".monitor.lock").exists())
+
+    def test_item_timestamps_bound_historical_and_later_since_reports(self):
+        records = []
+        for seconds in (1, 15, 25):
+            for kind in ("CommandExecution", "SubAgentActivity"):
+                records.append({"timestamp": f"2026-01-01T00:00:{seconds:02d}Z", "type": "event_msg", "payload": {
+                    "type": "item_completed", "thread_id": "thread-a", "item": {"type": kind, "id": kind + str(seconds), "duration": {"secs": seconds, "nanos": 0}}}})
+        self.append(*records)
+        self.collect()
+        monitor.validate_state(self.state, self.manifest)
+        self.assertTrue(all(item["timestamp"] is not None for item in self.state["items"].values()))
+        self.assertEqual(self.derived(20)["agents"]["agent-a"]["observed_command_count"], 2)
+        self.manifest["agents"][0]["since"] = "2026-01-01T00:00:10Z"
+        agent = self.derived(20)["agents"]["agent-a"]
+        self.assertEqual(agent["observed_command_count"], 1)
+        self.assertEqual(agent["observed_command_duration_seconds"], 15)
+        self.assertEqual(agent["observed_subagent_activity_count"], 1)
+        self.assertEqual(self.derived(20)["tasks"]["task-a"]["observed_command_count"], 1)
+
+    def test_items_with_unknown_timestamps_make_bounded_metrics_unavailable(self):
+        record = {"type": "event_msg", "payload": {"type": "item_completed", "thread_id": "thread-a", "item": {
+            "type": "CommandExecution", "id": "unknown-time", "duration": {"secs": 1, "nanos": 0}}}}
+        self.manifest["agents"][0]["since"] = "2026-01-01T00:00:00Z"
+        self.append(record)
+        self.collect()
+        monitor.validate_state(self.state, self.manifest)
+        for scope in ("agents", "tasks"):
+            metrics = self.derived()[scope]["agent-a" if scope == "agents" else "task-a"]
+            self.assertIsNone(metrics["observed_command_count"])
+            self.assertIsNone(metrics["observed_command_duration_seconds"])
+            self.assertIn("missing timestamps", metrics["item_metrics_status"])
+        # Old private state remains readable, but cannot acquire an invented time.
+        del self.state["items"]["thread-a/unknown-time"]["timestamp"]
+        monitor.validate_state(self.state, self.manifest)
+        self.assertIn("missing timestamps", self.derived()["agents"]["agent-a"]["item_metrics_status"])
+
+    def test_replacement_agent_resolves_task_findings_preserving_agent_history(self):
+        self.manifest["agents"].append({"id": "agent-b", "thread_id": "thread-b", "task": "task-a", "session_path": str(self.base / "other.jsonl")})
+        self.state["events"] = [
+            event("test_result", 0, check="suite", retry_group="failure", attempt=3, result="fail"),
+            event("review_finding", 1, check="review", attempt=2, result="open"),
+            event("test_result", 2, agent="agent-b", check="suite", retry_group="failure", attempt=3, result="pass"),
+            event("review_finding", 3, agent="agent-b", check="review", attempt=2, result="resolved")]
+        actual = self.derived()
+        for quality in (actual["tasks"]["task-a"]["quality"], actual["overall"]["quality"]):
+            self.assertEqual(quality["failed_checks"], 0)
+            self.assertEqual(quality["open_review_findings"], 0)
+            self.assertFalse(quality["repair_limit_reached"])
+            self.assertFalse(quality["review_limit_reached"])
+        old = actual["agents"]["agent-a"]["quality"]
+        self.assertEqual(old["failed_checks"], 1)
+        self.assertEqual(old["open_review_findings"], 1)
+        self.assertTrue(old["repair_limit_reached"])
+        self.assertTrue(old["review_limit_reached"])
+
+    def test_independent_requirement_passes_and_explicit_failure_invalidation(self):
+        self.manifest["tasks"][0]["requirements"].append("req-b")
+        self.state["events"] = [event("test_result", 0, check="suite", requirement="req-a", result="pass"),
+                                event("test_result", 1, check="suite", requirement="req-b", result="pass")]
+        self.assertEqual(self.derived()["tasks"]["task-a"]["quality"]["missing_requirement_evidence"], [])
+        self.state["events"].append(event("test_result", 2, check="suite", result="fail"))
+        quality = self.derived()["tasks"]["task-a"]["quality"]
+        self.assertEqual(quality["missing_requirement_evidence"], ["req-a", "req-b"])
+        self.assertIn("failure clears all passes", quality["requirement_evidence_policy"])
+        self.state["events"].append(event("test_result", 3, check="suite", requirement="req-b", result="pass"))
+        self.assertEqual(self.derived()["tasks"]["task-a"]["quality"]["missing_requirement_evidence"], ["req-a"])
+
+    def test_later_resolution_does_not_erase_exceeded_attempt_limits(self):
+        self.state["events"] = [event("test_result", 0, check="suite", retry_group="failure", attempt=3, result="fail"),
+                                event("test_result", 1, check="suite", retry_group="failure", attempt=4, result="pass"),
+                                event("review_finding", 2, check="review", attempt=2, result="open"),
+                                event("review_finding", 3, check="review", attempt=3, result="resolved")]
+        quality = self.derived()["tasks"]["task-a"]["quality"]
+        self.assertFalse(quality["repair_limit_reached"])
+        self.assertFalse(quality["review_limit_reached"])
+        self.assertTrue(quality["repair_limit_violation"])
+        self.assertTrue(quality["review_limit_violation"])
+        self.state["events"][1]["attempt"] = 3
+        self.state["events"][3]["attempt"] = 2
+        quality = self.derived()["tasks"]["task-a"]["quality"]
+        self.assertFalse(quality["repair_limit_reached"])
+        self.assertFalse(quality["review_limit_reached"])
+        self.assertFalse(quality["repair_limit_violation"])
+        self.assertFalse(quality["review_limit_violation"])
+
+    def test_task_budget_warning_identifies_task_in_json_markdown_and_cli(self):
+        self.initialize()
+        self.append(usage())
+        self.assertEqual(self.cli("collect", "--state-dir", str(self.private))[0], 0)
+        result = self.cli("event", "--state-dir", str(self.private), "--type", "assignment", "--task", "task-a", "--agent", "agent-a", "--run", "run-a", "--token-budget", "100")
+        cli = json.loads(result[1])
+        self.assertEqual(cli["budget_warnings"], [])
+        self.assertEqual(cli["task_budget_warnings"], {"task-a": ["tokens_soft_budget_reached"]})
+        directory, manifest, state = monitor.load_state(self.private)
+        actual = monitor.report(manifest, state)
+        self.assertEqual(actual["tasks"]["task-a"]["budget_warnings"], cli["task_budget_warnings"]["task-a"])
+        self.assertIn("Task budget warnings: task-a: tokens_soft_budget_reached", monitor.markdown(actual))
 
 
 if __name__ == "__main__":

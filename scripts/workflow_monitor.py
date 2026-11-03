@@ -218,11 +218,14 @@ def validate_state(state, manifest):
         require(isinstance(key, str) and len(key.split("/")) == 2, "invalid item key")
         thread, identity = key.split("/")
         safe_id(identity)
-        require(thread in threads and isinstance(item, dict) and set(item) == {"agent", "task", "type", "duration_seconds"}, "invalid item schema")
+        require(thread in threads and isinstance(item, dict) and {"agent", "task", "type", "duration_seconds"} <= set(item)
+                and set(item) <= {"agent", "task", "type", "duration_seconds", "timestamp"}, "invalid item schema")
         require(item["agent"] in agents and agents[item["agent"]]["thread_id"] == thread and item["task"] == agents[item["agent"]]["task"], "item owner mismatch")
         require(item["type"] in {"CommandExecution", "SubAgentActivity"}, "invalid item type")
         if item["duration_seconds"] is not None:
             number(item["duration_seconds"])
+        if item.get("timestamp") is not None:
+            number(item["timestamp"])
     for agent, cursor in state["files"].items():
         require(agent in agents and isinstance(cursor, dict) and set(cursor) == {"offset", "identity", "prefix_size", "prefix", "boundary", "pending_bytes"}, "invalid cursor schema")
         for field in ("offset", "identity", "prefix_size", "pending_bytes"):
@@ -285,7 +288,8 @@ def consume(record, mapped_agent, manifest, state):
                     return
             except Invalid:
                 diagnostic(state, "timestamp_required_for_bound")
-                return
+                if kind == "token_usage_record":
+                    return
     if kind == "event_msg" and payload.get("type") == "token_count":
         diagnostic(state, "legacy_cumulative_tokens_unsupported_v1")
         return
@@ -352,7 +356,12 @@ def consume(record, mapped_agent, manifest, state):
                 duration = seconds + nanos / 1_000_000_000
             except Invalid:
                 diagnostic(state, "item_duration_unavailable")
-        state["items"].setdefault(key, {"agent": owner["id"], "task": owner["task"], "type": item["type"], "duration_seconds": duration})
+        try:
+            observed = timestamp(record.get("timestamp"))
+        except Invalid:
+            observed = None
+        state["items"].setdefault(key, {"agent": owner["id"], "task": owner["task"], "type": item["type"],
+                                       "duration_seconds": duration, "timestamp": observed})
     elif kind not in {"event_msg", "response_item", "compacted"}:
         diagnostic(state, "unknown_record_schema")
 
@@ -463,14 +472,25 @@ def intervals(events, as_of):
 
 def quality(events, requirements):
     checks, findings, retries = {}, {}, {}
+    requirement_evidence = {}
+    review_attempts = {}
     evidence_missing = False
     for event in sorted(events, key=lambda e: timestamp(e["timestamp"])):
+        check_key = (event["task"], event["run"], event.get("check"))
         if event["type"] == "test_result":
-            checks[(event["agent"], event["run"], event["check"])] = event
+            checks[check_key] = event
+            evidence = requirement_evidence.setdefault(check_key, set())
+            # A later failure invalidates all earlier requirement passes for
+            # this task/run/check. Subsequent passes rebuild evidence separately.
+            if event["result"] in {"fail", "failure"}:
+                evidence.clear()
+            elif event["result"] == "pass" and "requirement" in event:
+                evidence.add(event["requirement"])
         elif event["type"] == "review_finding":
-            findings[(event["agent"], event["run"], event["check"])] = event
+            findings[check_key] = event
+            review_attempts[check_key] = max(review_attempts.get(check_key, 0), event.get("attempt", 0))
         if "retry_group" in event:
-            key = (event["agent"], event["run"], event["retry_group"])
+            key = (event["task"], event["run"], event["retry_group"])
             group = retries.setdefault(key, {"attempt": 0, "result": None})
             if event["type"] == "retry" and group["result"] not in {"fail", "failure", "open"}:
                 evidence_missing = True
@@ -479,11 +499,14 @@ def quality(events, requirements):
                 group["result"] = None
             if event.get("result") in {"pass", "success", "resolved", "fail", "failure", "open"}:
                 group["result"] = event["result"]
-    covered = {event.get("requirement") for event in checks.values() if event["result"] == "pass"}
+    covered = set().union(*requirement_evidence.values()) if requirement_evidence else set()
     return {"failed_checks": sum(event["result"] in {"fail", "failure"} for event in checks.values()) if checks else None,
             "open_review_findings": sum(event["result"] == "open" for event in findings.values()) if findings else None,
             "repair_limit_reached": any(group["attempt"] >= 3 and group["result"] not in {"pass", "success", "resolved"} for group in retries.values()),
-            "review_limit_reached": any(event.get("attempt", 0) >= 2 and event["result"] == "open" for event in findings.values()),
+            "review_limit_reached": any(review_attempts[key] >= 2 and event["result"] == "open" for key, event in findings.items()),
+            "repair_limit_violation": any(group["attempt"] > 3 for group in retries.values()),
+            "review_limit_violation": any(attempt > 2 for attempt in review_attempts.values()),
+            "requirement_evidence_policy": "a failure clears all passes for the same task/run/check; later requirement passes accumulate independently",
             "retry_evidence_missing": evidence_missing,
             "missing_requirement_evidence": sorted(set(requirements) - covered),
             "quality_evidence_available": bool(checks or findings)}
@@ -550,11 +573,19 @@ def report(manifest, state, as_of=None):
             metrics["wall_seconds"] = wall_time(selected, as_of)
             metrics["budget_warnings"] = budget_warnings(task_budgets.get(key, {}), selected, [row for row in responses if row[dimension] == key], metrics["wall_seconds"])
             result[dimension + "s"][key] = metrics
-            items = [item for item in state["items"].values() if item[dimension] == key]
+            all_items = [item for item in state["items"].values() if item[dimension] == key]
+            unknown_item_time = any(item.get("timestamp") is None for item in all_items)
+            items = [item for item in all_items if item.get("timestamp") is not None and item["timestamp"] <= as_of
+                     and (item["agent"] not in bounds or item["timestamp"] >= bounds[item["agent"]])]
             commands = [item for item in items if item["type"] == "CommandExecution"]
             metrics["observed_command_count"] = len(commands) if commands else None
             metrics["observed_command_duration_seconds"] = sum(item["duration_seconds"] for item in commands) if commands and all(item["duration_seconds"] is not None for item in commands) else None
             metrics["observed_subagent_activity_count"] = sum(item["type"] == "SubAgentActivity" for item in items) if items else None
+            metrics["item_metrics_status"] = "observed within collection bounds" if items else "unavailable: no timestamped items within collection bounds"
+            if unknown_item_time:
+                for field in ("observed_command_count", "observed_command_duration_seconds", "observed_subagent_activity_count"):
+                    metrics[field] = None
+                metrics["item_metrics_status"] = "unavailable: observed items missing timestamps"
             if dimension == "agent":
                 metrics["model_context"] = state["models"].get(key)
                 metrics["collection_since"] = next(agent.get("since") for agent in manifest["agents"] if agent["id"] == key)
@@ -588,6 +619,8 @@ def markdown(result):
               "", "Budget warnings: " + (", ".join(result["budget_warnings"]) or "none observed"),
               "", "Diagnostics: " + (", ".join(f"{key}={value}" for key, value in sorted(result["diagnostics"].items())) or "none observed"),
               "", "Full component, agent, run, quality and collector measurements are in report.json."]
+    task_warnings = [key + ": " + ", ".join(task["budget_warnings"]) for key, task in result["tasks"].items() if task["budget_warnings"]]
+    lines += ["", "Task budget warnings: " + ("; ".join(task_warnings) or "none observed")]
     return "\n".join(lines) + "\n"
 
 
