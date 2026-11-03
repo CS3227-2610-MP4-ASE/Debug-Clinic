@@ -6,19 +6,13 @@ import { createApp } from "../../apps/backend/src/app.js";
 import { createDebugClinicAuth } from "../../apps/backend/src/auth/auth.js";
 import { readEnv } from "../../apps/backend/src/config/env.js";
 import { createPrismaClient } from "../../apps/backend/src/db/client.js";
+import { testRuntimeDatabaseTarget } from "./database-target.js";
 
 if (process.env["E2E_AUTH_COMPLETION"] !== "1")
   throw new Error("Synthetic runtime requires explicit opt-in");
 const config = readEnv();
-const target = new URL(config.databaseUrl);
-if (
-  !["postgres:", "postgresql:"].includes(target.protocol) ||
-  !["127.0.0.1", "localhost"].includes(target.hostname) ||
-  !target.pathname.endsWith("_test") ||
-  target.search ||
-  target.hash ||
-  config.appOrigin !== "http://127.0.0.1:5173"
-)
+testRuntimeDatabaseTarget(config);
+if (config.appOrigin !== "http://127.0.0.1:5173")
   throw new Error("Unsafe synthetic runtime target");
 const channel = resolve(".workflow-state/browser-auth");
 await mkdir(channel, { recursive: true });

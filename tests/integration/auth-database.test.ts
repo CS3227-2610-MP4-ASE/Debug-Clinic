@@ -7,17 +7,9 @@ import { createDebugClinicAuth } from "../../apps/backend/src/auth/auth.js";
 import type { AuthEmail } from "../../apps/backend/src/auth/email.js";
 import { readEnv } from "../../apps/backend/src/config/env.js";
 import { createApp } from "../../apps/backend/src/app.js";
+import { testDatabaseUrl } from "../support/database-target.js";
 
-const url = process.env["TEST_DATABASE_URL"];
-if (
-  !url ||
-  !["127.0.0.1", "localhost"].includes(new URL(url).hostname) ||
-  !new URL(url).pathname.endsWith("_test")
-) {
-  throw new Error(
-    "Integration tests require a loopback TEST_DATABASE_URL whose database name ends with _test",
-  );
-}
+const url = testDatabaseUrl();
 const prisma = new PrismaClient({
   adapter: new PrismaPg({ connectionString: url }),
 });

@@ -71,7 +71,7 @@ export function createDebugClinicAuth(
         }
       : undefined;
 
-  return betterAuth<DebugClinicAuthOptions>({
+  const auth = betterAuth<DebugClinicAuthOptions>({
     appName: "DebugClinic",
     baseURL: config.betterAuthUrl,
     basePath: "/api/auth",
@@ -89,6 +89,9 @@ export function createDebugClinicAuth(
         );
       },
     },
+    // The library's router otherwise falls back to console.error for non-API
+    // exceptions even with a configured logger. Propagate to our safe boundary.
+    onAPIError: { throw: true, errorURL: `${config.appOrigin}/auth/error` },
     account: {
       accountLinking: {
         enabled: true,
@@ -392,4 +395,22 @@ export function createDebugClinicAuth(
       database: { joins: true },
     },
   });
+  const handler: DebugClinicAuth["handler"] = async (request) => {
+    try {
+      return await auth.handler(request);
+    } catch {
+      logger.warn(
+        { category: "auth_handler_failure" },
+        "Authentication request could not be completed",
+      );
+      return Response.json(
+        {
+          code: "AUTH_UNAVAILABLE",
+          message: "Authentication is temporarily unavailable. Try again.",
+        },
+        { status: 500 },
+      );
+    }
+  };
+  return { ...auth, handler, fetch: handler };
 }

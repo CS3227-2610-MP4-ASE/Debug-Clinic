@@ -12,22 +12,8 @@ import type {
 } from "../../apps/backend/src/auth/email.js";
 import { readEnv } from "../../apps/backend/src/config/env.js";
 import type { DebugClinicPrisma } from "../../apps/backend/src/db/client.js";
-
-export function testDatabaseUrl(
-  raw = process.env["TEST_DATABASE_URL"],
-): string {
-  if (!raw) throw new Error("Explicit isolated database URL required");
-  const url = new URL(raw);
-  if (
-    !["postgres:", "postgresql:"].includes(url.protocol) ||
-    !["127.0.0.1", "localhost"].includes(url.hostname) ||
-    !url.pathname.endsWith("_test") ||
-    url.search ||
-    url.hash
-  )
-    throw new Error("Unsafe synthetic database target");
-  return raw;
-}
+import { testDatabaseUrl } from "./database-target.js";
+export { testDatabaseUrl } from "./database-target.js";
 export const password = "Synthetic-auth-password-12345";
 export function database(): PrismaClient {
   return new PrismaClient({
