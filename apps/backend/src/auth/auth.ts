@@ -403,6 +403,16 @@ export function createDebugClinicAuth(
         { category: "auth_handler_failure" },
         "Authentication request could not be completed",
       );
+      if (
+        request.method === "GET" &&
+        [
+          "/api/auth/callback/google",
+          "/api/auth/callback/google/oauth-proxy",
+          "/api/auth/oauth-proxy-callback",
+        ].includes(new URL(request.url).pathname)
+      ) {
+        return Response.redirect(`${config.appOrigin}/auth/error`, 302);
+      }
       return Response.json(
         {
           code: "AUTH_UNAVAILABLE",

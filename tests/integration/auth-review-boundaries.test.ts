@@ -306,15 +306,29 @@ describe("independent review boundary acceptance", () => {
         cause: new Error("PRIVATE_PROVIDER_CAUSE_CANARY"),
       }),
     );
-    const result = await googleFinish(
-      f.auth,
-      await googleStart(f.auth, "INSTRUCTOR"),
+    const flow = await googleStart(f.auth, "INSTRUCTOR");
+    const callback = new URL(flow.callback);
+    callback.searchParams.set("callbackURL", "https://evil.example");
+    const result = await f.auth.handler(
+      new Request(callback, {
+        headers: { cookie: flow.cookie, "x-forwarded-host": "evil.example" },
+      }),
     );
-    expect(result.status).toBe(500);
-    expect(await result.json()).toEqual({
-      code: "AUTH_UNAVAILABLE",
-      message: "Authentication is temporarily unavailable. Try again.",
-    });
+    expect(result.status).toBe(302);
+    expect(result.headers.get("location")).toBe(
+      `${f.config.appOrigin}/auth/error`,
+    );
+    expect(
+      result.headers
+        .getSetCookie()
+        .some((value) => value.includes("session_token")),
+    ).toBe(false);
+    expect(
+      await f.auth.api.getSession({
+        headers: new Headers({ cookie: cookies(result) }),
+      }),
+    ).toBeNull();
+    expect(await result.text()).not.toContain("PRIVATE_");
     expect(inspect(consoleCalls)).not.toContain("PRIVATE_");
     expect(logLines.join("\n")).not.toContain("PRIVATE_");
     expect(logLines.join("\n")).toContain("auth_handler_failure");

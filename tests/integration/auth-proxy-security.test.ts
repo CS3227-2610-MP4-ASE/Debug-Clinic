@@ -1,4 +1,6 @@
 import { afterAll, afterEach, describe, expect, it, vi } from "vitest";
+import { inspect } from "node:util";
+import * as authLogging from "../../apps/backend/src/lib/logger.js";
 import { createDebugClinicAuth } from "../../apps/backend/src/auth/auth.js";
 import type { DebugClinicPrisma } from "../../apps/backend/src/db/client.js";
 import {
@@ -79,6 +81,74 @@ async function flow(
   return { complete, cookie: cookies(start) };
 }
 describe("preview proxy intent security on real PostgreSQL", () => {
+  it.each(["current", "legacy"] as const)(
+    "G04 unexpected %s originating proxy completion failure returns to fixed recovery UI without access or raw diagnostics",
+    async (route) => {
+      const logs: string[] = [];
+      const consoleCalls: unknown[][] = [];
+      const { config } = fixture(prisma);
+      const logger = authLogging.createLogger(
+        { ...config, logLevel: "info" },
+        {
+          write: (line) => {
+            logs.push(line);
+          },
+        },
+      );
+      vi.spyOn(authLogging, "createLogger").mockReturnValue(logger);
+      vi.spyOn(console, "error").mockImplementation((...args: unknown[]) => {
+        consoleCalls.push(args);
+      });
+      const failing = prisma.$extends({
+        query: {
+          session: {
+            create: async () => {
+              throw new Error("PRIVATE_PROXY_COMPLETION_CANARY", {
+                cause: new Error("PRIVATE_PROXY_CAUSE_CANARY"),
+              });
+            },
+          },
+        },
+      }) as unknown as DebugClinicPrisma;
+      const auths = pair(failing);
+      const recipient = email();
+      owned.push(recipient);
+      await googleDouble(auths.stable, recipient);
+      const started = await flow(auths);
+      const completion = new URL(started.complete);
+      if (route === "legacy")
+        completion.pathname = "/api/auth/oauth-proxy-callback";
+      const result = await auths.preview.handler(
+        new Request(completion, {
+          headers: {
+            cookie: started.cookie,
+            "x-forwarded-host": "evil.example",
+          },
+        }),
+      );
+      expect(result.status).toBe(302);
+      expect(result.headers.get("location")).toBe(
+        `${previewOrigin}/auth/error`,
+      );
+      expect(
+        result.headers
+          .getSetCookie()
+          .some((value) => value.includes("session_token")),
+      ).toBe(false);
+      expect(
+        await auths.preview.api.getSession({
+          headers: new Headers({ cookie: cookies(result) }),
+        }),
+      ).toBeNull();
+      expect(
+        await prisma.session.count({ where: { user: { email: recipient } } }),
+      ).toBe(0);
+      expect(await result.text()).not.toContain("PRIVATE_");
+      expect(inspect(consoleCalls)).not.toContain("PRIVATE_");
+      expect(logs.join("\n")).not.toContain("PRIVATE_");
+      expect(logs.join("\n")).toContain("auth_handler_failure");
+    },
+  );
   it("G02 rejects copied completion, tampered ciphertext and expired intent; fresh signed flow succeeds", async () => {
     const auths = pair(prisma);
     const recipient = email();
