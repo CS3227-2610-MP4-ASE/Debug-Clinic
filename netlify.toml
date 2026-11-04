@@ -8,8 +8,9 @@
   NODE_VERSION = "24"
   NPM_VERSION = "11"
   NPM_FLAGS = "--include=dev"
-  # This numeric timeout is public configuration, not a credential.
-  SECRETS_SCAN_OMIT_KEYS = "AI_TIMEOUT_MS"
+  # Public settings only. File-based values replace the dashboard exclusion list.
+  # Keep credentials (API keys, passwords, auth secrets and database URLs) scanned.
+  SECRETS_SCAN_OMIT_KEYS = "AI_TIMEOUT_MS,AI_PROVIDER,CORS_ORIGINS,LOG_LEVEL,NODE_ENV,SOC_LLM_ENDPOINT,SMTP_HOST,SECRETS_SCAN_OMIT_KEYS"
 
 [functions]
   node_bundler = "esbuild"
