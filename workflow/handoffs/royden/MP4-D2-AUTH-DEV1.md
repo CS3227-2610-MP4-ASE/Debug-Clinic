@@ -45,6 +45,17 @@ The owned PG cluster and app/preview ports3001/5173/5174 were stopped/cleared af
 
 ## Production diagnosis remains owner work
 
+Local follow-up on 4 November: with separate user approval, created the Google
+Web client **DebugClinic Local Development** in project `debug-clinic`, using
+origin `http://127.0.0.1:5173` and callback
+`http://127.0.0.1:5173/api/auth/callback/google`. Credentials are stored only in
+the ignored local `.env`; the existing shared client is unchanged. After API
+restart, local readiness and Google initiation both returned HTTP200 with the
+approved callback. Real Google consent, callback/session acceptance and same-email
+verified association remain unobserved. SMTP is still disabled. Local services
+were restarted for the user's manual test and remain running. Full configuration
+evidence: [local Google setup](../../evaluations/royden/MP4-D2-AUTH/google-local-setup.md).
+
 Read-only observations on **3 November 2026**, approximately21:17/21:40 Singapore time: homepage and `/api/health`200, `/api/ready`503 with database not ready, anonymous `/api/v1/me`401. Anonymous get-session200 did not prove database-backed authentication. Reported registration/Google fallback causes remain unknown; local defects found here do not establish their deployed cause.
 
 After separate owner authorization:
