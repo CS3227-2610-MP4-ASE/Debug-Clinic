@@ -278,7 +278,20 @@ def consume(record, mapped_agent, manifest, state):
         diagnostic(state, "non_object_record")
         return
     kind = record.get("type")
+    if not isinstance(kind, str):
+        diagnostic(state, "unknown_record_schema")
+        return
     payload = record.get("payload") if isinstance(record.get("payload"), dict) else record
+    # Even unknown schemas can carry malformed, unhashable identifiers. Validate
+    # before any dictionary lookup so one complete bad line cannot stall a cursor.
+    for field in ("thread_id", "turn_id", "parent_thread_id"):
+        value = payload.get(field)
+        if value is not None:
+            try:
+                safe_id(value)
+            except Invalid:
+                diagnostic(state, "invalid_record_identifier")
+                return
     owners = {agent["thread_id"]: agent for agent in manifest["agents"]}
     owner = owners.get(payload.get("thread_id"))
     if kind == "token_usage_record" or (kind == "event_msg" and payload.get("type") == "item_completed"):
@@ -340,7 +353,12 @@ def consume(record, mapped_agent, manifest, state):
     elif kind == "event_msg" and payload.get("type") == "item_completed":
         item = payload.get("item", {})
         owner = owners.get(payload.get("thread_id"))
-        if not owner or not isinstance(item, dict) or item.get("type") not in {"CommandExecution", "SubAgentActivity"}:
+        if not owner or not isinstance(item, dict):
+            return
+        if not isinstance(item.get("type"), str):
+            diagnostic(state, "invalid_item_type")
+            return
+        if item.get("type") not in {"CommandExecution", "SubAgentActivity"}:
             return
         identity = item.get("id")
         if not isinstance(identity, str) or not ID.fullmatch(identity):

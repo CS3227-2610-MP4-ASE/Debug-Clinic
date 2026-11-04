@@ -128,6 +128,35 @@ class MonitorTests(unittest.TestCase):
         self.assertEqual(self.state["diagnostics"]["malformed_complete_line"], 2)
         self.assertEqual(len(self.state["responses"]), 1)
 
+    def test_malformed_record_identifiers_do_not_block_collection_or_resumption(self):
+        malformed = []
+        for value in ([], {}, True, 42, "invalid identifier"):
+            for field in ("thread_id", "turn_id", "parent_thread_id"):
+                for kind in ("token_usage_record", "session_meta", "turn_context", "future_schema"):
+                    payload = dict(usage()["payload"], id="thread-a", parent_thread_id="thread-a")
+                    payload[field] = value
+                    malformed.append({"type": kind, "payload": payload})
+        self.append(*malformed, usage())
+        self.collect()
+        self.assertEqual(self.state["diagnostics"]["invalid_record_identifier"], len(malformed))
+        self.assertEqual(self.state["files"]["agent-a"]["offset"], self.session.stat().st_size)
+        self.assertEqual(len(self.state["responses"]), 1)
+        self.state = monitor.read_json(self.private / "state.json")
+        self.append(usage("r2"))
+        self.collect()
+        self.assertEqual(self.state["diagnostics"]["invalid_record_identifier"], len(malformed))
+        self.assertEqual(self.derived()["overall"]["tokens"]["total"], 240)
+
+    def test_unhashable_record_and_item_types_are_skipped(self):
+        for value in ([], {}):
+            self.append({"type": value}, {"type": "event_msg", "payload": {
+                "type": "item_completed", "thread_id": "thread-a", "item": {"id": "bad-item", "type": value}}})
+        self.append(usage())
+        self.collect()
+        self.assertEqual(len(self.state["responses"]), 1)
+        self.assertEqual(self.state["diagnostics"]["unknown_record_schema"], 2)
+        self.assertEqual(self.state["diagnostics"]["invalid_item_type"], 2)
+
     def test_truncation_replacement_and_same_inode_rewrite(self):
         self.append(usage(), usage("long-response"))
         self.collect()
