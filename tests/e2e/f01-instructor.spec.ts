@@ -351,17 +351,51 @@ test("B23 late generation response cannot repopulate a fresh page after unmount"
   const state = await install(page);
   state.generationGate = gate();
   await page.goto("/instructor/questions/new");
+  await page.evaluate(() => {
+    (window as Window & { f01SpaDocument?: boolean }).f01SpaDocument = true;
+  });
   await page.getByRole("textbox", { name: /topic/i }).fill(f01Topic);
+  const oldRequest = page.waitForRequest(
+    "**/api/v1/instructor/questions/generate",
+  );
   await page.getByRole("button", { name: /^Generate$/i }).click();
+  const pendingRequest = await oldRequest;
   await expect.poll(() => state.generateCalls).toBe(1);
   // Ordinary shell navigation remains possible while feature navigation is locked.
   await page.getByRole("link", { name: /^DebugClinic$/i }).click();
+  if ((page.viewportSize()?.width ?? 1280) < 600)
+    await page.getByRole("button", { name: "Open navigation" }).click();
+  await page
+    .getByRole("link", { name: "Instructor workspace", exact: true })
+    .click();
+  await expect(page).toHaveURL(/\/instructor$/);
+  await page.getByRole("link", { name: "New question", exact: true }).click();
+  await expect(page).toHaveURL(/\/instructor\/questions\/new$/);
+  await expect(page.getByRole("textbox", { name: /topic/i })).toHaveValue("");
+  expect(
+    await page.evaluate(
+      () => (window as Window & { f01SpaDocument?: boolean }).f01SpaDocument,
+    ),
+  ).toBe(true);
+  // A fresh component is mounted in the same document before the old response.
   state.generationGate.release();
-  await page.goto("/instructor/questions/new");
+  const lateResponse = await pendingRequest.response();
+  if (lateResponse) await lateResponse.finished(); // Null/error permits a legitimate unmount abort.
+  await page.evaluate(
+    () =>
+      new Promise<void>((resolve) =>
+        requestAnimationFrame(() => requestAnimationFrame(() => resolve())),
+      ),
+  );
   await expect(page.getByRole("textbox", { name: /topic/i })).toHaveValue("");
   await expect(page.getByRole("textbox", { name: fields.title })).toHaveCount(
     0,
   );
+  expect(
+    await page.evaluate(
+      () => (window as Window & { f01SpaDocument?: boolean }).f01SpaDocument,
+    ),
+  ).toBe(true);
   expect(state.generateCalls).toBe(1);
   expect(state.saveCalls).toBe(0);
 });

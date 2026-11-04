@@ -192,3 +192,61 @@ and final finish timestamp will be reported to coordinator. The writer's frozen
 interpretation fails ordinary Prettier formatting; coordinator confirmed the
 exact artifact is covered by the main immutable-evidence formatting exception.
 Its original bytes and freeze commit remain unchanged.
+
+## Targeted review correction round 1 — F01-ACCEPTANCE-REPAIR-01
+
+Resumed original author on `bb09c1a` at the 2026-11-04T20:20:44Z checkpoint;
+same package/frozen interpretation, with source still unexposed. Coordinator
+provided only two confirmed public P2 failure facts: selected-content cap was
+deferred until the whole envelope completed, and a first200 response body network
+TypeError was not retried. These refine existing B08/B09 coverage; no expected
+behavior changed and no app/config/helper implementation was read or edited.
+
+Five independent transport cases were added:
+
+- B08 UTF-8 and mixed JSON Unicode-escape controls at exactly32,768 selected
+  decoded UTF-8 bytes with unrelated outer metadata must succeed.
+- The corresponding32,769-byte streams are valid JSON prefixes of sub65,536-byte
+  envelopes, deliberately left unfinished. UTF-8 code points and JSON escapes
+  cross explicit byte chunks. The test observes rejection503 and cancellation
+  before requesting EOF or triggering the shared controlled deadline, with one
+  remote attempt. It races the public operation against the stream's next-read
+  request rather than waiting for a wall-clock timeout. Final cleanup aborts the
+  controlled signal only after the early-outcome assertions.
+- A first200 response emits a partial body then fails its read with network
+  TypeError; a valid second response must recover with final counts7/9, exactly
+  two remote attempts and the same unexpired deadline signal.
+
+The authorized P3 stale-response test now leaves via the SPA brand link, returns
+through Instructor workspace and New question links, proves the new topic page
+mounted empty, and only then releases the old response. A document marker proves
+no hard reload occurred; assertions run after the old request finishes or is
+legitimately aborted on unmount. This strengthens B23 without adding a workflow.
+
+Writer command through the pinned multi wrapper:
+`npm test -- apps/backend/test/f01-acceptance-transport.test.ts --testNamePattern "selected3276|first200 body" --reporter=dot`.
+Baseline result:5expected missing-generation-method failures,128other cases
+filtered out,1.67s. No authored skip was introduced. The baseline cannot establish
+the candidate defects; coordinator owns true candidate-red runs before source
+repair, subsequent green transport and browser execution, and re-review.
+An initial no-cond-assign lint finding in the new fixture encoder was corrected
+without changing encoded values. No database/browser runtime was executed by the
+writer in this correction round.
+
+SPA verification repair 1: coordinator's first runtime attempt reached the fresh
+SPA component on both viewports but failed at the test-only call
+`pendingRequest.finished()`: installed Playwright Request has no finished method.
+Journaled installed public type signatures establish `Request.response():
+Promise<Response|null>` and `Response.finished(): Promise<Error|null>`. The wait
+now obtains the optional response and awaits its completion when present, while
+permitting a legitimate request abort. Same-document marker, release only after
+fresh mount, empty topic/no preview and no-replay assertions remain unchanged.
+The context reader rejects node_modules type paths; journaled scoped signature
+search supplied these public declarations. No application change was requested.
+Coordinator reports all365 unit/API cases and the five new transport cases/probe
+green; browser rerun for this API correction remains coordinator-owned.
+Writer-only static checks passed through the pinned wrapper: focused Prettier and
+ESLint, plus `npm exec -- tsc --noEmit --strict --skipLibCheck --target ES2022
+--module NodeNext --moduleResolution NodeNext tests/e2e/f01-instructor.spec.ts`.
+The standalone typecheck validates this Playwright API use without importing the
+unexposed application implementation or executing a browser.

@@ -95,6 +95,143 @@ function contentBytes(size: number) {
 afterEach(() => vi.restoreAllMocks());
 
 describe("F01 independent SoC fetch boundary", () => {
+  for (const encoding of ["utf8", "mixed-unicode-escapes"] as const) {
+    function encodedEnvelope(content: string) {
+      let escaped = JSON.stringify(content);
+      if (encoding === "mixed-unicode-escapes") {
+        let alternate = false;
+        escaped = escaped.replace(/界/g, () => {
+          alternate = !alternate;
+          return alternate ? "\\u754c" : "界";
+        });
+      }
+      const metadata = JSON.stringify({
+        metadata: {
+          content: 'Unrelated outer content, braces } and quoted \\"message\\"',
+          nested: [{ choices: [{ message: { content: "decoy" } }] }],
+        },
+      });
+      return `${metadata.slice(0, -1)},"choices":[{"message":{"content":${escaped},"role":"assistant"}}]`;
+    }
+    it(`B08 ${encoding} selected32768 bytes with unrelated outer metadata remains valid across chunk boundaries`, async () => {
+      const content = contentBytes(32768);
+      const raw = `${encodedEnvelope(content)}}`;
+      expect(Buffer.byteLength(raw)).toBeLessThan(65536);
+      const streamed = streamResponse(raw);
+      await expect(
+        adapter(
+          vi.fn<typeof fetch>().mockResolvedValue(streamed.response),
+        ).generateQuestion({ topic: f01Topic }),
+      ).resolves.toMatchObject({ output: JSON.parse(content) });
+    });
+    it(`B08 ${encoding} selected32769 bytes cancels unfinished sub65536 envelope before EOF or deadline`, async () => {
+      const content = contentBytes(32769);
+      const raw = encodedEnvelope(content);
+      expect(Buffer.byteLength(raw)).toBeLessThan(65536);
+      expect(JSON.parse(`${raw}}`).choices[0].message.content).toBe(content);
+      const bytes = new TextEncoder().encode(raw);
+      const specialCuts = [bytes.indexOf(0xe7) + 1, bytes.indexOf(0xe7) + 2];
+      const escapedQuote = raw.indexOf('\\"schemaVersion');
+      specialCuts.push(Buffer.byteLength(raw.slice(0, escapedQuote + 1)));
+      const unicodeEscape = raw.indexOf("\\u754c");
+      if (unicodeEscape >= 0)
+        specialCuts.push(
+          Buffer.byteLength(raw.slice(0, unicodeEscape + 1)),
+          Buffer.byteLength(raw.slice(0, unicodeEscape + 4)),
+        );
+      const cuts = [
+        ...new Set([
+          ...specialCuts,
+          ...Array.from({ length: Math.ceil(bytes.length / 997) }, (_, index) =>
+            Math.min((index + 1) * 997, bytes.length),
+          ),
+        ]),
+      ]
+        .filter((cut) => cut > 0 && cut <= bytes.length)
+        .sort((a, b) => a - b);
+      let offset = 0;
+      let cutIndex = 0;
+      let waitingForEof!: (value: { kind: "awaiting-eof" }) => void;
+      const drained = new Promise<{ kind: "awaiting-eof" }>((resolve) => {
+        waitingForEof = resolve;
+      });
+      const cancelled = vi.fn();
+      const source = new ReadableStream<Uint8Array>(
+        {
+          pull(controller) {
+            if (offset === bytes.length) {
+              waitingForEof({ kind: "awaiting-eof" });
+              // Deliberately never close: early cap enforcement cannot wait for EOF.
+              return new Promise<void>(() => {});
+            }
+            const end = cuts[cutIndex++]!;
+            controller.enqueue(bytes.slice(offset, end));
+            offset = end;
+          },
+          cancel: cancelled,
+        },
+        { highWaterMark: 0 },
+      );
+      const deadline = new AbortController();
+      vi.spyOn(AbortSignal, "timeout").mockReturnValue(deadline.signal);
+      const transport = vi
+        .fn<typeof fetch>()
+        .mockResolvedValue(new Response(source));
+      let completed:
+        | Promise<{ kind: "resolved" } | { kind: "rejected"; error: unknown }>
+        | undefined;
+      try {
+        completed = adapter(transport, { aiMaxRetries: 3 })
+          .generateQuestion({ topic: f01Topic })
+          .then(
+            () => ({ kind: "resolved" as const }),
+            (error: unknown) => ({ kind: "rejected" as const, error }),
+          );
+        const outcome = await Promise.race([completed, drained]);
+        expect(outcome.kind).toBe("rejected");
+        if (outcome.kind === "rejected")
+          expect(outcome.error).toMatchObject({ status: 503 });
+        expect(cancelled).toHaveBeenCalledOnce();
+        expect(deadline.signal.aborted).toBe(false);
+        expect(transport).toHaveBeenCalledOnce();
+      } finally {
+        deadline.abort();
+        await completed;
+      }
+    });
+  }
+  it("B09 first200 body network TypeError retries within the same deadline and recovers", async () => {
+    const prefix = new TextEncoder().encode(
+      '{"metadata":{"content":"unrelated 界"},"choices":[{"message":{"content":"{\\"schemaVersion\\":',
+    );
+    let reads = 0;
+    const firstBody = new ReadableStream<Uint8Array>(
+      {
+        pull(controller) {
+          if (reads++ === 0) controller.enqueue(prefix);
+          else
+            controller.error(new TypeError("synthetic body network failure"));
+        },
+      },
+      { highWaterMark: 0 },
+    );
+    const transport = vi
+      .fn<typeof fetch>()
+      .mockResolvedValueOnce(new Response(firstBody, { status: 200 }))
+      .mockResolvedValueOnce(
+        response(f01Output, { prompt_tokens: 7, completion_tokens: 9 }),
+      );
+    await expect(
+      adapter(transport, {
+        aiMaxRetries: 1,
+        aiTimeoutMs: 5000,
+      }).generateQuestion({ topic: f01Topic }),
+    ).resolves.toEqual({ output: f01Output, inputTokens: 7, outputTokens: 9 });
+    expect(transport).toHaveBeenCalledTimes(2);
+    const firstSignal = transport.mock.calls[0]![1]!.signal;
+    expect(transport.mock.calls[1]![1]!.signal).toBe(firstSignal);
+    expect(firstSignal!.aborted).toBe(false);
+  });
   for (const finish of [999, 1000, 1001]) {
     it(`B09 controlled finish at deadline${finish - 1000 >= 0 ? "+" : ""}${finish - 1000}ms`, async () => {
       vi.useFakeTimers();

@@ -10,6 +10,7 @@ import {
 import type { AppConfig } from "../config/env.js";
 import { DependencyUnavailableError } from "../lib/errors.js";
 import { z } from "zod";
+import { QuestionContentLimit } from "./question-response.js";
 
 export interface AiProviderContext {
   requestId: string;
@@ -81,6 +82,7 @@ export class SocLlmProvider implements AiProvider {
     const deadline = AbortSignal.timeout(this.config.aiTimeoutMs);
     try {
       for (let attempt = 0; attempt <= this.config.aiMaxRetries; attempt++) {
+        deadline.throwIfAborted();
         let response: Response;
         try {
           response = await withinDeadline(
@@ -128,6 +130,20 @@ export class SocLlmProvider implements AiProvider {
           }
           throw new DependencyUnavailableError();
         }
+        let envelopeText: string;
+        try {
+          envelopeText = await readQuestionEnvelope(response, deadline);
+        } catch (error) {
+          if (
+            error instanceof QuestionBodyInterrupted &&
+            !deadline.aborted &&
+            attempt < this.config.aiMaxRetries
+          ) {
+            await retryDelay(attempt, deadline);
+            continue;
+          }
+          throw error;
+        }
         const envelope = z
           .object({
             choices: z
@@ -135,7 +151,7 @@ export class SocLlmProvider implements AiProvider {
               .length(1),
             usage: z.unknown().optional(),
           })
-          .parse(JSON.parse(await readQuestionEnvelope(response, deadline)));
+          .parse(JSON.parse(envelopeText));
         const content = envelope.choices[0]!.message.content;
         if (Buffer.byteLength(content, "utf8") > 32_768) {
           void response.body?.cancel().catch(() => undefined);
@@ -265,6 +281,9 @@ async function withinDeadline<T>(
   promise: Promise<T>,
   signal: AbortSignal,
 ): Promise<T> {
+  // The operation may already have rejected when an abort arrives between its
+  // creation and this guard. Observe it even when the deadline wins immediately.
+  if (signal.aborted) void promise.catch(() => undefined);
   signal.throwIfAborted();
   let abort: () => void = () => undefined;
   const expired = new Promise<never>((_resolve, reject) => {
@@ -285,18 +304,39 @@ async function readQuestionEnvelope(
   if (!response.body) throw new DependencyUnavailableError();
   const reader = response.body.getReader();
   const chunks: Uint8Array[] = [];
+  const decoder = new TextDecoder("utf-8", { fatal: true });
+  const contentLimit = new QuestionContentLimit();
   let length = 0;
   try {
     while (true) {
-      const chunk = await withinDeadline(reader.read(), signal);
+      let chunk: ReadableStreamReadResult<Uint8Array>;
+      try {
+        chunk = await withinDeadline(reader.read(), signal);
+      } catch (error) {
+        if (error instanceof TypeError) throw new QuestionBodyInterrupted();
+        throw error;
+      }
       if (chunk.done) break;
       length += chunk.value.byteLength;
       if (length > 65_536) throw new DependencyUnavailableError();
+      // Decode errors are malformed data, distinct from a network read failure.
+      let decoded: string;
+      try {
+        decoded = decoder.decode(chunk.value, { stream: true });
+      } catch {
+        throw new DependencyUnavailableError();
+      }
+      contentLimit.consume(decoded);
       chunks.push(chunk.value);
     }
-    return new TextDecoder("utf-8", { fatal: true }).decode(
-      Buffer.concat(chunks),
-    );
+    try {
+      contentLimit.consume(decoder.decode());
+      return new TextDecoder("utf-8", { fatal: true }).decode(
+        Buffer.concat(chunks),
+      );
+    } catch {
+      throw new DependencyUnavailableError();
+    }
   } catch (error) {
     void reader.cancel().catch(() => undefined);
     throw error;
@@ -304,6 +344,8 @@ async function readQuestionEnvelope(
     reader.releaseLock();
   }
 }
+
+class QuestionBodyInterrupted extends Error {}
 
 async function retryDelay(attempt: number, signal: AbortSignal) {
   const { setTimeout } = await import("node:timers/promises");
