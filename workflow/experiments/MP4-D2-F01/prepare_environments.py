@@ -77,12 +77,13 @@ def main():
                     time.sleep(0.5)
                 else:
                     raise ValueError("Owned database not ready")
-                # Explicitly reset only this experiment-owned ephemeral database.
-                run(ex.command(config, ["npm", "run", "db:reset", "--", "--force"]), cwd=root, env=env)
+                # Apply baseline migrations without destroying existing data.
+                # Containers are fresh or already contain this unstarted baseline.
+                run(ex.command(config, ["npm", "run", "db:deploy"]), cwd=root, env=env)
                 run(ex.command(config, ["npm", "run", "db:seed"]), cwd=root, env=env)
                 result["database"] = True
                 result["postgres_image_id"] = image_id
-                checks.append("owned loopback ephemeral DB: baseline migrate/reset/seed")
+                checks.append("owned loopback ephemeral DB: baseline migration deploy and seed")
             result.pop("blocker", None)
         except (OSError, ValueError, subprocess.SubprocessError) as error:
             result["blocker"] = type(error).__name__ + ": selected setup step did not complete; inspect private setup log"

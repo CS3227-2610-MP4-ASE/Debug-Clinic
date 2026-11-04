@@ -65,8 +65,9 @@ Arm databases use separate owned containers and the same PostgreSQL image digest
 and committed migration/seed. Baseline seed upserts generate different random
 IDs/timestamps: compare logical roles/content/counts, not byte-identical DB dumps.
 They contain only synthetic data and no reusable real-provider credentials.
-Reset only the arm's owned database before its measured run; preserve the other
-arm. Infrastructure preparation and warm-up are outside candidate timings.
+Apply baseline migrations and the idempotent synthetic seed only to each arm's
+owned fresh database; preserve the other arm. Preparation does not reset an
+existing database. Infrastructure preparation and warm-up are outside candidate timings.
 New writer-worktree setup/install after a multi run starts is measured coordination
 overhead. Both arms use existing fixed browser ports serially; check listeners,
 leave unrelated processes intact and clean up owned servers before the next run.

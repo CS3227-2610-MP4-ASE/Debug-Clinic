@@ -89,7 +89,8 @@ F01 behaviors. Inspect `readiness.json` for exact observed commands/results.
 The 28 F01 groups stay Planned. The same two calibration fixtures and 11-sample
 live batch remain pending separate common evaluation authorization.
 
-Reset only the relevant private owned container's synthetic DB before its run;
-never reset a pre-existing service or use the other arm's DB. Retain the second
+Apply committed migrations and the idempotent baseline seed to each owned fresh
+container. The helper uses `db:deploy`, not a destructive reset. Never reset a
+pre-existing service or use the other arm's DB. Retain the second
 arm at the frozen baseline while multi runs. Cache warmth and fixed run order
 remain documented limitations; no cache-flush or significance claim is made.
