@@ -43,3 +43,21 @@ Production readiness503 has an unknown cause; local changes cannot establish eit
 reported production failure's root cause. Real Google, SMTP receipt and CI are
 unobserved. Private telemetry preserves original exceeded soft estimates and coverage
 limits; it is not billing or quota attribution.
+
+## 4 November — local Google acceptance and publication authorization
+
+The owner approved a separate loopback-only OAuth Web client and ignored local
+credential configuration. Google initiation passed after the owned API restart.
+At the owner's request, their password-only local test identity was removed with
+exact database/identity/dependency guards; other users and production were untouched.
+The owner completed Google registration. Read-only database inspection and the real
+protected Instructor workspace confirm a verified Google-only local identity with
+an active session; this is one real provider journey, separate from automated doubles.
+Returning Google login, other live permutations, SMTP receipt and production remain
+unverified. Local services remain available for the owner's tests.
+
+The owner then authorized updating Dev1's handoff, final inspection and feature-branch
+push. Merge/deployment/production operations remain separate. The handoff now records
+the live local observation and exact production OAuth origin/callback requirements.
+Application source remains at the independently reviewed/tested checkpoint; the
+publication follow-up changes evidence only.

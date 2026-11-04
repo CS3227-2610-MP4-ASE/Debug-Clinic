@@ -54,3 +54,26 @@ Production database readiness, production provider settings, SMTP delivery and
 deployment remain separate owner work. No production release, Git push or merge
 was performed. Ignored local credentials and live test services are intentionally
 left available for the user's manual test.
+
+## Live local registration observed after user test
+
+At the user's request, their single password-only local test identity was removed
+in a guarded transaction against verified `127.0.0.1:55434/auth_completion_test`.
+The guard required the exact identity, no authored exercises, attempts, reviews
+or AI usage; related credentials/sessions were removed by existing cascades.
+Post-delete counts for that user, accounts and sessions were all zero. No other
+test users or production data were removed; no Google account was deleted.
+
+The user then completed Google registration. Read-only inspection on 4 November,
+approximately13:10 Singapore time, observed a new **Instructor**, verified email,
+one Google provider account, zero password provider accounts and one active
+session. A fresh browser tab at `/instructor` rendered the protected Instructor
+workspace and Sign out action. No email address, subject ID, session token or
+provider token is retained in this evidence. The actual browser screenshot is
+private in the feature run directory as `google-local-instructor-accepted.jpg`.
+
+This supersedes the earlier pending registration/callback/session observation for
+that one local Google account. It does not establish a live returning login,
+Learner registration, same-email password linking, Google-first recovery, sign-out,
+SMTP delivery or any deployed result. The automated complementary coverage and
+its doubles remain as labelled in the acceptance report.

@@ -3,6 +3,25 @@
 Feature MP4-D2-AUTH. Owner Royden / Developer 2. Date 3 November 2026, Asia/Singapore.
 Current gate: local delivery complete, with independent functional, standards and security pass. Both owner decisions remain bound to the unchanged approved package hashes. Earlier pending/future-tense passages below are historical checkpoints, superseded by the final closure.
 
+## Publication follow-up — 4 November 2026
+
+The owner explicitly requested updating Dev1's handoff, final branch inspection
+and then push. Feature-branch publication is now authorized; merge, deployment and
+production changes remain outside that authorization. Application source is
+unchanged from the independently reviewed/tested `a1645b9` checkpoint; intervening
+commits contain evidence and handoffs only. The branch also includes its committed
+workflow/prerequisite parents.
+
+After separately approved local Google client configuration and the user's manual
+signup, read-only database inspection and the actual protected browser workspace
+confirm one verified Google-only Instructor identity with an active local session.
+The [Google follow-up](../../evaluations/royden/MP4-D2-AUTH/google-local-setup.md)
+records the scope and remaining live-provider gaps. This supersedes the older
+blanket statement that all live Google acceptance is unobserved. SMTP, returning
+Google login, other live permutations, CI and production remain unverified.
+Manual local services remain running; the earlier shutdown describes automated
+acceptance cleanup only. No approved artifact bytes or workflow machinery changed.
+
 ## Final local closure — 4 November 2026
 
 Application checkpoint `a1645b9d42ccaed896bf94ba571713dbd9eb6a41` on
