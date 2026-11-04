@@ -68,7 +68,7 @@ private debugging drafts from the instructor workspace.
 
 ## Preparing an instructor draft
 
-Choose **Generate question** and enter a beginner Python topic, then select
+Choose **New question** in the instructor workspace and enter a beginner Python topic, then select
 **Generate**. A successful response shows one unsaved preview with six editable
 fields: title, problem statement, buggy Python code, expected behavior, bug
 explanation and corrected solution. The original topic stays read-only after

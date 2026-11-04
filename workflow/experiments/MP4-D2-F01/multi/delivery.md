@@ -1,6 +1,8 @@
 # MP4-D2-F01 multi-agent local delivery
 
-Status: deterministic local candidate verified; independent reviews pending.
+Status: corrected source `4e610dd` passes deterministic checks and all three
+independent re-reviews. Initial candidate `e538db4` remains historical evidence;
+both P2 findings and the optional SPA-test suggestion are resolved in round 1.
 No final acceptance claim.
 
 ## Authority and baseline
@@ -131,11 +133,23 @@ Compatible application/test slices were combined with `git cherry-pick --no-comm
 no merge or competing-arm content was used. Only the verified combined result is
 committed on this feature branch.
 
-Exact upfront packets are archived as `.txt` with the original receipt hashes.
-Their recorded bytes include one final blank line. The staged whitespace check
+Upfront receipt packets are archived as `.txt` with original receipt hashes.
+The two builder receipt files contain one extra final newline compared with the
+sender-declared packet strings; their substantive bodies match exactly. This is
+a recorded serialization deviation, not an exact-byte dispatch claim. Both forms
+are preserved in [dispatch-integrity.json](dispatch-integrity.json). The host
+encrypts tool message arguments in telemetry, so independent plaintext comparison
+against that transport record is unavailable; no decryption was attempted.
+Reviewer receipt/sender bytes match. The staged whitespace check
 uses a `blank-at-eof` exception for those two files only; all other staged paths
 use the ordinary check. Packet bytes are preserved rather than rewritten after
 dispatch. Prettier excludes only immutable snapshots, not new application code.
+
+Initial independent [reviews](reviews.md) returned Standards PASS with one
+optional SPA-test suggestion, Spec CHANGES REQUIRED for B08/B09 transport gaps,
+and Security PASS. Offline injected-stream reproduction confirmed both P2s.
+The original isolated application/test writers own correction round 1; reviewers
+remain read-only. No requirement change or owner product clarification occurred.
 
 All commands use the pinned multi wrapper. [verification.json](verification.json)
 retains exact argument arrays, timestamps, durations, exit codes and original
@@ -210,3 +224,78 @@ records. Local packaging proves extracted artifact behavior, not AWS bootstrap
 or deployment. No push, merge, PR, deployment, production access or live provider
 call has occurred. The two opt-in no-SMTP foundation browser cases were skipped;
 the captured-outbox real-cookie auth journeys ran and passed separately.
+
+## Final corrected verification
+
+The earlier candidate table records its initial 352 unit cases. Final corrected
+source `4e610dd504b42cbb4ea648ee0ebc24282605a8ae` passes **365 unit/API cases**,
+**162 PostgreSQL cases**, **100 full browser cases with two opt-in skips**, all
+static/declaration checks, the local build and extracted ESM package smoke.
+Both P2s and the optional P3 are resolved; all three independent re-reviews pass.
+No second correction round was required. Exact final command expansion/results
+are retained in [verification.json](verification.json).
+
+Final ordered integrated verification command, from this arm's worktree:
+
+```powershell
+python ../.workflow-runs/MP4-D2-F01-comparison/multi/finish_local_verification.py
+```
+
+Observed exit **0**, ending `2026-11-04T20:38:31.603061+00:00`. The private
+orchestrator runs only the prepared multi wrapper: complete build, full real-PG
+suite, pinned local packaging/extraction, packaged smoke and full browser suite,
+stopping on first failure. It keeps DB/browser operations serialized. Separate
+postrepair unit/typecheck/lint/format checks also pass. Native hosted-build
+acceptance remains pending; its local guard rejection is not a successful hosted
+build. Bundle-size/dependency-annotation warnings are retained without suppressing
+them.
+
+Review repair evidence: original candidate's five new tests produced three
+failures/two cap controls, then all five passed after repair. The offline probe
+changed from deadline-only cancellation/one failed body attempt to early
+cancellation/second-attempt recovery. The new SPA test's mistaken Request API was
+fixed by its independent author with installed-type verification; desktop/mobile
+rerun passes. A repeated cold fixture-import timeout received a 15-second
+test-startup allowance, preserving all admission assertions and production limits.
+
+Developer/User Guides, feature map, interaction log, active feature ledger and a
+Developer 1-safe handoff are updated from observed implementation. Per-arm
+context/resource measurements retain soft-budget overruns and unavailable fields;
+they do not score or inspect the single condition.
+
+## Recorded readiness and measurements
+
+| Boundary                    | UTC                     | Singapore, 5 November 2026 |
+| --------------------------- | ----------------------- | -------------------------- |
+| Start                       | 2026-11-04 19:19:03.881 | 03:19:03.881               |
+| Initial committed candidate | 2026-11-04 20:06:41.826 | 04:06:41.826               |
+| Local reviewed readiness    | 2026-11-04 20:49:53.889 | 04:49:53.889               |
+
+Start-to-candidate **2,857.945 seconds**; start-to-reviewed **5,450.008 seconds**;
+candidate-to-reviewed **2,592.063 seconds**. The later interval includes review,
+repairs, rechecks and evidence/report preparation, not only implementation time.
+Summed logical agent spans are reported separately from wall time.
+
+[Measurements](measurements.md), [machine-readable measurements](measurements.json),
+[context summary](context-summary.json), [range aggregates](retrieval-ranges.json)
+and the [sanitized monitor report](resources/report.md) contain actual supported
+observations and limitations. At the recorded snapshot: **74,074,664 development
+response tokens**, including **72,746,624 cached input**; uncached input 986,400;
+output 341,640, including reasoning subset 144,955. The original 5,000,000-token
+soft estimate was exceeded; it remains visible. The cohort includes coordinator,
+both writers and all three reviewers, not application-provider consumption.
+Snapshot cutoffs can omit later reporting/final-answer usage; no billing or exact
+context-window claim is made.
+
+Initial packet serialization differs by one final newline for each builder;
+bodies match and both forms/hashes are preserved. Root host CWD and reader/
+telemetry gaps are disclosed. The common tool profile records core execution/
+delegation families, not an exhaustive connector inventory fingerprint. No model/
+effort drift was observed. These caveats preclude treating this one arm as a
+perfectly controlled causal context experiment. No other-arm result was examined.
+
+Verification servers exited; reserved API/browser ports were observed clear.
+Owned experiment databases, ignored local artifacts and isolated writer worktrees
+remain available for recovery. Writers retain only coordinator-owned untracked
+packet/feedback files; their application/test changes are committed. Main delivery
+evidence is committed separately from the corrected source checkpoint.

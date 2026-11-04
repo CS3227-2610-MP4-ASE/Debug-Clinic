@@ -1,0 +1,100 @@
+{
+  "as_of": "2026-11-04T20:49:54.901011+00:00",
+  "all_read_events": 339,
+  "measured_read_events": 337,
+  "prestart_read_events": 2,
+  "distinct_hash_ranges": 178,
+  "repeated_identical_ranges": 161,
+  "within_actor_repeats": 13,
+  "cross_actor_reuse": 148,
+  "emitted_utf8_bytes": 2472544,
+  "notes": {
+    "context-gap": 27,
+    "search": 8,
+    "clarification-answer": 2,
+    "handoff-gap": 2,
+    "deviation": 5,
+    "rework": 9
+  },
+  "per_actor": {
+    "acceptance": {
+      "reads": 38,
+      "emitted_utf8_bytes": 230418
+    },
+    "coordinator": {
+      "reads": 54,
+      "emitted_utf8_bytes": 344397
+    },
+    "functional-review": {
+      "reads": 65,
+      "emitted_utf8_bytes": 548994
+    },
+    "implementer": {
+      "reads": 49,
+      "emitted_utf8_bytes": 259284
+    },
+    "security-review": {
+      "reads": 61,
+      "emitted_utf8_bytes": 485060
+    },
+    "standards-review": {
+      "reads": 72,
+      "emitted_utf8_bytes": 604391
+    }
+  },
+  "changed_version_paths": {
+    "AGENTS.md": 2,
+    "packages/contracts/src/index.ts": 3,
+    "apps/backend/src/app.ts": 2,
+    "apps/backend/src/ai/provider.ts": 3,
+    "tests/support/browser-auth-server.ts": 2,
+    "prisma/schema.prisma": 2,
+    "apps/frontend/src/App.tsx": 2,
+    "tests/integration/f01-drafts.test.ts": 3,
+    "apps/backend/test/f01-acceptance-transport.test.ts": 2,
+    "tests/e2e/f01-instructor.spec.ts": 2,
+    "workflow/handoffs/royden/MP4-D2-F01.md": 3,
+    "workflow/agents/FEATURE_MAP.md": 2,
+    "docs/DeveloperGuide.md": 2,
+    "docs/UserGuide.md": 2,
+    "scripts/verify-netlify-artifact.ts": 2,
+    "apps/backend/src/server.ts": 2,
+    "apps/backend/test/playwright-config.test.ts": 2,
+    "apps/backend/test/auth-test-target.test.ts": 2,
+    "apps/backend/src/exercises/instructor-drafts.ts": 3,
+    "workflow/experiments/MP4-D2-F01/multi/acceptance-handoff.md": 2,
+    "apps/frontend/src/pages/InstructorDashboardPage.tsx": 2,
+    "apps/backend/test/f01-unit-provider.test.ts": 2
+  },
+  "coded_clarification_topics": [
+    {
+      "id": "C01",
+      "topic": "Public constructor/export spelling",
+      "resolved": "createInstructorDrafts options/full envelopes"
+    },
+    {
+      "id": "C02",
+      "topic": "Scoped raw check-log read admission",
+      "resolved": "own multi check logs only"
+    },
+    {
+      "id": "C03",
+      "topic": "Exact scoped Git diff despite reader revision limitation",
+      "resolved": "fixed own base/head diff with gap note"
+    },
+    {
+      "id": "C04",
+      "topic": "Public dashboard SPA link label",
+      "resolved": "New question"
+    }
+  ],
+  "material_owner_product_decisions": 0,
+  "limits": [
+    "Receipts measure emitted bytes/ranges, not token counts or exact context occupancy.",
+    "Root config/diff/Netlify/log gaps, host context and non-reader tool outputs remain incomplete exposure measurements.",
+    "The reader omits worktree identity; assignment/command context supplies it and hashes identify content versions.",
+    "Initial two builder receipts differ from sender intent by one final newline; bodies match. Host message encryption prevents independent plaintext transport comparison.",
+    "Repeated reads are a proxy, not automatically waste. Cross-actor specification reuse supports independence.",
+    "No compaction note was recorded; absence of a note is not proof of complete host compaction telemetry."
+  ]
+}

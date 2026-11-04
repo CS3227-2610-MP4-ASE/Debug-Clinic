@@ -1,6 +1,8 @@
 {
-  "status": "pre-review integrated deterministic verification",
-  "generated_at": "2026-11-04T20:05:12.104480+00:00",
+  "status": "corrected local source verified; manual/live/hosted final acceptance pending",
+  "generated_at": "2026-11-04T20:47:47.689958+00:00",
+  "source_commit": "4e610dd504b42cbb4ea648ee0ebc24282605a8ae",
+  "initial_candidate_commit": "e538db44081071f2c2c7c9d0a0169d207bc69d6d",
   "runtime": {
     "node": "v24.14.0",
     "npm": "11.9.0",
@@ -8,10 +10,16 @@
   },
   "environment": {
     "provider": "fake or injected fetch only",
-    "database": "owned multi loopback 127.0.0.1:55441/debugclinic_f01_test",
+    "database": "owned multi loopback127.0.0.1:55441/debugclinic_f01_test",
     "browser": "Chromium desktop and Pixel7 mobile",
-    "external_calls": "none"
+    "live_provider_calls": 0
   },
+  "final_integrated_command": [
+    "python",
+    "../.workflow-runs/MP4-D2-F01-comparison/multi/finish_local_verification.py"
+  ],
+  "final_integrated_exit_code": 0,
+  "final_integrated_end_utc": "2026-11-04T20:38:31.603061+00:00",
   "private_logs_root": "../.workflow-runs/MP4-D2-F01-comparison/multi/checks",
   "checks": [
     {
@@ -735,19 +743,379 @@
       "log": "candidate-db-validate.log",
       "expected_exit_code": 0,
       "classification": "pass"
+    },
+    {
+      "id": "review-transport-red",
+      "command": [
+        "python",
+        "workflow/experiments/MP4-D2-F01/experiment.py",
+        "exec",
+        "--arm",
+        "multi",
+        "--",
+        "node",
+        "--import",
+        "tsx",
+        "../.workflow-runs/MP4-D2-F01-comparison/multi/probe-review-transport.mjs"
+      ],
+      "started_at": "2026-11-04T20:18:03.430226+00:00",
+      "ended_at": "2026-11-04T20:18:04.441310+00:00",
+      "elapsed_seconds": 1.011084,
+      "exit_code": 1,
+      "log": "review-transport-red.log",
+      "expected_exit_code": 0,
+      "classification": "retained-failure-see-delivery-record"
+    },
+    {
+      "id": "review-independent-transport-red",
+      "command": [
+        "python",
+        "workflow/experiments/MP4-D2-F01/experiment.py",
+        "exec",
+        "--arm",
+        "multi",
+        "--",
+        "npm",
+        "test",
+        "--",
+        "apps/backend/test/f01-acceptance-transport.test.ts",
+        "--testNamePattern",
+        "selected3276|first200 body",
+        "--reporter=dot"
+      ],
+      "started_at": "2026-11-04T20:25:34.029263+00:00",
+      "ended_at": "2026-11-04T20:25:36.533766+00:00",
+      "elapsed_seconds": 2.504503,
+      "exit_code": 1,
+      "log": "review-independent-transport-red.log",
+      "expected_exit_code": 0,
+      "classification": "retained-failure-see-delivery-record"
+    },
+    {
+      "id": "review-independent-transport-green",
+      "command": [
+        "python",
+        "workflow/experiments/MP4-D2-F01/experiment.py",
+        "exec",
+        "--arm",
+        "multi",
+        "--",
+        "npm",
+        "test",
+        "--",
+        "apps/backend/test/f01-acceptance-transport.test.ts",
+        "--testNamePattern",
+        "selected3276|first200 body",
+        "--reporter=dot"
+      ],
+      "started_at": "2026-11-04T20:26:15.412212+00:00",
+      "ended_at": "2026-11-04T20:26:16.803459+00:00",
+      "elapsed_seconds": 1.391247,
+      "exit_code": 0,
+      "log": "review-independent-transport-green.log",
+      "expected_exit_code": 0,
+      "classification": "pass"
+    },
+    {
+      "id": "review-transport-green",
+      "command": [
+        "python",
+        "workflow/experiments/MP4-D2-F01/experiment.py",
+        "exec",
+        "--arm",
+        "multi",
+        "--",
+        "node",
+        "--import",
+        "tsx",
+        "../.workflow-runs/MP4-D2-F01-comparison/multi/probe-review-transport.mjs"
+      ],
+      "started_at": "2026-11-04T20:26:16.879768+00:00",
+      "ended_at": "2026-11-04T20:26:17.530163+00:00",
+      "elapsed_seconds": 0.650395,
+      "exit_code": 0,
+      "log": "review-transport-green.log",
+      "expected_exit_code": 0,
+      "classification": "pass"
+    },
+    {
+      "id": "reviewed-unit",
+      "command": [
+        "python",
+        "workflow/experiments/MP4-D2-F01/experiment.py",
+        "exec",
+        "--arm",
+        "multi",
+        "--",
+        "npm",
+        "test"
+      ],
+      "started_at": "2026-11-04T20:26:17.604029+00:00",
+      "ended_at": "2026-11-04T20:26:25.577013+00:00",
+      "elapsed_seconds": 7.972984,
+      "exit_code": 1,
+      "log": "reviewed-unit.log",
+      "expected_exit_code": 0,
+      "classification": "retained-failure-see-delivery-record"
+    },
+    {
+      "id": "reviewed-spa-stale",
+      "command": [
+        "python",
+        "workflow/experiments/MP4-D2-F01/experiment.py",
+        "exec",
+        "--arm",
+        "multi",
+        "--",
+        "npm",
+        "run",
+        "test:e2e",
+        "--",
+        "tests/e2e/f01-instructor.spec.ts",
+        "--grep",
+        "late generation response",
+        "--workers=1"
+      ],
+      "started_at": "2026-11-04T20:27:20.136063+00:00",
+      "ended_at": "2026-11-04T20:27:30.768228+00:00",
+      "elapsed_seconds": 10.632165,
+      "exit_code": 1,
+      "log": "reviewed-spa-stale.log",
+      "expected_exit_code": 0,
+      "classification": "retained-failure-see-delivery-record"
+    },
+    {
+      "id": "reviewed-unit-startup-repair",
+      "command": [
+        "python",
+        "workflow/experiments/MP4-D2-F01/experiment.py",
+        "exec",
+        "--arm",
+        "multi",
+        "--",
+        "npm",
+        "test"
+      ],
+      "started_at": "2026-11-04T20:28:46.787190+00:00",
+      "ended_at": "2026-11-04T20:28:50.660661+00:00",
+      "elapsed_seconds": 3.873471,
+      "exit_code": 0,
+      "log": "reviewed-unit-startup-repair.log",
+      "expected_exit_code": 0,
+      "classification": "pass"
+    },
+    {
+      "id": "reviewed-lint",
+      "command": [
+        "python",
+        "workflow/experiments/MP4-D2-F01/experiment.py",
+        "exec",
+        "--arm",
+        "multi",
+        "--",
+        "npm",
+        "run",
+        "lint"
+      ],
+      "started_at": "2026-11-04T20:30:04.842325+00:00",
+      "ended_at": "2026-11-04T20:30:10.907311+00:00",
+      "elapsed_seconds": 6.064986,
+      "exit_code": 0,
+      "log": "reviewed-lint.log",
+      "expected_exit_code": 0,
+      "classification": "pass"
+    },
+    {
+      "id": "reviewed-format",
+      "command": [
+        "python",
+        "workflow/experiments/MP4-D2-F01/experiment.py",
+        "exec",
+        "--arm",
+        "multi",
+        "--",
+        "npm",
+        "run",
+        "format:check"
+      ],
+      "started_at": "2026-11-04T20:30:11.079975+00:00",
+      "ended_at": "2026-11-04T20:30:17.921457+00:00",
+      "elapsed_seconds": 6.841482,
+      "exit_code": 0,
+      "log": "reviewed-format.log",
+      "expected_exit_code": 0,
+      "classification": "pass"
+    },
+    {
+      "id": "reviewed-typecheck",
+      "command": [
+        "python",
+        "workflow/experiments/MP4-D2-F01/experiment.py",
+        "exec",
+        "--arm",
+        "multi",
+        "--",
+        "npm",
+        "run",
+        "typecheck"
+      ],
+      "started_at": "2026-11-04T20:30:07.292324+00:00",
+      "ended_at": "2026-11-04T20:30:32.799447+00:00",
+      "elapsed_seconds": 25.507123,
+      "exit_code": 0,
+      "log": "reviewed-typecheck.log",
+      "expected_exit_code": 0,
+      "classification": "pass"
+    },
+    {
+      "id": "reviewed-spa-stale-repair1",
+      "command": [
+        "python",
+        "workflow/experiments/MP4-D2-F01/experiment.py",
+        "exec",
+        "--arm",
+        "multi",
+        "--",
+        "npm",
+        "run",
+        "test:e2e",
+        "--",
+        "tests/e2e/f01-instructor.spec.ts",
+        "--grep",
+        "late generation response",
+        "--workers=1"
+      ],
+      "started_at": "2026-11-04T20:31:50.999466+00:00",
+      "ended_at": "2026-11-04T20:32:00.400342+00:00",
+      "elapsed_seconds": 9.400876,
+      "exit_code": 0,
+      "log": "reviewed-spa-stale-repair1.log",
+      "expected_exit_code": 0,
+      "classification": "pass"
+    },
+    {
+      "id": "reviewed-build",
+      "command": [
+        "python",
+        "workflow/experiments/MP4-D2-F01/experiment.py",
+        "exec",
+        "--arm",
+        "multi",
+        "--",
+        "npm",
+        "run",
+        "build"
+      ],
+      "started_at": "2026-11-04T20:35:05.739000+00:00",
+      "ended_at": "2026-11-04T20:35:32.738578+00:00",
+      "elapsed_seconds": 26.999578,
+      "exit_code": 0,
+      "log": "reviewed-build.log",
+      "expected_exit_code": 0,
+      "classification": "pass"
+    },
+    {
+      "id": "reviewed-integration",
+      "command": [
+        "python",
+        "workflow/experiments/MP4-D2-F01/experiment.py",
+        "exec",
+        "--arm",
+        "multi",
+        "--",
+        "npm",
+        "run",
+        "test:integration"
+      ],
+      "started_at": "2026-11-04T20:35:32.856462+00:00",
+      "ended_at": "2026-11-04T20:36:01.179044+00:00",
+      "elapsed_seconds": 28.322582,
+      "exit_code": 0,
+      "log": "reviewed-integration.log",
+      "expected_exit_code": 0,
+      "classification": "pass"
+    },
+    {
+      "id": "reviewed-netlify-package",
+      "command": [
+        "python",
+        "workflow/experiments/MP4-D2-F01/experiment.py",
+        "exec",
+        "--arm",
+        "multi",
+        "--",
+        "node",
+        "scripts/package-netlify-artifact.mjs",
+        "C:/Users/royde/AppData/Local/npm-cache/_npx/e9adb3c3f6de0f20/node_modules/netlify-cli/package.json"
+      ],
+      "started_at": "2026-11-04T20:36:01.320204+00:00",
+      "ended_at": "2026-11-04T20:36:19.401031+00:00",
+      "elapsed_seconds": 18.080827,
+      "exit_code": 0,
+      "log": "reviewed-netlify-package.log",
+      "expected_exit_code": 0,
+      "classification": "pass"
+    },
+    {
+      "id": "reviewed-packaged-smoke",
+      "command": [
+        "python",
+        "workflow/experiments/MP4-D2-F01/experiment.py",
+        "exec",
+        "--arm",
+        "multi",
+        "--",
+        "node",
+        "--import",
+        "tsx",
+        "scripts/verify-netlify-artifact.ts",
+        "C:\\Users\\royde\\Desktop\\NUS\\Sem 5\\CS3227\\MP4\\Debug-Clinic-generate-question-multi\\.netlify\\node_modules\\auth-smoke-5f589557-3fd5-42b8-aab2-de4b32b90d72\\extracted\\netlify\\functions\\api.mjs"
+      ],
+      "started_at": "2026-11-04T20:36:22.367261+00:00",
+      "ended_at": "2026-11-04T20:36:28.941889+00:00",
+      "elapsed_seconds": 6.574628,
+      "exit_code": 0,
+      "log": "reviewed-packaged-smoke.log",
+      "expected_exit_code": 0,
+      "classification": "pass"
+    },
+    {
+      "id": "reviewed-e2e-all",
+      "command": [
+        "python",
+        "workflow/experiments/MP4-D2-F01/experiment.py",
+        "exec",
+        "--arm",
+        "multi",
+        "--",
+        "npm",
+        "run",
+        "test:e2e",
+        "--",
+        "--workers=1"
+      ],
+      "started_at": "2026-11-04T20:36:29.018557+00:00",
+      "ended_at": "2026-11-04T20:38:31.603061+00:00",
+      "elapsed_seconds": 122.584504,
+      "exit_code": 0,
+      "log": "reviewed-e2e-all.log",
+      "expected_exit_code": 0,
+      "classification": "pass"
     }
   ],
   "source_sha256": {
-    "apps/backend/src/ai/provider.ts": "bde26ac98243c2aded8f995d8d9b5c9aa4123fe3f8169fb561a32cc32e28b331",
+    "apps/backend/src/ai/provider.ts": "d022e76b5bbfe9f7ac542699f9181deac8b1c09583134d9e2c39df5384917389",
+    "apps/backend/src/ai/question-response.ts": "f9f8fbdd535f5f27ee57954d5335319b42e934fa0bf154366d02fc9f1f29c1c9",
     "apps/backend/src/app.ts": "ef1d8950f8ad4ac3345ee234d9fc61288edf28fef4d0cc1be87c1c1ce15665f0",
     "apps/backend/src/exercises/instructor-drafts.ts": "babb4413c579198dc93fbd72b40ed7bfa7662a654a33b398343ac9cbacd9fdeb",
     "apps/backend/src/server.ts": "d48a4cf3561f0eacc214cca1eaa85381ea68d73458e7b9461e09506f2f1aabfc",
+    "apps/backend/test/auth-test-target.test.ts": "9eddad78532bb72df3778e0d882152cddf8dda45592d0d2517e00b66fcab679a",
     "apps/backend/test/f01-acceptance-http.test.ts": "60e8e7bb1dabf4730b3cfb97bba4c3dad145bb92d3ba424ba1dba68d22aeb6ed",
     "apps/backend/test/f01-acceptance-migration.test.ts": "d240124842f7247271ba44103ef6f0109b51dc923fe0d882f418eb04c21d42f7",
     "apps/backend/test/f01-acceptance-retry-clock.test.ts": "9f079f11c0b065ab94d81d05b340a2d4824e74a4af2d0e697b3fa0a185b96557",
-    "apps/backend/test/f01-acceptance-transport.test.ts": "a5c09cc99f67b91364315c13bdcb573b0151bc1802d1072797ad39bd8199bc29",
+    "apps/backend/test/f01-acceptance-transport.test.ts": "e2fcda8f99d5458368665071976d05a6f25a25c4947732f546f4feba6df74876",
     "apps/backend/test/f01-unit-drafts.test.ts": "20497b4800a41f1de0e4314d935bcb993b65e931fd202e625709719f43c87b8d",
-    "apps/backend/test/f01-unit-provider.test.ts": "b4d1dd4e25f0786d4f0ffd7a3c0b9ceb54f9e2717a3075e200640b9641315dfc",
+    "apps/backend/test/f01-unit-provider.test.ts": "7a44836cfea7aac3c7104e322185baf7067d9340ef865c3cf7ddf0f8cc046496",
     "apps/backend/test/playwright-config.test.ts": "0fbc174db94876433a89058369da1b9eb80168b528bcfc30403beb92f33d7baa",
     "apps/frontend/src/App.tsx": "75511673fe9496f833b9a0ebdb044aae39d8ba3929cc35a3192b5b77ef21443a",
     "apps/frontend/src/lib/instructor-drafts.ts": "3153ac4a0c9c9af4a87f3005ab3a52f573f381a5ae59079a498fc71a5db3ea96",
@@ -763,15 +1131,15 @@
     "prisma/schema.prisma": "c947a5adf0726e13d5b5e2973f30eb99ecb860aa250e6b89c6026f452f2ff6cc",
     "scripts/verify-netlify-artifact.ts": "d95815cc28e4c8c163da2372aeeb3e57786d673071eabea167e203543db76a9b",
     "tests/e2e/f01-composed.spec.ts": "878f77e01fd6656527e68fb9d8058e376aa64f08ce6acbea0983215f7b7c2044",
-    "tests/e2e/f01-instructor.spec.ts": "f357841854ebf2ccda5e905adf7a015e5495f34277cff20414e32958e07ac25e",
+    "tests/e2e/f01-instructor.spec.ts": "53dff4b85fc42880aa1f1a8213e4e926810d8e7d2037fd82aacf7d43ef6b55f2",
     "tests/integration/f01-drafts.test.ts": "74dba4f6646035cebd0ae13782464866ba2d17ca3714c82079dfd2d2f8aa02b5",
     "tests/support/browser-auth-server.ts": "3e10f568ec0af72de8503cc79df2f621881bf31cc3d40fb8074b3a05080fab3b",
     "tests/support/f01-database.ts": "00dc4505d6d1e01cc547b577fd6a2010215f2e3e628f110583994b104704340c",
     "tests/support/f01-fixtures.ts": "87f317fa0fc300632a872f1b573682caaab51b067a9b418bb17ce0a14c7bf813"
   },
   "limits": [
-    "No live provider, human accessibility, instructor product review or hosted CI evidence.",
-    "Native hosted build intentionally rejects local metadata; extracted local artifact smoke passed.",
-    "Two opt-in browser foundation cases skipped; captured-outbox real-cookie journeys passed."
+    "Native hosted build local guard rejects absent site metadata; hosted build/platform remains pending.",
+    "Two opt-in browser foundation cases skipped; captured-outbox real-cookie journeys passed.",
+    "No live provider semantic/calibration, human accessibility/product review or hosted CI evidence."
   ]
 }

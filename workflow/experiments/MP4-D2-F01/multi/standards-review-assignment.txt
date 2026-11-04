@@ -1,0 +1,26 @@
+# F01-STANDARDS-REVIEW-01
+Fresh independent Developer 2 coding-standards reviewer; generic collaboration fork_turns=none, inherited defaults. Apply AGENTS.md, docs/CodingStandards.md and .codex/agents/independent_reviewer.toml. Report actual observed identity/model/effort; coordinator maps telemetry. You authored no reviewed code/tests.
+Worktree C:/Users/royde/Desktop/NUS/Sem 5/CS3227/MP4/Debug-Clinic-generate-question-multi; branch royden/f01-multi.
+Fixed base98f0f8de62edbd3a54f0f50f011c7dd6b571ef71; candidate e538db44081071f2c2c7c9d0a0169d207bc69d6d.
+Diff: git diff 98f0f8de62edbd3a54f0f50f011c7dd6b571ef71...e538db44081071f2c2c7c9d0a0169d207bc69d6d
+Commits: b757182 test(f01): freeze independent acceptance interpretation; e538db4 feat(f01): integrate verified instructor draft generation candidate.
+Owner authorized read-only reviews in chat01a1a7fd-dc02-7283-9ec9-9efb83f70873. Approved agent-eval-reviewed-v1 snapshot597ecf887319e942ad46171bae7349404fbd1d36; PackageApproval.md holds7hashes/supersedes Draft labels and approved shared seams. Read complete PRD/TDD/RTT/PackageApproval for assigned design and all changed source/tests, applicable configs and exact verification.json. Independent functional/security peers cover their axes.
+
+Standards sources: docs/CodingStandards.md, AGENTS.md, actual ESLint/TypeScript/Prettier/workspace configs, approved TDD module/seam/minimality constraints. Review SRP/DRY, concrete deep module, typed public boundaries/ESM/declarations, auth/server/data separation, transactions/projections, safe failures, accessible MUI and meaningful public-boundary tests. Source scope includes backend provider/app/draft module/runtimes, contracts/schema/migration, frontend F01 pages/helper/routes, new f01 tests, browser fixture/packaging verifier and related guides/ledger. The narrow Prettier exemptions preserve immutable approved/evidence bytes; upfront packets preserve original bytes. Review their scope, not formatter-enforced mechanics.
+
+Smell baseline (judgment calls only; repo overrides; skip tooling-enforced issues):
+- Mysterious Name: a function, variable, or type whose name does not reveal what it does or holds. Rename it; if no honest name comes, the design is murky.
+- Duplicated Code: the same logic shape appears in more than one hunk or file. Extract the shared shape and call it from both.
+- Feature Envy: a method reaches into another object's data more than its own. Move it onto the data it envies.
+- Data Clumps: the same few fields/params keep traveling together. Bundle into one type and pass that.
+- Primitive Obsession: a primitive/string stands in for a domain concept deserving its own type. Give it a small type.
+- Repeated Switches: the same switch/if cascade on a type recurs. Replace with polymorphism or one shared map.
+- Shotgun Surgery: one logical change forces scattered edits. Gather what changes together.
+- Divergent Change: a module changes for unrelated reasons. Split by reason.
+- Speculative Generality: abstractions/parameters/hooks for unspecified needs. Delete/inline until needed.
+- Message Chains: long a.b().c().d() navigation callers should not depend on. Hide the walk behind the first object.
+- Middle Man: a class/function mostly delegates onward. Cut it and call the real target.
+- Refused Bequest: subclass/implementer ignores most inheritance. Use composition.
+
+Return under400words: separate standards verdict pass/changes required/unable to verify; functional axis outside your assignment. Report per relevant file/hunk documented violations citing standard file/rule, or labeled possible smells with quoted hunk. Name severity/exactline/impact/correction, hard blockers versus optional judgments; no aesthetic rewrite without concrete impact. Preserve each axis separately. No source edits/repairs/staging/commits, DB/browser/services/live calls, real data/credentials or publication. Request any reproduction through coordinator.
+Only this arm/common frozen inputs; exclude other-arm branches/results/conversation and unrelated SDD, resource reports, git log --all. Project reads use experiment.py read --arm multi --actor standards-review --reason review --path RELATIVE; journal searches/gaps. Direct scoped root-config/Netlify reads allowed only with gap note; instrumentation unchanged. Soft900seconds/1,000,000 observedtokens; report finish/waits/context issues, no quality waiver. Raw monitor ../.workflow-runs/MP4-D2-F01-comparison/multi/monitor. Return report to coordinator; at most2 later targeted rounds, no reviewer-written repairs.
