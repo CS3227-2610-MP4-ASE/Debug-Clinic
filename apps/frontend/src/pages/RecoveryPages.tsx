@@ -211,10 +211,13 @@ export function AuthCompletionPage() {
     setBusy(true);
     setError(null);
     try {
-      const user = await refresh();
-      if (!user) throw new Error("No session");
+      const session = await refresh();
+      if (!session.ok || !session.user) throw new Error("No session");
       await navigate(
-        workspace(user, new URLSearchParams(location.search).get("returnTo")),
+        workspace(
+          session.user,
+          new URLSearchParams(location.search).get("returnTo"),
+        ),
         { replace: true },
       );
     } catch {

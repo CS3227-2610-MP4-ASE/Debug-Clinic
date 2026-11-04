@@ -13,11 +13,14 @@ import {
 import { getCurrentUser } from "../lib/api.js";
 import { authClient } from "./auth-client.js";
 
+type SessionRefreshResult =
+  { ok: true; user: CurrentUser | null } | { ok: false };
+
 interface AuthState {
   user: CurrentUser | null;
   isLoading: boolean;
   error: string | null;
-  refresh: () => Promise<CurrentUser | null>;
+  refresh: () => Promise<SessionRefreshResult>;
   signOut: () => Promise<void>;
 }
 
@@ -29,22 +32,22 @@ export function AuthProvider({ children }: PropsWithChildren) {
   const [error, setError] = useState<string | null>(null);
   const requestVersion = useRef(0);
 
-  const refresh = useCallback(async () => {
+  const refresh = useCallback(async (): Promise<SessionRefreshResult> => {
     const version = ++requestVersion.current;
     setIsLoading(true);
     setError(null);
     try {
       const currentUser = await getCurrentUser();
-      if (version !== requestVersion.current) return null;
+      if (version !== requestVersion.current) return { ok: false };
       setUser(currentUser);
-      return currentUser;
+      return { ok: true, user: currentUser };
     } catch {
-      if (version !== requestVersion.current) return null;
+      if (version !== requestVersion.current) return { ok: false };
       setUser(null);
       setError(
         "We could not restore your session. Check the API connection and try again.",
       );
-      return null;
+      return { ok: false };
     } finally {
       if (version === requestVersion.current) setIsLoading(false);
     }

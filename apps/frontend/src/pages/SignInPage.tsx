@@ -38,9 +38,9 @@ export function SignInPage() {
         password: String(values.get("password")),
         rememberMe: true,
       });
-      const user = await refresh();
-      if (!user) throw new Error("Session unavailable");
-      await navigate(workspace(user, destination), { replace: true });
+      const session = await refresh();
+      if (!session.ok || !session.user) throw new Error("Session unavailable");
+      await navigate(workspace(session.user, destination), { replace: true });
     } catch (failure) {
       setError(
         failureMessage(

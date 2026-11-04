@@ -28,6 +28,7 @@ export function RegisterPage() {
   const [role, setRole] = useState<Role | "">("");
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState<"email" | "google" | null>(null);
+  const [registrationAccepted, setRegistrationAccepted] = useState(false);
   const { refresh } = useAuth();
   const navigate = useNavigate();
   function selectedRole(): Role {
@@ -42,23 +43,32 @@ export function RegisterPage() {
     setBusy("email");
     setError(null);
     try {
-      const registrationRole = selectedRole();
-      await authRequest("/sign-up/email", {
-        name: String(values.get("name")),
-        email: String(values.get("email")).trim().toLowerCase(),
-        password: String(values.get("password")),
-        registrationRole,
-      });
+      if (!registrationAccepted) {
+        const registrationRole = selectedRole();
+        await authRequest("/sign-up/email", {
+          name: String(values.get("name")),
+          email: String(values.get("email")).trim().toLowerCase(),
+          password: String(values.get("password")),
+          registrationRole,
+        });
+        setRegistrationAccepted(true);
+      }
       // Only /me authorizes navigation; duplicate responses may contain synthetic users.
-      const user = await refresh();
-      if (!user) {
+      const session = await refresh();
+      if (!session.ok) {
+        setError(
+          "Registration request accepted, but we could not check your session. Check your connection and retry the session check.",
+        );
+        return;
+      }
+      if (!session.user) {
         await navigate("/sign-in", {
           replace: true,
           state: { verificationPending: true },
         });
         return;
       }
-      await navigate(workspace(user), { replace: true });
+      await navigate(workspace(session.user), { replace: true });
     } catch (failure) {
       setError(
         !role
@@ -109,10 +119,14 @@ export function RegisterPage() {
       <AuthError message={error} />
       {busy && (
         <Typography role="status">
-          {busy === "google" ? "Connecting to Google…" : "Creating account…"}
+          {busy === "google"
+            ? "Connecting to Google…"
+            : registrationAccepted
+              ? "Checking your session…"
+              : "Creating account…"}
         </Typography>
       )}
-      <FormControl required disabled={busy !== null}>
+      <FormControl required disabled={busy !== null || registrationAccepted}>
         <FormLabel id="registration-role">Choose your role</FormLabel>
         <RadioGroup
           aria-labelledby="registration-role"
@@ -135,7 +149,7 @@ export function RegisterPage() {
         variant="outlined"
         startIcon={<Google />}
         onClick={() => void google()}
-        disabled={busy !== null}
+        disabled={busy !== null || registrationAccepted}
       >
         Continue with Google
       </Button>
@@ -148,6 +162,7 @@ export function RegisterPage() {
         <TextField
           label="Name"
           name="name"
+          disabled={registrationAccepted}
           autoComplete="name"
           required
           inputProps={{ maxLength: 100 }}
@@ -155,6 +170,7 @@ export function RegisterPage() {
         <TextField
           label="Email"
           name="email"
+          disabled={registrationAccepted}
           type="email"
           autoComplete="email"
           required
@@ -162,6 +178,7 @@ export function RegisterPage() {
         <TextField
           label="Password"
           name="password"
+          disabled={registrationAccepted}
           type="password"
           autoComplete="new-password"
           required
@@ -169,7 +186,13 @@ export function RegisterPage() {
           inputProps={{ minLength: 12, maxLength: 128 }}
         />
         <Button type="submit" variant="contained" disabled={busy !== null}>
-          {busy === "email" ? "Creating account…" : "Create account"}
+          {registrationAccepted
+            ? busy === "email"
+              ? "Checking your session…"
+              : "Retry session check"
+            : busy === "email"
+              ? "Creating account…"
+              : "Create account"}
         </Button>
       </Stack>
       <Typography color="text.secondary">

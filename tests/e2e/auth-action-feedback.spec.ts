@@ -162,6 +162,85 @@ for (const action of cases)
       expect(calls).toBe(2);
     });
   }
+for (const failure of ["network", "server"] as const)
+  for (const recoveredSession of ["anonymous", "authenticated"] as const)
+    test(`registration session lookup ${failure} retries without repeating signup (${recoveredSession})`, async ({
+      page,
+    }) => {
+      let registrations = 0;
+      let failing = true;
+      await page.route("**/api/v1/me", async (route) => {
+        if (registrations === 0) {
+          await route.fulfill({ status: 401, json: {} });
+        } else if (failing) {
+          if (failure === "network") await route.abort("failed");
+          else
+            await route.fulfill({
+              status: 503,
+              json: { message: "PRIVATE_SESSION_CANARY" },
+            });
+        } else if (recoveredSession === "anonymous") {
+          await route.fulfill({ status: 401, json: {} });
+        } else {
+          await route.fulfill({
+            json: {
+              user: {
+                id: "synthetic",
+                name: "Synthetic",
+                email: "synthetic@example.test",
+                role: "INSTRUCTOR",
+              },
+            },
+          });
+        }
+      });
+      await page.route("**/api/auth/sign-up/email", (route) => {
+        registrations += 1;
+        return route.fulfill({
+          json: { token: null, user: { id: "untrusted-signup-user" } },
+        });
+      });
+      const restored = page.waitForResponse("**/api/v1/me");
+      await page.goto("/register");
+      await restored;
+      await page
+        .getByRole("radio", { name: "Instructor", exact: true })
+        .check();
+      await page.getByRole("textbox", { name: /^Name/ }).fill("Synthetic");
+      await page
+        .getByRole("textbox", { name: /^Email/ })
+        .fill("synthetic@example.test");
+      await page.getByLabel(/^Password/).fill("Synthetic-password-12345");
+      await page
+        .getByRole("button", { name: "Create account", exact: true })
+        .click();
+      await expect(page.getByRole("alert")).toContainText(
+        "could not check your session",
+      );
+      await expect(page.getByRole("alert")).not.toContainText("PRIVATE_");
+      await expect(page).toHaveURL(/\/register$/);
+      const retry = page.getByRole("button", {
+        name: "Retry session check",
+        exact: true,
+      });
+      await retry.click();
+      await expect(retry).toBeEnabled();
+      await expect(page.getByRole("alert")).toContainText(
+        "could not check your session",
+      );
+      expect(registrations).toBe(1);
+      failing = false;
+      await retry.click();
+      await expect(page).toHaveURL(
+        recoveredSession === "anonymous" ? /\/sign-in$/ : /\/instructor$/,
+      );
+      if (recoveredSession === "anonymous")
+        await expect(page.getByRole("alert")).toContainText(
+          "If verification is needed",
+        );
+      expect(registrations).toBe(1);
+    });
+
 test("BF completion refresh failure and invalid verification/reset result remain recoverable", async ({
   page,
 }) => {
