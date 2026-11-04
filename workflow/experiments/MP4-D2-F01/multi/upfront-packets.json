@@ -1,0 +1,14 @@
+[
+  {
+    "path": "workflow/experiments/MP4-D2-F01/multi/acceptance-assignment.txt",
+    "bytes": 5178,
+    "sha256": "72e0a0cf1bbceabba57d5a63bf31b8f12b4d6cbf9425c425ae4073983cfff26f",
+    "original_receipt_path": "workflow/experiments/MP4-D2-F01/multi/acceptance-assignment.md"
+  },
+  {
+    "path": "workflow/experiments/MP4-D2-F01/multi/implementation-assignment.txt",
+    "bytes": 5904,
+    "sha256": "9266f5367ce26dc31230a0222a3a655881ede78c64094baba87fb225706420c8",
+    "original_receipt_path": "workflow/experiments/MP4-D2-F01/multi/implementation-assignment.md"
+  }
+]

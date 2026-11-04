@@ -134,16 +134,20 @@ model Exercise {
 }
 
 model ExerciseVersion {
-  id               String      @id @default(cuid())
-  exerciseId       String
-  version          Int
-  language         String      @default("python")
-  buggyCode        String
-  expectedBehavior String
-  exercise         Exercise    @relation(fields: [exerciseId], references: [id], onDelete: Cascade)
-  hints            HintStage[]
-  attempts         Attempt[]
-  createdAt        DateTime    @default(now())
+  id                   String      @id @default(cuid())
+  exerciseId           String
+  version              Int
+  language             String      @default("python")
+  buggyCode            String
+  expectedBehavior     String
+  topic                String?
+  bugExplanation       String?
+  correctedSolution    String?
+  generationProvenance Json?
+  exercise             Exercise    @relation(fields: [exerciseId], references: [id], onDelete: Cascade)
+  hints                HintStage[]
+  attempts             Attempt[]
+  createdAt            DateTime    @default(now())
 
   @@unique([exerciseId, version])
   @@index([exerciseId])

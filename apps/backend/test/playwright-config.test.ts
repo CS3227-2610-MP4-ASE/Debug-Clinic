@@ -42,9 +42,6 @@ describe("Playwright authentication origin", () => {
   });
 
   it("awaits the backend at its configured port before the frontend proxy", () => {
-    expect(backend?.command).toBe(
-      "node --conditions=development --import tsx apps/backend/src/server.ts",
-    );
     expect(backend?.url).toBe(
       `http://127.0.0.1:${backend?.env?.["PORT"]}/api/health`,
     );
@@ -71,6 +68,27 @@ describe("Playwright isolated database override", () => {
     vi.unstubAllEnvs();
     vi.resetModules();
   });
+
+  it.each([
+    [
+      "",
+      "node --conditions=development --import tsx apps/backend/src/server.ts",
+    ],
+    [
+      "1",
+      "node --conditions=development --import tsx tests/support/browser-auth-server.ts",
+    ],
+  ])(
+    "selects the explicit synthetic-runtime mode %j",
+    async (mode, command) => {
+      vi.stubEnv("E2E_AUTH_COMPLETION", mode);
+      vi.resetModules();
+      const { default: config } = await import("../../../playwright.config.js");
+      if (!Array.isArray(config.webServer))
+        throw new Error("Expected application servers");
+      expect(config.webServer[0]?.command).toBe(command);
+    },
+  );
 
   it.each([
     "postgresql://debugclinic:synthetic@127.0.0.1:55433/browser_test",

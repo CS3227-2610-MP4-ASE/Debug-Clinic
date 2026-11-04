@@ -3,18 +3,26 @@ import { createApp } from "./app.js";
 import { createDebugClinicAuth } from "./auth/auth.js";
 import { readEnv } from "./config/env.js";
 import { createPrismaClient } from "./db/client.js";
+import { createInstructorDrafts } from "./exercises/instructor-drafts.js";
 import { createLogger } from "./lib/logger.js";
 
 const config = readEnv();
 const logger = createLogger(config);
 const prisma = createPrismaClient(config);
 const auth = createDebugClinicAuth(config, prisma);
+const aiProvider = createAiProvider(config);
 
 const app = createApp({
   config,
   database: prisma,
   auth,
-  aiProvider: createAiProvider(config),
+  aiProvider,
+  instructorDrafts: createInstructorDrafts({
+    prisma,
+    provider: aiProvider,
+    config,
+    logger,
+  }),
   profileUpdater: async (userId, name) => {
     return prisma.user.update({
       where: { id: userId },

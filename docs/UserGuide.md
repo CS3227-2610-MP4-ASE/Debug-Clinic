@@ -1,6 +1,6 @@
 # DebugClinic User Guide
 
-This guide describes the implemented authentication flows and foundation workspaces.
+This guide describes authentication and instructor draft preparation.
 Availability on a deployed site depends on its database, Google and email configuration.
 
 ## Public pages
@@ -63,7 +63,31 @@ show safe guidance and leave the controls available to retry.
   returns to sign-in. If it fails, the interface reports the error and keeps the
   sign-out action available for retry; do not assume you are signed out.
 
-Both workspaces are currently honest empty states. Exercise creation, publication, attempts, AI coaching, submission, and review are not yet implemented in the user interface.
+The learner workspace remains a foundation screen. Instructors can prepare
+private debugging drafts from the instructor workspace.
+
+## Preparing an instructor draft
+
+Choose **Generate question** and enter a beginner Python topic, then select
+**Generate**. A successful response shows one unsaved preview with six editable
+fields: title, problem statement, buggy Python code, expected behavior, bug
+explanation and corrected solution. The original topic stays read-only after
+generation. **New question** clears the topic and preview to start again.
+
+Review and edit the fields, then select **Save draft** to create a private draft.
+The saved view is read-only. **My drafts** lists your saved drafts, with **Load
+more** when another page is available, and lets you reopen them after reload.
+Other instructors and learners cannot retrieve your private drafts.
+
+Generation and Save show progress and disable repeated actions. A generation
+failure retains your topic and offers **Retry**; a failed Save retains your edits
+for another explicit **Save draft** attempt. Leaving or reloading discards unsaved
+work. Saved drafts remain available in **My drafts**.
+
+Every preview and saved draft is visibly unverified. Check the explanation and
+corrected solution yourself; this flow neither executes Python nor verifies or
+publishes exercises. Hint authoring, learner attempts and publication remain
+separate work.
 
 ## Development fixtures
 
@@ -73,4 +97,6 @@ The database seed creates one instructor, one learner, and one draft exercise. T
 
 - Google authentication needs a Google OAuth client and approved callback URLs.
 - Email verification and password reset need an email delivery service.
-- The live NUS SoC LLM adapter remains disabled until the official request contract and credentials are supplied.
+- Question generation needs a configured backend AI provider. Local synthetic
+  verification uses the fake provider. Live SoC output quality and availability
+  require separate acceptance evidence.

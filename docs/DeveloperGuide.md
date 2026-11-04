@@ -94,8 +94,27 @@ offline transport; a live key and chat model are still required for acceptance.
 
 All AI requests originate from the backend. Input and structured output use Zod
 contracts, errors are mapped to non-secret responses, and request logging redacts
-learner code and reasoning. Quota persistence and usage-event writes remain
-future feature work.
+learner code and reasoning. Question generation records minimal usage events;
+hint-preview behavior is unchanged. No custom quota subsystem is introduced.
+
+Instructor draft preparation is owned by
+`apps/backend/src/exercises/instructor-drafts.ts`. It exposes generate, Save,
+list and get operations behind the instructor HTTP boundary. Generation records
+usage metadata without creating an exercise. Explicit Save creates a private
+`DRAFT` Exercise and Python version 1 in one transaction, retaining the topic,
+six editable fields and server-snapshotted provenance. The association is
+instructor-reported; the generation ID does not attest to edited content.
+The additive migration adds four nullable version fields without backfilling
+legacy records. Incomplete legacy records are excluded from this draft surface.
+
+`soc-question-v1` sends exactly fixed system instructions and one topic JSON
+message. Structured output, two streaming byte caps (65,536-byte envelope and
+32,768-byte selected content), one overall deadline and bounded transient retries
+protect the boundary. String limits explicitly use JavaScript UTF-16 length.
+Provider token counts outside PostgreSQL's nonnegative Int32 range become null.
+No topic, code or provider content enters usage records or feature error logs.
+The fake adapter is explicitly configured and never an automatic fallback.
+All generated/edited/saved content remains unverified; Python is never executed.
 
 ## Environment separation
 
@@ -120,6 +139,17 @@ an explicit `DATABASE_URL`; there is no implicit database write target.
 - `/api/v1/profile` accepts only a strict name update; attempts to send `role` fail validation.
 - `/api/v1/instructor/ping` demonstrates server-enforced instructor authorization.
 - `/api/v1/ai/hint-preview` demonstrates authenticated, learner-only AI validation and safe failure mapping.
+- `POST /api/v1/instructor/questions/generate` produces one unsaved six-field
+  preview and generation metadata.
+- `POST /api/v1/instructor/drafts` explicitly saves edited fields, retained topic
+  and a successful generation ID belonging to the current instructor.
+- `GET /api/v1/instructor/drafts` lists the owner's complete drafts in descending
+  creation-time/ID order, 50 at a time, with a bounded optional offset.
+- `GET /api/v1/instructor/drafts/:id` returns an owner-only read-only draft.
+  Missing, foreign, non-DRAFT and incomplete records share the same safe 404.
+
+Both instructor POSTs require an exact configured Origin and JSON content type
+after server session/role checks. Save performs no publication or verification.
 
 Every response carries an `x-request-id`. Error bodies contain a stable code, recoverable message, request ID, and optional validation details. Internal stack traces, Prisma errors, provider responses, cookies, and credentials are not returned.
 

@@ -7,6 +7,7 @@ import { createDebugClinicAuth } from "../../apps/backend/src/auth/auth.js";
 import { readEnv } from "../../apps/backend/src/config/env.js";
 import { deploymentEnvironment } from "../../apps/backend/src/config/deployment.js";
 import { createPrismaClient } from "../../apps/backend/src/db/client.js";
+import { createInstructorDrafts } from "../../apps/backend/src/exercises/instructor-drafts.js";
 import { createLogger } from "../../apps/backend/src/lib/logger.js";
 import { toWebHandler } from "../../apps/backend/src/lib/web-handler.js";
 
@@ -14,11 +15,18 @@ const appConfig = readEnv(deploymentEnvironment(process.env, deployment));
 const logger = createLogger(appConfig);
 const prisma = createPrismaClient(appConfig);
 const auth = createDebugClinicAuth(appConfig, prisma);
+const aiProvider = createAiProvider(appConfig);
 const app = createApp({
   config: appConfig,
   database: prisma,
   auth,
-  aiProvider: createAiProvider(appConfig),
+  aiProvider,
+  instructorDrafts: createInstructorDrafts({
+    prisma,
+    provider: aiProvider,
+    config: appConfig,
+    logger,
+  }),
   profileUpdater: async (userId, name) =>
     prisma.user.update({
       where: { id: userId },

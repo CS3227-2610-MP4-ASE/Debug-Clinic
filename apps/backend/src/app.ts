@@ -17,6 +17,13 @@ import {
   CurrentUserResponseSchema,
   HealthResponseSchema,
   ProfileUpdateSchema,
+  DraftIdSchema,
+  DraftListQuerySchema,
+  DraftListResponseSchema,
+  GenerateQuestionRequestSchema,
+  GenerateQuestionResponseSchema,
+  SaveDraftRequestSchema,
+  SavedDraftResponseSchema,
   type CurrentUser,
   type Role,
 } from "@debugclinic/contracts";
@@ -29,6 +36,7 @@ import {
 import { createSessionResolver, type SessionResolver } from "./auth/session.js";
 import type { DebugClinicAuth } from "./auth/auth.js";
 import type { AppConfig } from "./config/env.js";
+import type { InstructorDrafts } from "./exercises/instructor-drafts.js";
 import { AppError, DependencyUnavailableError } from "./lib/errors.js";
 import {
   createLogger,
@@ -51,6 +59,7 @@ export interface CreateAppOptions {
   auth?: DebugClinicAuth;
   sessionResolver?: SessionResolver;
   aiProvider?: AiProvider;
+  instructorDrafts?: InstructorDrafts;
   profileUpdater: ProfileUpdater;
   logger?: AppLogger;
 }
@@ -295,6 +304,81 @@ export function createApp(options: CreateAppOptions) {
     requireUser(sessionResolver),
     requireRole("INSTRUCTOR"),
     (_request, response) => response.json({ ok: true }),
+  );
+
+  const instructor = [requireUser(sessionResolver), requireRole("INSTRUCTOR")];
+  const requireDraftMutation: RequestHandler = (request, _response, next) => {
+    const origin = request.header("origin");
+    if (!origin || !options.config.corsOrigins.includes(origin)) {
+      next(new AppError(403, "FORBIDDEN", "An allowed Origin is required"));
+    } else if (!request.is("application/json")) {
+      next(
+        new AppError(
+          400,
+          "BAD_REQUEST",
+          "The request body must use application/json",
+        ),
+      );
+    } else {
+      next();
+    }
+  };
+  const drafts = (): InstructorDrafts => {
+    if (!options.instructorDrafts)
+      throw new DependencyUnavailableError(
+        "Instructor drafts are temporarily unavailable",
+      );
+    return options.instructorDrafts;
+  };
+  app.post(
+    "/api/v1/instructor/questions/generate",
+    ...instructor,
+    requireDraftMutation,
+    validateBody(GenerateQuestionRequestSchema),
+    asyncHandler(async (request, response) => {
+      const result = await drafts().generate(
+        response.locals.user!.id,
+        request.body.topic as string,
+      );
+      response.json(GenerateQuestionResponseSchema.parse(result));
+    }),
+  );
+  app.post(
+    "/api/v1/instructor/drafts",
+    ...instructor,
+    requireDraftMutation,
+    validateBody(SaveDraftRequestSchema),
+    asyncHandler(async (request, response) => {
+      const result = await drafts().save(
+        response.locals.user!.id,
+        SaveDraftRequestSchema.parse(request.body),
+      );
+      response.status(201).json(SavedDraftResponseSchema.parse(result));
+    }),
+  );
+  app.get(
+    "/api/v1/instructor/drafts",
+    ...instructor,
+    asyncHandler(async (request, response) => {
+      const { offset } = DraftListQuerySchema.parse(request.query);
+      response.json(
+        DraftListResponseSchema.parse(
+          await drafts().list(response.locals.user!.id, offset),
+        ),
+      );
+    }),
+  );
+  app.get(
+    "/api/v1/instructor/drafts/:id",
+    ...instructor,
+    asyncHandler(async (request, response) => {
+      const id = DraftIdSchema.parse(request.params["id"]);
+      response.json(
+        SavedDraftResponseSchema.parse(
+          await drafts().get(response.locals.user!.id, id),
+        ),
+      );
+    }),
   );
 
   app.post(
