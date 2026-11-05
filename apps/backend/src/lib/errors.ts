@@ -9,6 +9,7 @@ export class AppError extends Error {
     public readonly code: ApiErrorCode,
     message: string,
     public readonly details?: Array<{ path: string; message: string }>,
+    public readonly mutationOutcome?: "NOT_APPLIED" | "UNKNOWN",
   ) {
     super(message);
     this.name = "AppError";

@@ -26,6 +26,7 @@ import type { AppConfig } from "../config/env.js";
 import type { DebugClinicPrisma } from "../db/client.js";
 import { AppError, DependencyUnavailableError } from "../lib/errors.js";
 import type { AppLogger } from "../lib/logger.js";
+import { generationTopicDigest } from "./topic-digest.js";
 
 export interface InstructorDrafts {
   generate(ownerId: string, topic: string): Promise<GenerateQuestionResponse>;
@@ -149,6 +150,7 @@ export function createInstructorDrafts(
             userId: ownerId,
             attemptId: null,
             operation: "generate-question",
+            generationTopicDigest: generationTopicDigest(topic),
             ...origin,
             status:
               result?.output.kind === "rejected"
@@ -210,6 +212,7 @@ export function createInstructorDrafts(
             model: true,
             promptVersion: true,
             createdAt: true,
+            generationTopicDigest: true,
           },
         });
         if (!usage)
@@ -218,6 +221,17 @@ export function createInstructorDrafts(
             "BAD_REQUEST",
             "The generation reference is not available for this draft",
           );
+        if (
+          usage.generationTopicDigest !== null &&
+          usage.generationTopicDigest !== generationTopicDigest(input.topic)
+        ) {
+          throw new AppError(
+            400,
+            "BAD_REQUEST",
+            "The topic must match the generated question",
+            [{ path: "topic", message: "Use the original generated topic" }],
+          );
+        }
         const provenance = DraftProvenanceSchema.parse({
           generationId: usage.id,
           provider: usage.provider,
