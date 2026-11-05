@@ -39,6 +39,9 @@ const instructor: CurrentUser = {
   role: "INSTRUCTOR",
 };
 
+const circularFailure = new Error("PRIVATE_CANARY");
+circularFailure.cause = circularFailure;
+
 const sessionResolver: SessionResolver = async (req) => {
   const token = req.header("authorization");
   if (token === "Bearer learner") return learner;
@@ -106,6 +109,9 @@ describe("DebugClinic API", () => {
     ],
     [{ cause: { code: "28P01", message: "PRIVATE_CANARY" } }, "credentials"],
     [{ code: "ENOTFOUND", message: "PRIVATE_CANARY" }, "connectivity"],
+    [{ cause: { kind: "DatabaseDoesNotExist" } }, "target"],
+    [{ cause: { originalCode: "53300" } }, "capacity"],
+    [circularFailure, "unknown"],
     [new Error("PRIVATE_CANARY"), "unknown"],
   ])(
     "logs only a safe category when the readiness query fails",
