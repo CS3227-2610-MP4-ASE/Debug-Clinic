@@ -8,6 +8,7 @@ export const ApiErrorCodeSchema = z.enum([
   "UNAUTHENTICATED",
   "FORBIDDEN",
   "NOT_FOUND",
+  "CONFLICT",
   "RATE_LIMITED",
   "DEPENDENCY_UNAVAILABLE",
   "INTERNAL_ERROR",
@@ -18,6 +19,7 @@ export const ApiErrorSchema = z.object({
     code: ApiErrorCodeSchema,
     message: z.string().min(1),
     requestId: z.string().min(1),
+    mutationOutcome: z.enum(["NOT_APPLIED", "UNKNOWN"]).optional(),
     details: z
       .array(z.object({ path: z.string(), message: z.string() }))
       .optional(),
@@ -73,17 +75,31 @@ export const HealthResponseSchema = z.object({
 });
 
 // F01 wire contracts. Code is kept verbatim; prose is normalized at the boundary.
+const storageText = (value: string): boolean => {
+  for (let index = 0; index < value.length; index++) {
+    const unit = value.charCodeAt(index);
+    if (unit === 0) return false;
+    if (unit >= 0xd800 && unit <= 0xdbff) {
+      const next = value.charCodeAt(++index);
+      if (!(next >= 0xdc00 && next <= 0xdfff)) return false;
+    } else if (unit >= 0xdc00 && unit <= 0xdfff) return false;
+  }
+  return true;
+};
+const storageMessage = "Must contain valid Unicode without null characters";
 const prose = (maximum: number) =>
   z
     .string()
     .trim()
     .min(1)
+    .refine(storageText, { message: storageMessage })
     .refine((value) => value.length <= maximum, {
       message: `Must contain at most ${maximum} characters`,
     });
 const code = (maximum: number) =>
   z
     .string()
+    .refine(storageText, { message: storageMessage })
     .refine((value) => value.length <= maximum, {
       message: `Must contain at most ${maximum} characters`,
     })
@@ -229,3 +245,149 @@ export const DraftListResponseSchema = z
   })
   .strict();
 export type DraftListResponse = z.infer<typeof DraftListResponseSchema>;
+
+// F02 keeps the literal-DRAFT F01 surface unchanged.
+export const RevisionSchema = z.number().int().min(0).max(2_147_483_647);
+export const PreviewPublicationKeySchema = z
+  .string()
+  .regex(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/);
+export const OwnerQuestionStatusSchema = z.enum([
+  "DRAFT",
+  "PUBLISHED",
+  "ARCHIVED",
+]);
+export const SaveQuestionChangesRequestSchema = z
+  .object({
+    expectedRevision: RevisionSchema,
+    topic: QuestionTopicSchema,
+    draft: QuestionFieldsSchema,
+  })
+  .strict();
+export type SaveQuestionChangesRequest = z.infer<
+  typeof SaveQuestionChangesRequestSchema
+>;
+export const PublishQuestionRequestSchema = z.discriminatedUnion("source", [
+  z
+    .object({
+      source: z.literal("preview"),
+      previewKey: PreviewPublicationKeySchema,
+      generationId: DraftIdSchema,
+      topic: QuestionTopicSchema,
+      draft: QuestionFieldsSchema,
+      reviewConfirmed: z.literal(true),
+    })
+    .strict(),
+  z
+    .object({
+      source: z.literal("saved"),
+      id: DraftIdSchema,
+      expectedRevision: RevisionSchema,
+      topic: QuestionTopicSchema,
+      draft: QuestionFieldsSchema,
+      reviewConfirmed: z.literal(true),
+    })
+    .strict(),
+]);
+export type PublishQuestionRequest = z.infer<
+  typeof PublishQuestionRequestSchema
+>;
+export const RemoveQuestionRequestSchema = z
+  .object({ confirmed: z.literal(true) })
+  .strict();
+export type RemoveQuestionRequest = z.infer<typeof RemoveQuestionRequestSchema>;
+const questionIdentity = {
+  id: DraftIdSchema,
+  title: prose(120),
+  topic: QuestionTopicSchema,
+  status: OwnerQuestionStatusSchema,
+  createdAt: z.string().datetime(),
+  publishedAt: z.string().datetime().nullable(),
+  archivedAt: z.string().datetime().nullable(),
+};
+const validState = (value: {
+  status: string;
+  publishedAt: string | null;
+  archivedAt: string | null;
+}) =>
+  value.status === "DRAFT"
+    ? value.publishedAt === null && value.archivedAt === null
+    : value.status === "PUBLISHED"
+      ? value.publishedAt !== null && value.archivedAt === null
+      : value.publishedAt !== null && value.archivedAt !== null;
+export const OwnerQuestionSchema = QuestionFieldsSchema.extend({
+  ...questionIdentity,
+  versionId: DraftIdSchema,
+  provenance: DraftProvenanceSchema,
+  revision: RevisionSchema,
+})
+  .strict()
+  .refine(validState, { message: "Invalid question state timestamps" });
+export type OwnerQuestion = z.infer<typeof OwnerQuestionSchema>;
+export const OwnerQuestionResponseSchema = z
+  .object({ question: OwnerQuestionSchema })
+  .strict();
+export type OwnerQuestionResponse = z.infer<typeof OwnerQuestionResponseSchema>;
+export const PublishQuestionResponseSchema = z
+  .object({
+    question: OwnerQuestionSchema,
+    outcome: z.enum(["published", "existing"]),
+  })
+  .strict();
+export type PublishQuestionResponse = z.infer<
+  typeof PublishQuestionResponseSchema
+>;
+export const OwnerQuestionListQuerySchema = DraftListQuerySchema.extend({
+  status: OwnerQuestionStatusSchema,
+}).strict();
+export type OwnerQuestionListQuery = z.infer<
+  typeof OwnerQuestionListQuerySchema
+>;
+export const OwnerQuestionListResponseSchema = z
+  .object({
+    questions: z
+      .array(z.object(questionIdentity).strict().refine(validState))
+      .max(50),
+    nextOffset: DraftOffsetSchema.nullable(),
+  })
+  .strict();
+export type OwnerQuestionListResponse = z.infer<
+  typeof OwnerQuestionListResponseSchema
+>;
+export const PublishedQuestionListQuerySchema = DraftListQuerySchema;
+export type PublishedQuestionListQuery = z.infer<
+  typeof PublishedQuestionListQuerySchema
+>;
+export const PublishedQuestionSummarySchema = z
+  .object({
+    id: DraftIdSchema,
+    title: prose(120),
+    topic: QuestionTopicSchema,
+    instructorName: z.string().trim().min(1),
+    publishedAt: z.string().datetime(),
+  })
+  .strict();
+export type PublishedQuestionSummary = z.infer<
+  typeof PublishedQuestionSummarySchema
+>;
+export const PublishedQuestionListResponseSchema = z
+  .object({
+    questions: z.array(PublishedQuestionSummarySchema).max(50),
+    nextOffset: DraftOffsetSchema.nullable(),
+  })
+  .strict();
+export type PublishedQuestionListResponse = z.infer<
+  typeof PublishedQuestionListResponseSchema
+>;
+export const PublishedQuestionSchema = PublishedQuestionSummarySchema.extend({
+  versionId: DraftIdSchema,
+  problemStatement: prose(2000),
+  buggyCode: code(4000),
+  expectedBehavior: prose(1500),
+}).strict();
+export type PublishedQuestion = z.infer<typeof PublishedQuestionSchema>;
+export const PublishedQuestionResponseSchema = z
+  .object({ question: PublishedQuestionSchema })
+  .strict();
+export type PublishedQuestionResponse = z.infer<
+  typeof PublishedQuestionResponseSchema
+>;
