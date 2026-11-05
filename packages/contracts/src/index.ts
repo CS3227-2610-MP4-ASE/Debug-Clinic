@@ -297,7 +297,7 @@ export const RemoveQuestionRequestSchema = z
 export type RemoveQuestionRequest = z.infer<typeof RemoveQuestionRequestSchema>;
 const questionIdentity = {
   id: DraftIdSchema,
-  title: prose(120),
+  title: QuestionFieldsSchema.shape.title,
   topic: QuestionTopicSchema,
   status: OwnerQuestionStatusSchema,
   createdAt: z.string().datetime(),
@@ -360,7 +360,7 @@ export type PublishedQuestionListQuery = z.infer<
 export const PublishedQuestionSummarySchema = z
   .object({
     id: DraftIdSchema,
-    title: prose(120),
+    title: QuestionFieldsSchema.shape.title,
     topic: QuestionTopicSchema,
     instructorName: z.string().trim().min(1),
     publishedAt: z.string().datetime(),
@@ -380,9 +380,9 @@ export type PublishedQuestionListResponse = z.infer<
 >;
 export const PublishedQuestionSchema = PublishedQuestionSummarySchema.extend({
   versionId: DraftIdSchema,
-  problemStatement: prose(2000),
-  buggyCode: code(4000),
-  expectedBehavior: prose(1500),
+  problemStatement: QuestionFieldsSchema.shape.problemStatement,
+  buggyCode: QuestionFieldsSchema.shape.buggyCode,
+  expectedBehavior: QuestionFieldsSchema.shape.expectedBehavior,
 }).strict();
 export type PublishedQuestion = z.infer<typeof PublishedQuestionSchema>;
 export const PublishedQuestionResponseSchema = z

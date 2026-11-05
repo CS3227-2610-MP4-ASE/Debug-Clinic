@@ -1,5 +1,7 @@
 import { randomUUID } from "node:crypto";
+import { createServer, createConnection, type Socket } from "node:net";
 import { PrismaPg } from "@prisma/adapter-pg";
+import request from "supertest";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { PrismaClient } from "../../generated/prisma/client.js";
 import { createInstructorQuestions } from "../../apps/backend/src/exercises/instructor-questions.js";
@@ -8,6 +10,8 @@ import { FakeAiProvider } from "../../apps/backend/src/ai/provider.js";
 import { readEnv } from "../../apps/backend/src/config/env.js";
 import { createLogger } from "../../apps/backend/src/lib/logger.js";
 import { testDatabaseUrl } from "../support/database-target.js";
+import { createApp } from "../../apps/backend/src/app.js";
+import { createDebugClinicAuth } from "../../apps/backend/src/auth/auth.js";
 
 const url = testDatabaseUrl();
 for (const name of [
@@ -25,6 +29,7 @@ const prisma = client(),
 const suffix = randomUUID();
 const owner = `f02-owner-${suffix}`,
   other = `f02-other-${suffix}`;
+const ownedUsers = [owner, other];
 const config = readEnv({
   NODE_ENV: "test",
   APP_ORIGIN: "http://localhost:5173",
@@ -88,12 +93,12 @@ beforeAll(async () => {
 });
 afterAll(async () => {
   await prisma.exercise.deleteMany({
-    where: { authorId: { in: [owner, other] } },
+    where: { authorId: { in: ownedUsers } },
   });
   await prisma.aiUsageEvent.deleteMany({
-    where: { userId: { in: [owner, other] } },
+    where: { userId: { in: ownedUsers } },
   });
-  await prisma.user.deleteMany({ where: { id: { in: [owner, other] } } });
+  await prisma.user.deleteMany({ where: { id: { in: ownedUsers } } });
   await Promise.all([prisma.$disconnect(), concurrent.$disconnect()]);
 });
 describe("F02 public module / real PostgreSQL", () => {
@@ -473,4 +478,633 @@ it("B30 corrupt eligible stored contracts fail safely for owner and learner", as
   await expect(questions.getPublished(original.id)).rejects.toMatchObject({
     status: 503,
   });
+  await prisma.exerciseVersion.update({
+    where: { id: original.versionId },
+    data: { generationProvenance: original.provenance },
+  });
 });
+
+describe("F02 real cookie HTTP authorization and input boundaries", () => {
+  const logs: string[] = [];
+  const httpLogger = createLogger(
+    { ...config, logLevel: "info" },
+    {
+      write(chunk) {
+        logs.push(chunk);
+      },
+    },
+  );
+  const auth = createDebugClinicAuth(config, prisma, async () => {});
+  const app = createApp({
+    config,
+    database: prisma,
+    auth,
+    logger: httpLogger,
+    instructorQuestions: createInstructorQuestions({
+      prisma,
+      logger: httpLogger,
+    }),
+    instructorDrafts: drafts,
+    profileUpdater: async () => {
+      throw new Error("Unused");
+    },
+  });
+  const cookies: Record<string, string> = {};
+  const identities: Record<string, string> = {};
+  beforeAll(async () => {
+    for (const [name, role] of [
+      ["a", "INSTRUCTOR"],
+      ["b", "INSTRUCTOR"],
+      ["learner", "LEARNER"],
+    ] as const) {
+      const email = `f02-cookie-${name}-${suffix}@example.test`,
+        password = "F02-synthetic-password-12345";
+      await request(app)
+        .post("/api/auth/sign-up/email")
+        .set("origin", config.appOrigin)
+        .send({
+          name: `Instructor ${name}`,
+          email,
+          password,
+          registrationRole: role,
+        })
+        .expect(200);
+      const user = await prisma.user.findUniqueOrThrow({ where: { email } });
+      ownedUsers.push(user.id);
+      identities[name] = user.id;
+      await prisma.user.update({
+        where: { id: user.id },
+        data: { emailVerified: true },
+      });
+      const signed = await request(app)
+        .post("/api/auth/sign-in/email")
+        .set("origin", config.appOrigin)
+        .send({ email, password })
+        .expect(200);
+      cookies[name] = (signed.headers["set-cookie"] as unknown as string[])
+        .map((value) => value.split(";")[0])
+        .join("; ");
+    }
+  });
+  it("B32 real cookies enforce guests, roles, ownership and expiry", async () => {
+    const generated = await drafts.generate(identities["a"]!, topic);
+    const saved = await drafts.save(identities["a"]!, {
+      topic,
+      draft: fields,
+      generationId: generated.generation.id,
+    });
+    const path = `/api/v1/instructor/questions/${saved.draft.id}`;
+    await request(app).get(path).expect(401);
+    await request(app).get(path).set("cookie", cookies["learner"]!).expect(403);
+    await request(app).get(path).set("cookie", cookies["b"]!).expect(404);
+    await request(app).get(path).set("cookie", cookies["a"]!).expect(200);
+    await request(app)
+      .get("/api/v1/learner/questions")
+      .set("cookie", cookies["a"]!)
+      .expect(403);
+    const body = {
+      source: "saved",
+      id: saved.draft.id,
+      topic,
+      draft: fields,
+      expectedRevision: 0,
+      reviewConfirmed: true,
+    };
+    for (const identity of ["learner", "b"])
+      await request(app)
+        .post("/api/v1/instructor/questions/publish")
+        .set("cookie", cookies[identity]!)
+        .set("origin", config.appOrigin)
+        .send(body)
+        .expect(identity === "b" ? 404 : 403);
+    await request(app)
+      .post("/api/v1/instructor/questions/publish")
+      .set("cookie", cookies["a"]!)
+      .set("origin", config.appOrigin)
+      .send(body)
+      .expect(200);
+    const exposed = await request(app)
+      .get(`/api/v1/learner/questions/${saved.draft.id}`)
+      .set("cookie", cookies["learner"]!)
+      .expect(200);
+    expect(JSON.stringify(exposed.body)).not.toMatch(
+      /F02_PRIVATE|example.test|provenance|correctedSolution|bugExplanation/,
+    );
+    await prisma.session.updateMany({
+      where: { userId: identities["a"]! },
+      data: { expiresAt: new Date(0) },
+    });
+    const expired = await request(app)
+      .post("/api/v1/instructor/questions/publish")
+      .set("cookie", cookies["a"]!)
+      .set("origin", config.appOrigin)
+      .send(body)
+      .expect(401);
+    expect(expired.body.error.mutationOutcome).toBe("NOT_APPLIED");
+  });
+  it("B03/B33/B36 rejects raw body, origins, unknown keys and every unrepresentable field without mutation or log leakage", async () => {
+    const generated = await drafts.generate(identities["b"]!, topic);
+    const saved = await drafts.save(identities["b"]!, {
+      topic,
+      draft: fields,
+      generationId: generated.generation.id,
+    });
+    const before = (await questions.getOwner(identities["b"]!, saved.draft.id))
+      .question;
+    const path = `/api/v1/instructor/questions/${saved.draft.id}`;
+    const body = { topic, draft: fields, expectedRevision: 0 };
+    for (const origin of [undefined, "https://foreign.example.test"]) {
+      let req = request(app).patch(path).set("cookie", cookies["b"]!);
+      if (origin) req = req.set("origin", origin);
+      expect(
+        (await req.send(body).expect(403)).body.error.mutationOutcome,
+      ).toBe("NOT_APPLIED");
+    }
+    await request(app)
+      .patch(path)
+      .set("cookie", cookies["b"]!)
+      .set("origin", config.appOrigin)
+      .set("content-type", "text/plain")
+      .send("F02_PRIVATE_BODY")
+      .expect(400);
+    for (const [raw, status] of [
+      ["{", 400],
+      [JSON.stringify({ private: "x".repeat(65536) }), 413],
+    ] as const) {
+      const response = await request(app)
+        .patch(path)
+        .set("cookie", cookies["b"]!)
+        .set("origin", config.appOrigin)
+        .set("content-type", "application/json")
+        .send(raw)
+        .expect(status);
+      expect(response.body.error).toMatchObject({
+        code: "BAD_REQUEST",
+        mutationOutcome: "NOT_APPLIED",
+        requestId: expect.any(String),
+      });
+    }
+    for (const field of ["topic", ...Object.keys(fields)])
+      for (const invalid of [
+        "F02_PRIVATE_BODY\0",
+        "F02_PRIVATE_BODY\ud800",
+        "F02_PRIVATE_BODY\udc00",
+      ]) {
+        const input =
+          field === "topic"
+            ? { ...body, topic: invalid }
+            : { ...body, draft: { ...fields, [field]: invalid } };
+        const response = await request(app)
+          .patch(path)
+          .set("cookie", cookies["b"]!)
+          .set("origin", config.appOrigin)
+          .send(input)
+          .expect(400);
+        expect(response.body.error.mutationOutcome).toBe("NOT_APPLIED");
+        expect(response.body.error.details).toContainEqual({
+          path: field === "topic" ? "topic" : `draft.${field}`,
+          message: expect.any(String),
+        });
+        expect(JSON.stringify(response.body)).not.toContain("F02_PRIVATE_BODY");
+      }
+    const unknown = await request(app)
+      .patch(path)
+      .set("cookie", cookies["b"]!)
+      .set("origin", config.appOrigin)
+      .send({ ...body, F02_PRIVATE_UNKNOWN: "private" })
+      .expect(400);
+    expect(JSON.stringify(unknown.body)).not.toContain("F02_PRIVATE_UNKNOWN");
+    expect(
+      (await questions.getOwner(identities["b"]!, saved.draft.id)).question,
+    ).toEqual(before);
+    expect(logs.join("\n")).not.toMatch(
+      /F02_PRIVATE|generationTopicDigest|duplicate key|session_token|synthetic-password/,
+    );
+  });
+});
+
+it("B02/B03 all exact UTF16 field maxima persist and oversized or unrepresentable publications leave prior authority intact", async () => {
+  for (const [field, max] of Object.entries({
+    topic: 300,
+    title: 120,
+    problemStatement: 2000,
+    buggyCode: 4000,
+    expectedBehavior: 1500,
+    bugExplanation: 2000,
+    correctedSolution: 4000,
+  })) {
+    const boundTopic = field === "topic" ? "x".repeat(298) + "😀" : topic;
+    const generated = await drafts.generate(owner, boundTopic);
+    const draft =
+      field === "topic"
+        ? fields
+        : { ...fields, [field]: "x".repeat(max - 2) + "😀" };
+    const first = await drafts.save(owner, {
+      topic: boundTopic,
+      draft,
+      generationId: generated.generation.id,
+    });
+    const before = (await questions.getOwner(owner, first.draft.id)).question;
+    expect(
+      field === "topic" ? before.topic : before[field as keyof typeof fields],
+    ).toBe("x".repeat(max - 2) + "😀");
+    const input = {
+      source: "saved" as const,
+      id: before.id,
+      expectedRevision: 0,
+      topic: boundTopic,
+      draft,
+      reviewConfirmed: true as const,
+    };
+    for (const invalid of [
+      "x".repeat(max + 1),
+      "x\0y",
+      "x\ud800y",
+      "x\udc00y",
+    ]) {
+      const invalidInput =
+        field === "topic"
+          ? { ...input, topic: invalid }
+          : { ...input, draft: { ...draft, [field]: invalid } };
+      await expect(async () =>
+        questions.publish(owner, invalidInput),
+      ).rejects.toThrow();
+      expect((await questions.getOwner(owner, before.id)).question).toEqual(
+        before,
+      );
+      await expect(questions.getPublished(before.id)).rejects.toMatchObject({
+        status: 404,
+      });
+    }
+    const published = await questions.publish(owner, input);
+    expect(published.question.status).toBe("PUBLISHED");
+    expect(
+      field === "topic"
+        ? published.question.topic
+        : published.question[field as keyof typeof fields],
+    ).toBe("x".repeat(max - 2) + "😀");
+  }
+});
+it("B41 revision overflow rejects save/initial publication with support guidance and no mutation", async () => {
+  const original = await fresh();
+  await prisma.exercise.update({
+    where: { id: original.id },
+    data: { editRevision: 2147483647 },
+  });
+  const before = (await questions.getOwner(owner, original.id)).question;
+  const input = {
+    topic,
+    expectedRevision: 2147483647,
+    draft: { ...fields, title: "Never committed" },
+  };
+  for (const operation of [
+    () => questions.saveChanges(owner, original.id, input),
+    () =>
+      questions.publish(owner, {
+        ...input,
+        source: "saved",
+        id: original.id,
+        reviewConfirmed: true,
+      }),
+  ]) {
+    await expect(operation()).rejects.toMatchObject({
+      status: 409,
+      mutationOutcome: "NOT_APPLIED",
+      message: expect.stringContaining("support"),
+    });
+    expect((await questions.getOwner(owner, original.id)).question).toEqual(
+      before,
+    );
+  }
+});
+it("B21/B23 own state and learner pages filter before pagination with deterministic timestamp/id ties", async () => {
+  const pagingOwner = `f02-pages-${suffix}`;
+  ownedUsers.push(pagingOwner);
+  await prisma.user.create({
+    data: {
+      id: pagingOwner,
+      name: "Paging Instructor",
+      email: `${pagingOwner}@example.test`,
+      role: "INSTRUCTOR",
+    },
+  });
+  const provenance = {
+    generationId: "legacy-fixture",
+    provider: "fake",
+    model: null,
+    promptVersion: "F02_PRIVATE_PROVENANCE",
+    generatedAt: "2026-11-06T00:00:00.000Z",
+    association: "instructor-reported",
+  };
+  for (const status of ["DRAFT", "PUBLISHED", "ARCHIVED"] as const)
+    for (const count of [0, 1, 49, 50, 51, 101]) {
+      const ids = Array.from(
+        { length: count },
+        (_, i) => `f02-page-${status}-${String(i).padStart(3, "0")}-${suffix}`,
+      );
+      const time = new Date("2030-01-01T00:00:00.000Z");
+      await prisma.exercise.createMany({
+        data: ids.map((id) => ({
+          id,
+          title: fields.title,
+          description: fields.problemStatement,
+          authorId: pagingOwner,
+          status,
+          createdAt: time,
+          publishedAt: status === "DRAFT" ? null : time,
+          archivedAt: status === "ARCHIVED" ? time : null,
+        })),
+      });
+      await prisma.exerciseVersion.createMany({
+        data: ids.map((id) => ({
+          exerciseId: id,
+          version: 1,
+          language: "python",
+          topic,
+          buggyCode: fields.buggyCode,
+          expectedBehavior: fields.expectedBehavior,
+          bugExplanation: fields.bugExplanation,
+          correctedSolution: fields.correctedSolution,
+          generationProvenance: provenance,
+        })),
+      });
+      const hidden = `f02-hidden-${status}-${count}-${suffix}`;
+      await prisma.exercise.create({
+        data: {
+          id: hidden,
+          authorId: pagingOwner,
+          title: "Incomplete",
+          description: "Hidden",
+          status,
+          createdAt: time,
+          publishedAt: status === "DRAFT" ? null : time,
+          archivedAt: status === "ARCHIVED" ? time : null,
+        },
+      });
+      const expected = [...ids].reverse();
+      for (const offset of [0, 49, 50, 51, 101]) {
+        const result = await questions.listOwner(pagingOwner, {
+          status,
+          offset,
+        });
+        expect(result.questions.map((q) => q.id)).toEqual(
+          expected.slice(offset, offset + 50),
+        );
+        expect(result.nextOffset).toBe(
+          count > offset + 50 ? offset + 50 : null,
+        );
+      }
+      if (status === "PUBLISHED" && count === 101) {
+        const first = await questions.listPublished({ offset: 0 });
+        const second = await questions.listPublished({ offset: 50 });
+        expect(first.questions.map((q) => q.id)).toEqual(expected.slice(0, 50));
+        expect(second.questions.map((q) => q.id)).toEqual(
+          expected.slice(50, 100),
+        );
+        expect(first.nextOffset).toBe(50);
+        expect(second.nextOffset).toBe(100);
+        expect(JSON.stringify([first, second])).not.toContain("F02_PRIVATE");
+      }
+      await prisma.exercise.deleteMany({ where: { authorId: pagingOwner } });
+    }
+  expect(
+    await questions.listOwner(pagingOwner, {
+      status: "DRAFT",
+      offset: 4294967295,
+    }),
+  ).toEqual({ questions: [], nextOffset: null });
+});
+
+it("B44 real unrelated uniqueness abort never masquerades as replay; named collision does one authoritative reread", async () => {
+  const faultOwner = `f02-unique-${suffix}`;
+  ownedUsers.push(faultOwner);
+  await prisma.user.create({
+    data: {
+      id: faultOwner,
+      name: "Fault Instructor",
+      email: `${faultOwner}@example.test`,
+      role: "INSTRUCTOR",
+    },
+  });
+  const generated = await drafts.generate(faultOwner, topic);
+  const traced = new PrismaClient({
+    adapter: new PrismaPg({ connectionString: url }),
+    log: [{ emit: "event", level: "query" }],
+  });
+  let keyReads = 0;
+  traced.$on("query", (event) => {
+    if (
+      event.query.startsWith("SELECT") &&
+      event.query.includes('"previewPublicationKey"')
+    )
+      keyReads++;
+  });
+  const module = createInstructorQuestions({ prisma: traced, logger });
+  const input = {
+    source: "preview" as const,
+    previewKey: randomUUID(),
+    generationId: generated.generation.id,
+    topic,
+    draft: fields,
+    reviewConfirmed: true as const,
+  };
+  await module.publish(faultOwner, input);
+  const constraint = `f02_unique_${suffix.replaceAll("-", "")}`;
+  const trigger = `f02_named_${suffix.replaceAll("-", "")}`;
+  try {
+    await prisma.$executeRawUnsafe(
+      `CREATE UNIQUE INDEX "${constraint}" ON "Exercise" (title) WHERE "authorId"='${faultOwner}'`,
+    );
+    keyReads = 0;
+    await expect(
+      module.publish(faultOwner, { ...input, previewKey: randomUUID() }),
+    ).rejects.toMatchObject({ status: 503, mutationOutcome: "NOT_APPLIED" });
+    expect(keyReads).toBe(1);
+    await prisma.$executeRawUnsafe(
+      `CREATE FUNCTION "${trigger}"() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN IF NEW."authorId"='${faultOwner}' AND NEW.title='Named fault' THEN RAISE EXCEPTION 'safe injected collision' USING ERRCODE='23505',CONSTRAINT='Exercise_authorId_previewPublicationKey_key'; END IF; RETURN NEW; END $$`,
+    );
+    await prisma.$executeRawUnsafe(
+      `CREATE TRIGGER "${trigger}" BEFORE INSERT ON "Exercise" FOR EACH ROW EXECUTE FUNCTION "${trigger}"()`,
+    );
+    keyReads = 0;
+    await expect(
+      module.publish(faultOwner, {
+        ...input,
+        previewKey: randomUUID(),
+        draft: { ...fields, title: "Named fault" },
+      }),
+    ).rejects.toMatchObject({ status: 503, mutationOutcome: "UNKNOWN" });
+    expect(keyReads).toBe(2);
+    expect(
+      (
+        await questions.listOwner(faultOwner, {
+          status: "PUBLISHED",
+          offset: 0,
+        })
+      ).questions,
+    ).toHaveLength(1);
+  } finally {
+    await prisma.$executeRawUnsafe(
+      `DROP TRIGGER IF EXISTS "${trigger}" ON "Exercise"`,
+    );
+    await prisma.$executeRawUnsafe(`DROP FUNCTION IF EXISTS "${trigger}"()`);
+    await prisma.$executeRawUnsafe(`DROP INDEX IF EXISTS "${constraint}"`);
+    await traced.$disconnect();
+  }
+});
+
+it("B17/B44 real PostgreSQL transport faults retain UNKNOWN for unavailable reread and committed acknowledgment loss", async () => {
+  const trigger = `f02_transport_${suffix.replaceAll("-", "")}`;
+  const generated = await drafts.generate(owner, topic);
+  await prisma.$executeRawUnsafe(
+    `CREATE FUNCTION "${trigger}"() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN IF NEW."authorId"='${owner}' AND NEW.title='F02_REREAD_FAULT' THEN RAISE EXCEPTION 'safe injected collision' USING ERRCODE='23505',CONSTRAINT='Exercise_authorId_previewPublicationKey_key'; END IF; RETURN NEW; END $$`,
+  );
+  try {
+    await prisma.$executeRawUnsafe(
+      `CREATE TRIGGER "${trigger}" BEFORE INSERT ON "Exercise" FOR EACH ROW EXECUTE FUNCTION "${trigger}"()`,
+    );
+    for (const mode of ["reread", "commit"] as const) {
+      const sockets = new Set<Socket>();
+      let inserted = false,
+        dropped = 0,
+        keyReads = 0;
+      const proxy = createServer((incoming) => {
+        const upstream = createConnection({
+          host: new URL(url).hostname,
+          port: Number(new URL(url).port),
+        });
+        sockets.add(incoming);
+        sockets.add(upstream);
+        for (const socket of [incoming, upstream]) {
+          socket.on("error", () => {
+            incoming.destroy();
+            upstream.destroy();
+          });
+          socket.on("close", () => sockets.delete(socket));
+        }
+        let clientBuffer = Buffer.alloc(0),
+          serverBuffer = Buffer.alloc(0),
+          startup = true;
+        incoming.on("data", (data) => {
+          clientBuffer = Buffer.concat([clientBuffer, data]);
+          if (startup) {
+            if (clientBuffer.length < 4) return;
+            const length = clientBuffer.readInt32BE(0);
+            if (clientBuffer.length < length) return;
+            upstream.write(clientBuffer.subarray(0, length));
+            clientBuffer = clientBuffer.subarray(length);
+            startup = false;
+          }
+          while (clientBuffer.length >= 5) {
+            const length = clientBuffer.readInt32BE(1) + 1;
+            if (clientBuffer.length < length) return;
+            const frame = clientBuffer.subarray(0, length);
+            clientBuffer = clientBuffer.subarray(length);
+            const kind = String.fromCharCode(frame[0]!);
+            const payload = frame.subarray(5).toString("utf8");
+            const sql =
+              kind === "Q"
+                ? payload
+                : kind === "P"
+                  ? payload.slice(payload.indexOf("\0") + 1)
+                  : "";
+            if (sql.startsWith("INSERT INTO") && sql.includes('"Exercise"'))
+              inserted = true;
+            if (
+              sql.startsWith("SELECT") &&
+              sql.includes('"previewPublicationKey"')
+            ) {
+              keyReads++;
+              if (mode === "reread" && inserted) {
+                dropped++;
+                incoming.destroy();
+                upstream.destroy();
+                return;
+              }
+            }
+            upstream.write(frame);
+          }
+        });
+        upstream.on("data", (data) => {
+          serverBuffer = Buffer.concat([serverBuffer, data]);
+          while (serverBuffer.length >= 5) {
+            const length = serverBuffer.readInt32BE(1) + 1;
+            if (serverBuffer.length < length) return;
+            const frame = serverBuffer.subarray(0, length);
+            serverBuffer = serverBuffer.subarray(length);
+            if (
+              mode === "commit" &&
+              inserted &&
+              frame[0] === 67 &&
+              frame.subarray(5).toString() === "COMMIT\0"
+            ) {
+              // PostgreSQL has committed; withhold its actual completion frame.
+              dropped++;
+              incoming.destroy();
+              upstream.destroy();
+              return;
+            }
+            incoming.write(frame);
+          }
+        });
+      });
+      await new Promise<void>((resolve) =>
+        proxy.listen(0, "127.0.0.1", resolve),
+      );
+      const address = proxy.address();
+      if (!address || typeof address === "string")
+        throw new Error("Missing proxy port");
+      const proxyUrl = new URL(url);
+      proxyUrl.port = String(address.port);
+      const faultClient = new PrismaClient({
+        adapter: new PrismaPg({
+          connectionString: testDatabaseUrl(proxyUrl.toString()),
+          max: 1,
+        }),
+      });
+      const faultModule = createInstructorQuestions({
+        prisma: faultClient,
+        logger,
+      });
+      const title =
+        mode === "reread" ? "F02_REREAD_FAULT" : "F02_COMMIT_AUTHORITY";
+      const input = {
+        source: "preview" as const,
+        previewKey: randomUUID(),
+        generationId: generated.generation.id,
+        topic,
+        draft: { ...fields, title },
+        reviewConfirmed: true as const,
+      };
+      try {
+        await expect(faultModule.publish(owner, input)).rejects.toMatchObject({
+          status: 503,
+          mutationOutcome: "UNKNOWN",
+        });
+        expect(dropped).toBe(1);
+        if (mode === "reread") {
+          expect(keyReads).toBe(2);
+          await prisma.$executeRawUnsafe(
+            `DROP TRIGGER "${trigger}" ON "Exercise"`,
+          );
+        }
+        const resolved = await questions.publish(owner, input);
+        expect(resolved.outcome).toBe(
+          mode === "commit" ? "existing" : "published",
+        );
+        expect(resolved.question.title).toBe(title);
+      } finally {
+        await faultClient.$disconnect();
+        for (const socket of sockets) socket.destroy();
+        await new Promise<void>((resolve, reject) =>
+          proxy.close((error) => (error ? reject(error) : resolve())),
+        );
+      }
+    }
+  } finally {
+    await prisma.$executeRawUnsafe(
+      `DROP TRIGGER IF EXISTS "${trigger}" ON "Exercise"`,
+    );
+    await prisma.$executeRawUnsafe(`DROP FUNCTION IF EXISTS "${trigger}"()`);
+  }
+}, 20000);
