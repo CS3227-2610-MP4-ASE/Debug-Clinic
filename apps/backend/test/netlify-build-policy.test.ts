@@ -21,6 +21,13 @@ describe("native Netlify build routing", () => {
       site: DEV_SITE_ID,
       context: "production",
       branch: "master",
+      expected: 1,
+    },
+    {
+      label: "development production context from a non-master branch",
+      site: DEV_SITE_ID,
+      context: "production",
+      branch: "feature/test",
       expected: 0,
     },
     {

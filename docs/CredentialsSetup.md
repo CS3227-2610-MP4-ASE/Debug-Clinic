@@ -263,9 +263,9 @@ Do these dashboard steps once:
 1. On **debugclinic-dev**, link this repository under **Build & deploy → Continuous
    deployment**, keep builds **Active**, and enable Deploy Previews for trusted
    team PRs targeting `master`. Under **Branches and deploy contexts**, disable
-   branch deploys. `master` remains the target branch for PR discovery; the
-   committed ignore command skips this site's production-context master builds,
-   so it publishes only PR preview URLs. Do not stop all builds on this site,
+   branch deploys. Set `master` as the production branch: the committed ignore
+   command permits its production-context builds to refresh the stable dev URL,
+   and PR builds publish separate preview URLs. Do not stop all builds on this site,
    because that would also disable previews. The committed `netlify.toml` provides build settings. Configure
    Netlify's GitHub integration/PR deploy notifications if you want its preview
    comment. Do not run a second GitHub CLI preview deployment. Preview publication
@@ -282,9 +282,9 @@ Do these dashboard steps once:
    production client's callback separate. Do not register every PR callback.
 4. Deploy this code to the **stable dev URL first**, before testing PR Google
    login: both ends need the proxy plugin and matching shared secret. If this
-   callback has already been deployed, retain it. Otherwise bootstrap it once
-   through an explicitly reviewed manual deployment. Master pushes no longer
-   refresh the stable dev URL. This callback service is required by the current
+   callback has already been deployed, merging to `master` refreshes it together
+   with the development app. For first setup, trigger a deploy of `master` on
+   the development site. This callback service is required by the current
    Google preview-login design; removing it requires a different callback design.
 5. Open a trusted team PR. Its Netlify build applies development migrations
    before publishing, then Google redirects through stable dev back to that
