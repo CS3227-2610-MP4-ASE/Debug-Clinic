@@ -20,6 +20,8 @@ interface AuthState {
   user: CurrentUser | null;
   isLoading: boolean;
   error: string | null;
+  sessionExpired: boolean;
+  sessionEpoch: number;
   refresh: () => Promise<SessionRefreshResult>;
   signOut: () => Promise<void>;
 }
@@ -30,6 +32,8 @@ export function AuthProvider({ children }: PropsWithChildren) {
   const [user, setUser] = useState<CurrentUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [sessionExpired, setSessionExpired] = useState(false);
+  const [sessionEpoch, setSessionEpoch] = useState(0);
   const requestVersion = useRef(0);
 
   const refresh = useCallback(async (): Promise<SessionRefreshResult> => {
@@ -40,6 +44,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
       const currentUser = await getCurrentUser();
       if (version !== requestVersion.current) return { ok: false };
       setUser(currentUser);
+      setSessionExpired(!currentUser);
       return { ok: true, user: currentUser };
     } catch {
       if (version !== requestVersion.current) return { ok: false };
@@ -63,9 +68,24 @@ export function AuthProvider({ children }: PropsWithChildren) {
     // Invalidate pending session reads so they cannot restore a signed-out user.
     requestVersion.current += 1;
     setUser(null);
+    setSessionExpired(false);
+    setSessionEpoch((value) => value + 1);
     setError(null);
     setIsLoading(false);
   }, []);
+
+  useEffect(() => {
+    const expire = () => setSessionExpired(true);
+    const restore = () => {
+      void refresh();
+    };
+    window.addEventListener("debugclinic:session-expired", expire);
+    window.addEventListener("focus", restore);
+    return () => {
+      window.removeEventListener("debugclinic:session-expired", expire);
+      window.removeEventListener("focus", restore);
+    };
+  }, [refresh]);
 
   useEffect(() => {
     const version = ++requestVersion.current;
@@ -93,8 +113,16 @@ export function AuthProvider({ children }: PropsWithChildren) {
   }, []);
 
   const value = useMemo(
-    () => ({ user, isLoading, error, refresh, signOut }),
-    [user, isLoading, error, refresh, signOut],
+    () => ({
+      user,
+      isLoading,
+      error,
+      sessionExpired,
+      sessionEpoch,
+      refresh,
+      signOut,
+    }),
+    [user, isLoading, error, sessionExpired, sessionEpoch, refresh, signOut],
   );
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
