@@ -1,0 +1,160 @@
+{
+  "baseline": "7707aeee09af4baa1623ce8449c22cc3a77f53b0",
+  "maximum_repair_cycles": 2,
+  "cycles_used": 2,
+  "second_cycle_needed": true,
+  "promptVersion": "soc-question-v2",
+  "targeted_checks": [
+    {
+      "name": "format-changed",
+      "args": [
+        "npm",
+        "exec",
+        "--no",
+        "--",
+        "prettier",
+        "--write",
+        "apps/backend/src/ai/question-prompt.ts",
+        "apps/backend/src/ai/provider.ts",
+        "apps/backend/src/exercises/instructor-drafts.ts",
+        "apps/backend/test/f01-prepush-regressions.test.ts",
+        "apps/backend/test/f01-acceptance-transport.test.ts",
+        "tests/support/f01-database.ts",
+        "tests/e2e/f01-composed.spec.ts",
+        "tests/integration/f01-drafts.test.ts"
+      ],
+      "exit_code": 0
+    },
+    {
+      "name": "focused-unit",
+      "args": [
+        "npm",
+        "test",
+        "--",
+        "apps/backend/test/f01-prepush-regressions.test.ts",
+        "apps/backend/test/f01-acceptance-transport.test.ts",
+        "-t",
+        "F01 pre-push regressions|B10 minimizes",
+        "--reporter=dot"
+      ],
+      "exit_code": 0
+    },
+    {
+      "name": "focused-provenance-pg",
+      "args": [
+        "npm",
+        "run",
+        "test:integration",
+        "--",
+        "tests/integration/f01-drafts.test.ts",
+        "-t",
+        "B11 SoC raw count0 crosses",
+        "--reporter=dot"
+      ],
+      "exit_code": 0
+    },
+    {
+      "name": "lint-changed",
+      "args": [
+        "npm",
+        "exec",
+        "--no",
+        "--",
+        "eslint",
+        "apps/backend/src/ai/question-prompt.ts",
+        "apps/backend/src/ai/provider.ts",
+        "apps/backend/src/exercises/instructor-drafts.ts",
+        "apps/backend/test/f01-prepush-regressions.test.ts",
+        "apps/backend/test/f01-acceptance-transport.test.ts",
+        "tests/support/f01-database.ts",
+        "tests/e2e/f01-composed.spec.ts",
+        "tests/integration/f01-drafts.test.ts",
+        "--max-warnings=0"
+      ],
+      "exit_code": 0
+    },
+    {
+      "name": "composed-browser-default-skip",
+      "result": "PASS",
+      "skipped": 2,
+      "unexpected": 0,
+      "scope": "Only the composed journey, no web servers or provider calls"
+    },
+    {
+      "name": "affected-backend-declaration-build",
+      "command": ["npm", "run", "build", "-w", "@debugclinic/backend"],
+      "exit_code": 0
+    }
+  ],
+  "live_samples": {
+    "total": 3,
+    "PASS": 3,
+    "FAIL": 0,
+    "INCONCLUSIVE": 0,
+    "no_rerolls": true,
+    "generated_python_executed": false
+  },
+  "independent_source_verdicts": {
+    "standards": "PASS",
+    "spec": "PASS scoped source",
+    "security": "PASS"
+  },
+  "original_comparison_unchanged": true,
+  "full_suites_rerun": false,
+  "remaining_scope_limits": [
+    "Three targeted live samples do not establish universal generation quality or replace frozen11-sample comparison.",
+    "Hosted CI, full regression, human accessibility/product acceptance and native platform acceptance were not rerun."
+  ],
+  "setup_note": "Calibration-report field lookup corrected before any provider call; this was runner setup, not a product repair iteration.",
+  "cycle_2": {
+    "repair_cycle": 2,
+    "maximum_cycles": 2,
+    "issue": "Integration beforeAll still hardcoded the experiment database after URL validation was generalized",
+    "expected_identity": "Decoded database path from already validated TEST_DATABASE_URL",
+    "baseline_red": [
+      {
+        "phase": "red",
+        "database": "debugclinic_test",
+        "verified_actual_database": "debugclinic_test",
+        "host": "127.0.0.1",
+        "port": 58027,
+        "selected_case": "preview is unsaved; all edits persist",
+        "exit_code": 1,
+        "provider": "fake",
+        "timestamp_utc": "2026-11-05T11:03:15.852373+00:00"
+      }
+    ],
+    "targeted_green": [
+      {
+        "phase": "green",
+        "database": "debugclinic_test",
+        "verified_actual_database": "debugclinic_test",
+        "host": "127.0.0.1",
+        "port": 58027,
+        "selected_case": "preview is unsaved; all edits persist",
+        "exit_code": 0,
+        "provider": "fake",
+        "timestamp_utc": "2026-11-05T11:03:41.346332+00:00"
+      },
+      {
+        "phase": "green",
+        "database": "debugclinic_f01_test",
+        "verified_actual_database": "debugclinic_f01_test",
+        "host": "127.0.0.1",
+        "port": 58027,
+        "selected_case": "preview is unsaved; all edits persist",
+        "exit_code": 0,
+        "provider": "fake",
+        "timestamp_utc": "2026-11-05T11:03:45.151207+00:00"
+      }
+    ],
+    "cases_per_green_run": 1,
+    "other_cases_skipped_per_run": 119,
+    "provider_calls": 0,
+    "application_logic_changed": false,
+    "CI_configuration_changed": false,
+    "full_suite_rerun_locally": false,
+    "independent_review": "PASS scoped database-identity correction"
+  },
+  "cycle_1_scope_correction": "The first cycle validated the URL guard but missed a separate hardcoded beforeAll database-name assertion. Actual CI exposed the gap; cycle2 reproduces and fixes that assertion."
+}

@@ -5,6 +5,9 @@ import { AppShell } from "./components/AppShell.js";
 import { ForbiddenPage } from "./pages/ForbiddenPage.js";
 import { HomePage } from "./pages/HomePage.js";
 import { InstructorDashboardPage } from "./pages/InstructorDashboardPage.js";
+import { GenerateQuestionPage } from "./pages/GenerateQuestionPage.js";
+import { InstructorDraftsPage } from "./pages/InstructorDraftsPage.js";
+import { InstructorDraftPage } from "./pages/InstructorDraftPage.js";
 import { LearnerDashboardPage } from "./pages/LearnerDashboardPage.js";
 import { NotFoundPage } from "./pages/NotFoundPage.js";
 import { RegisterPage } from "./pages/RegisterPage.js";
@@ -45,6 +48,15 @@ export function App() {
         </Route>
         <Route element={<RoleRoute role="INSTRUCTOR" />}>
           <Route path="/instructor" element={<InstructorDashboardPage />} />
+          <Route
+            path="/instructor/questions/new"
+            element={<GenerateQuestionPage />}
+          />
+          <Route path="/instructor/drafts" element={<InstructorDraftsPage />} />
+          <Route
+            path="/instructor/drafts/:id"
+            element={<InstructorDraftPage />}
+          />
         </Route>
         <Route path="*" element={<NotFoundPage />} />
       </Routes>

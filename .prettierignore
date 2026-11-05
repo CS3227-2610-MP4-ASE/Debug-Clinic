@@ -7,3 +7,15 @@ test-results
 # Verbatim synthetic participant snapshots; hashes and blind scores use original bytes.
 workflow/evaluations/royden/pilot/artifacts/
 package-lock.json
+# Immutable F01 approved inputs and historical planning/frozen interpretation evidence.
+docs/mission-brief/MP4-D2-F01-generate-question.md
+docs/features/MP4-D2-F01/ApprovalRecord.md
+docs/features/MP4-D2-F01/GrillingDecisions.md
+docs/features/MP4-D2-F01/PRD.md
+docs/features/MP4-D2-F01/TDD.md
+docs/features/MP4-D2-F01/RequirementsToTests.md
+docs/features/MP4-D2-F01/PackageReview.md
+docs/features/MP4-D2-F01/PackageApproval.md
+workflow/evaluations/royden/MP4-D2-F01/report.json
+workflow/evaluations/royden/MP4-D2-F01/report.md
+workflow/experiments/MP4-D2-F01/multi/acceptance-interpretation.md

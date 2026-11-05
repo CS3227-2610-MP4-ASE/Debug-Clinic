@@ -1,0 +1,92 @@
+{
+  "coordinator": [
+    {
+      "sha": "b7571823e2635296c60ff8cd886120f2b61ee61b",
+      "subject": "test(f01): freeze independent acceptance interpretation"
+    },
+    {
+      "sha": "e538db44081071f2c2c7c9d0a0169d207bc69d6d",
+      "subject": "feat(f01): integrate verified instructor draft generation candidate"
+    },
+    {
+      "sha": "4e610dd504b42cbb4ea648ee0ebc24282605a8ae",
+      "subject": "fix(f01): enforce reviewed streaming bounds and body retry"
+    }
+  ],
+  "implementer": [
+    {
+      "sha": "5c5541d3262707d5b28fba33ad28d7b17e4a4e2f",
+      "subject": "feat(f01): implement private instructor draft backend"
+    },
+    {
+      "sha": "6d68891f91b6cc113c05115db593303c4a8a9caf",
+      "subject": "fix(f01): enforce JavaScript string length bounds"
+    },
+    {
+      "sha": "74803bb00ebdd78b9382ee3d8d1aa38b437391b8",
+      "subject": "feat(f01): add instructor generation and private draft pages"
+    },
+    {
+      "sha": "ac5e5cd3c4a9a7498f469802d8a050a2472be028",
+      "subject": "fix(f01): validate stored provenance when listing drafts"
+    },
+    {
+      "sha": "190bb8a06aca66d237ebfe52138535b9651c57b7",
+      "subject": "fix(f01): enforce streaming content bounds and retry body interruptions"
+    }
+  ],
+  "acceptance": [
+    {
+      "sha": "778044b4ce9060a3cbff2ca8f2475d4b355197c1",
+      "subject": "test(f01): freeze independent acceptance interpretation"
+    },
+    {
+      "sha": "34582332a17d8d775f980a352cfe2366a5968397",
+      "subject": "test(f01): expected-red public HTTP and transport acceptance"
+    },
+    {
+      "sha": "7e118f479ea114d7d99fa9feb5e502ea56168690",
+      "subject": "test(f01): correct delimiter fixture lint without changing payload"
+    },
+    {
+      "sha": "0b8e354ddba9b036508f09247a6a2171f9a85ac0",
+      "subject": "test(f01): expected-red real PostgreSQL acceptance and rollback"
+    },
+    {
+      "sha": "77596f457d4c746c52b3deee5d0a3aeb21ef3d11",
+      "subject": "test(f01): expected-red instructor browser lifecycle acceptance"
+    },
+    {
+      "sha": "c9e50b32373f9f6ffe70d9ae66fa1c6493258ca5",
+      "subject": "test(f01): accept actionable specify wording in vague-topic guidance"
+    },
+    {
+      "sha": "53954564b31a3af5e2eb8aa7b29a274f2bea2732",
+      "subject": "test(f01): expected-red composed browser and remaining boundary cases"
+    },
+    {
+      "sha": "eaead71ce187586b313dd700efb14550cd6791a6",
+      "subject": "test(f01): expected-red additive migration and deadline partitions"
+    },
+    {
+      "sha": "6448edf6b653c859075605a1ee887f38ae899f1e",
+      "subject": "test(f01): expected-red observable retry timing with controlled clock"
+    },
+    {
+      "sha": "fec9a04e31aaf6db3a00d51953dbff50961acda7",
+      "subject": "test(f01): align browser locators with required accessible meaning"
+    },
+    {
+      "sha": "bb09c1a2ce1be5ee22b593ccde9bdeb09490d9b3",
+      "subject": "docs(f01): hand off independent acceptance coverage and evidence limits"
+    },
+    {
+      "sha": "edc548deb8c8be4bf03128e66a9693fe31dc9de2",
+      "subject": "test(f01): expected-red early content cap and body retry regressions"
+    },
+    {
+      "sha": "1fa799979501bc0fbce1d6992f46678fe0e8b8e5",
+      "subject": "test(f01): await public Playwright response completion for SPA case"
+    }
+  ]
+}

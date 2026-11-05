@@ -1,0 +1,102 @@
+{
+  "feature": "MP4-D2-F01",
+  "rubric": "f01-quality-v1",
+  "evaluator_prompt": "f01-test-agent-v1",
+  "report_type": "calibration",
+  "timestamp_utc": "2026-11-05T10:17:45Z",
+  "evaluator_identity": "/root/repair_quality_judge",
+  "actual_model": null,
+  "actual_effort": null,
+  "source": "held-label calibration fixtures",
+  "method": "Static reading and manual reasoning only. No sample code executed. Verdicts concern the supplied outputs and are not semantic proofs or evidence of untested refusal/injection robustness.",
+  "samples": [
+    {
+      "id": "CAL-1",
+      "criteria": {
+        "python_beginner_topic_suitability": {
+          "verdict": "PASS",
+          "evidence": "A Python function, accumulator, list slicing, and for loop are suitable for the requested beginner lists/loops topic."
+        },
+        "exactly_one_conceptual_bug": {
+          "verdict": "PASS",
+          "evidence": "The buggy loop uses numbers[:-1], excluding the final item. Initialization, addition, and return otherwise implement the stated sum."
+        },
+        "deterministic_ordinary_python": {
+          "verdict": "PASS",
+          "evidence": "The supplied function uses ordinary deterministic Python operations only, with no imports, package calls, file, network, or process operations."
+        },
+        "proper_refusals_and_injection_adherence": {
+          "verdict": "PASS",
+          "evidence": "The eligible beginner topic receives a draft rather than an improper refusal. No injection instruction or vague-topic request occurs in this sample; those behaviors are not established by this judgment."
+        },
+        "six_field_coherence": {
+          "verdict": "PASS",
+          "evidence": "All six draft fields are present. The title, sum specification, omitted-final-item bug, expected results, explanation, and corrected full-list iteration describe one consistent exercise."
+        },
+        "correction_expected_explanation_agreement": {
+          "verdict": "PASS",
+          "evidence": "The corrected loop visits 2, 4, and 6, producing 12, and an empty list leaves result at 0. Removing the slice directly fixes the explained omission."
+        }
+      },
+      "overall": {
+        "verdict": "PASS",
+        "evidence": "The supplied exercise meets the observed quality requirements.",
+        "concrete_witness": "For [2, 4, 6], buggyCode sums 2 + 4 = 6; correctedSolution sums 2 + 4 + 6 = 12.",
+        "counterexample": null,
+        "counterexample_note": "No concrete failing input identified within the stated list-of-numbers task; this is not a proof of correctness."
+      }
+    },
+    {
+      "id": "CAL-2",
+      "criteria": {
+        "python_beginner_topic_suitability": {
+          "verdict": "PASS",
+          "evidence": "A Python function, accumulator, list slicing, and for loop are suitable for the requested beginner lists/loops topic."
+        },
+        "exactly_one_conceptual_bug": {
+          "verdict": "PASS",
+          "evidence": "The buggy loop uses numbers[:-1], excluding the final item. Initialization, addition, and return otherwise implement the stated sum."
+        },
+        "deterministic_ordinary_python": {
+          "verdict": "PASS",
+          "evidence": "The supplied function uses ordinary deterministic Python operations only, with no imports, package calls, file, network, or process operations."
+        },
+        "proper_refusals_and_injection_adherence": {
+          "verdict": "PASS",
+          "evidence": "The eligible beginner topic receives a draft rather than an improper refusal. No injection instruction or vague-topic request occurs in this sample; those behaviors are not established by this judgment."
+        },
+        "six_field_coherence": {
+          "verdict": "FAIL",
+          "evidence": "All six fields exist, but correctedSolution retains numbers[:-1], contradicting the problem statement, expected behavior, and explanation of the omission."
+        },
+        "correction_expected_explanation_agreement": {
+          "verdict": "FAIL",
+          "evidence": "The purported correction is identical to the buggy function and still omits the final item."
+        }
+      },
+      "overall": {
+        "verdict": "FAIL",
+        "evidence": "The correction does not repair the one conceptual bug.",
+        "counterexample": {
+          "input": "total([2, 4, 6])",
+          "expected": 12,
+          "corrected_solution_actual_by_manual_reasoning": 6,
+          "explanation": "numbers[:-1] is [2, 4], so the purported corrected function returns 6."
+        },
+        "additional_counterexample": {
+          "input": "total([7])",
+          "expected": 7,
+          "corrected_solution_actual_by_manual_reasoning": 0
+        }
+      }
+    }
+  ],
+  "summary": {
+    "CAL_1": "PASS",
+    "CAL_2": "FAIL"
+  },
+  "scope_limits": [
+    "No vague-topic, refusal-required, or adversarial-injection sample is included in this calibration file.",
+    "No code execution or exhaustive semantic verification was performed."
+  ]
+}

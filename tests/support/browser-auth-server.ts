@@ -3,9 +3,12 @@ import { createHash, randomUUID } from "node:crypto";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { resolve } from "node:path";
 import { createApp } from "../../apps/backend/src/app.js";
+import { createAiProvider } from "../../apps/backend/src/ai/provider.js";
 import { createDebugClinicAuth } from "../../apps/backend/src/auth/auth.js";
 import { readEnv } from "../../apps/backend/src/config/env.js";
 import { createPrismaClient } from "../../apps/backend/src/db/client.js";
+import { createInstructorDrafts } from "../../apps/backend/src/exercises/instructor-drafts.js";
+import { createLogger } from "../../apps/backend/src/lib/logger.js";
 import { testRuntimeDatabaseTarget } from "./database-target.js";
 
 if (process.env["E2E_AUTH_COMPLETION"] !== "1")
@@ -17,6 +20,8 @@ if (config.appOrigin !== "http://127.0.0.1:5173")
 const channel = resolve(".workflow-state/browser-auth");
 await mkdir(channel, { recursive: true });
 const prisma = createPrismaClient(config);
+const logger = createLogger(config);
+const aiProvider = createAiProvider(config);
 const auth = createDebugClinicAuth(
   {
     ...config,
@@ -77,6 +82,14 @@ const app = createApp({
   config,
   auth,
   database: prisma,
+  aiProvider,
+  instructorDrafts: createInstructorDrafts({
+    prisma,
+    provider: aiProvider,
+    config,
+    logger,
+  }),
+  logger,
   profileUpdater: async (id, name) =>
     prisma.user.update({
       where: { id },

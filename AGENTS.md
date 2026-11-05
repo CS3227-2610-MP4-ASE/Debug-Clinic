@@ -70,6 +70,8 @@ evaluation record.
   setup. Offer a mailbox-based option when the user does not own a domain.
 - Existing lint rules exempt underscore-prefixed arguments, not unused local
   variables. Remove unused destructured test values rather than renaming them.
+- For JavaScript string-length limits, use explicit `value.length` checks and
+  surrogate-pair boundary tests; installed Zod string limits count code points.
 - Keep Compose bindings and example database URLs consistent and loopback-only;
   test their agreement so setup cannot target a different local PostgreSQL server.
 - Header redaction does not protect URL credentials. Sanitize logged URLs,

@@ -1,0 +1,50 @@
+{
+  "repair_cycle": 2,
+  "maximum_cycles": 2,
+  "issue": "Integration beforeAll still hardcoded the experiment database after URL validation was generalized",
+  "expected_identity": "Decoded database path from already validated TEST_DATABASE_URL",
+  "baseline_red": [
+    {
+      "phase": "red",
+      "database": "debugclinic_test",
+      "verified_actual_database": "debugclinic_test",
+      "host": "127.0.0.1",
+      "port": 58027,
+      "selected_case": "preview is unsaved; all edits persist",
+      "exit_code": 1,
+      "provider": "fake",
+      "timestamp_utc": "2026-11-05T11:03:15.852373+00:00"
+    }
+  ],
+  "targeted_green": [
+    {
+      "phase": "green",
+      "database": "debugclinic_test",
+      "verified_actual_database": "debugclinic_test",
+      "host": "127.0.0.1",
+      "port": 58027,
+      "selected_case": "preview is unsaved; all edits persist",
+      "exit_code": 0,
+      "provider": "fake",
+      "timestamp_utc": "2026-11-05T11:03:41.346332+00:00"
+    },
+    {
+      "phase": "green",
+      "database": "debugclinic_f01_test",
+      "verified_actual_database": "debugclinic_f01_test",
+      "host": "127.0.0.1",
+      "port": 58027,
+      "selected_case": "preview is unsaved; all edits persist",
+      "exit_code": 0,
+      "provider": "fake",
+      "timestamp_utc": "2026-11-05T11:03:45.151207+00:00"
+    }
+  ],
+  "cases_per_green_run": 1,
+  "other_cases_skipped_per_run": 119,
+  "provider_calls": 0,
+  "application_logic_changed": false,
+  "CI_configuration_changed": false,
+  "full_suite_rerun_locally": false,
+  "independent_review": "PASS scoped database-identity correction"
+}

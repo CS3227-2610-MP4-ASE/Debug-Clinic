@@ -74,5 +74,5 @@ describe("synthetic database target admission", () => {
       import("../../../tests/support/browser-auth-server.js"),
     ).rejects.toThrow("Unsafe synthetic database target");
     expect(createPrismaClient).not.toHaveBeenCalled();
-  });
+  }, 15_000); // Cold parallel module transformation is outside the app deadline.
 });

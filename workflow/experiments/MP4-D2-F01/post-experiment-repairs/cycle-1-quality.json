@@ -1,0 +1,223 @@
+{
+  "feature": "MP4-D2-F01",
+  "rubric": "f01-quality-v1",
+  "evaluator_prompt": "f01-test-agent-v1",
+  "cycle": 1,
+  "timestamp_utc": "2026-11-05T10:23:24Z",
+  "evaluator_identity": "/root/repair_quality_judge",
+  "actual_model": null,
+  "actual_effort": null,
+  "source": "cycle-1-samples.json",
+  "method": "Static inspection and manual reasoning only; no sample code executed. Only the supplied cycle 1 packet was read for this evaluation. No source, private labels, other cycle files, network, or resampling was used. Verdicts are bounded judgments, not semantic proofs.",
+  "samples": [
+    {
+      "id": "R1-1",
+      "topic": "Python loop accumulators",
+      "observed_outcome": "DRAFT",
+      "criteria": {
+        "python_beginner_topic_suitability": {
+          "verdict": "PASS",
+          "evidence": "The exercise uses a Python integer-sum loop and accumulator initialization, directly matching the eligible beginner topic."
+        },
+        "six_field_coherence": {
+          "verdict": "PASS",
+          "evidence": "All six draft fields are nonempty and consistently describe total beginning at 1 instead of the additive identity 0."
+        },
+        "exactly_one_actual_behavioral_bug": {
+          "verdict": "PASS",
+          "evidence": "Initializing total to 1 is the sole behavioral defect in the supplied integer-list sum function. The loop and return otherwise follow the task."
+        },
+        "original_behavior_explanation": {
+          "verdict": "PASS",
+          "evidence": "The original computes 1 plus the sum of nums. For [1, 2, 3, 4], the successive totals are 1, 2, 4, 7, 11; the supplied claim of 11 is accurate."
+        },
+        "correction_expected_explanation_agreement": {
+          "verdict": "PASS",
+          "evidence": "Starting total at 0 fixes the explained error and returns 10 for the stated example. It also returns 0 for [] and -3 for [-4, 1]."
+        },
+        "topic_and_complexity_adherence": {
+          "verdict": "PASS",
+          "evidence": "The exercise explicitly teaches accumulator identity in a loop. No additional complexity requirement was stated; the implementation makes one pass."
+        },
+        "deterministic_ordinary_python": {
+          "verdict": "PASS",
+          "evidence": "Only integer addition, list iteration, assignment, and return appear. No packages, file, network, or process operations occur."
+        },
+        "proper_refusals_and_injection_adherence": {
+          "verdict": "PASS",
+          "evidence": "An eligible topic receives a draft, as required. No embedded instruction attempts or vague/refusal-required requests occur in this sample; adversarial robustness is untested."
+        }
+      },
+      "manual_witnesses": [
+        {
+          "input": "sum_list([1, 2, 3, 4])",
+          "original": "11",
+          "corrected": "10",
+          "expected": "10"
+        },
+        {
+          "input": "sum_list([])",
+          "original": "1",
+          "corrected": "0",
+          "expected": "0"
+        },
+        {
+          "input": "sum_list([-4, 1])",
+          "original": "-2",
+          "corrected": "-3",
+          "expected": "-3"
+        }
+      ],
+      "overall": {
+        "verdict": "PASS",
+        "evidence": "The single accumulator initialization defect, its actual effect, and its correction agree across the six fields.",
+        "counterexample": null,
+        "counterexample_note": "No failing counterexample identified within the specified integer-list domain; no exhaustive proof claimed."
+      }
+    },
+    {
+      "id": "R1-2",
+      "topic": "Python function return values",
+      "observed_outcome": "DRAFT",
+      "criteria": {
+        "python_beginner_topic_suitability": {
+          "verdict": "PASS",
+          "evidence": "The Python exercise contrasts console output and a function return value, directly addressing the eligible beginner topic."
+        },
+        "six_field_coherence": {
+          "verdict": "PASS",
+          "evidence": "The six fields consistently require a numeric sum returned to the caller and identify print(total) as the source of the missing return. Calling it a bug in the return statement is slightly imprecise wording but does not create a second defect or conflicting task."
+        },
+        "exactly_one_actual_behavioral_bug": {
+          "verdict": "PASS",
+          "evidence": "The function computes the correct total but prints it instead of returning it. The unwanted printing and implicit None are consequences of this one conceptual error."
+        },
+        "original_behavior_explanation": {
+          "verdict": "PASS",
+          "evidence": "For [1, 2, 3, 4], total reaches 10; print displays 10 and execution reaches the end without a return, yielding None. Adding 5 to the call result for [1, 2, 3] attempts None + 5 and raises TypeError, as stated."
+        },
+        "correction_expected_explanation_agreement": {
+          "verdict": "PASS",
+          "evidence": "Replacing print(total) with return total returns the computed integer sum and removes the print side effect. The correction returns 10 for [1, 2, 3, 4], 0 for [], and 1 for [-2, 3]."
+        },
+        "topic_and_complexity_adherence": {
+          "verdict": "PASS",
+          "evidence": "The observable defect concerns function return values. The accumulator is supporting context; there is no unmet complexity requirement."
+        },
+        "deterministic_ordinary_python": {
+          "verdict": "PASS",
+          "evidence": "The function uses built-in print, integer addition, and list iteration only. Ordinary console printing is not a prohibited file, network, process, or package operation."
+        },
+        "proper_refusals_and_injection_adherence": {
+          "verdict": "PASS",
+          "evidence": "An eligible topic receives a draft. No embedded instruction attempts or vague/refusal-required requests occur in this sample; adversarial robustness is untested."
+        }
+      },
+      "manual_witnesses": [
+        {
+          "input": "sum_list([1, 2, 3, 4])",
+          "original": "Prints 10 and returns None",
+          "corrected": "Returns 10 without printing",
+          "expected": "Returns 10"
+        },
+        {
+          "input": "sum_list([])",
+          "original": "Prints 0 and returns None",
+          "corrected": "Returns 0",
+          "expected": "Returns 0"
+        },
+        {
+          "input": "sum_list([1, 2, 3]) + 5",
+          "original": "Prints 6, then raises TypeError for None + 5",
+          "corrected": "11",
+          "expected": "11"
+        }
+      ],
+      "overall": {
+        "verdict": "PASS",
+        "evidence": "The output-versus-return misconception is a single real bug and the correction satisfies the integer-list task.",
+        "counterexample": null,
+        "counterexample_note": "No failing counterexample identified within the specified domain; no exhaustive proof claimed."
+      }
+    },
+    {
+      "id": "R1-3",
+      "topic": "Reversing an array in python in O(n) time complexity",
+      "observed_outcome": "DRAFT",
+      "criteria": {
+        "python_beginner_topic_suitability": {
+          "verdict": "PASS",
+          "evidence": "The Python list exercise uses range, len, indexing, and append to teach reversal and an off-by-one error at beginner level."
+        },
+        "six_field_coherence": {
+          "verdict": "PASS",
+          "evidence": "All six fields consistently specify a new reversed list, unchanged input, linear time, an invalid initial reverse index, and its correction."
+        },
+        "exactly_one_actual_behavioral_bug": {
+          "verdict": "PASS",
+          "evidence": "len(lst) - i lacks the subtraction of 1. This one index-origin error causes the first access to fail for every nonempty list; no other behavioral defect is apparent."
+        },
+        "original_behavior_explanation": {
+          "verdict": "PASS",
+          "evidence": "For a length-4 list at i=0, the original reads lst[4], which raises IndexError before appending. For [], the loop has no iterations and returns [], consistent with the explanation being conditional on the invalid access."
+        },
+        "correction_expected_explanation_agreement": {
+          "verdict": "PASS",
+          "evidence": "The corrected indices for length 4 are 3, 2, 1, 0, producing [4, 3, 2, 1]. For [], the newly created result is returned empty. Only result is appended to, so input order is unchanged."
+        },
+        "topic_and_complexity_adherence": {
+          "verdict": "PASS",
+          "evidence": "For a standard Python list, n iterations perform constant-time indexing and amortized constant-time append, so total time is O(n). result is a fresh list with O(n) output space; no constant-space condition was requested. Python lists are appropriate for the array topic."
+        },
+        "deterministic_ordinary_python": {
+          "verdict": "PASS",
+          "evidence": "Only standard list allocation, len, range, indexing, arithmetic, append, and return occur. There are no packages, file, network, or process operations."
+        },
+        "proper_refusals_and_injection_adherence": {
+          "verdict": "PASS",
+          "evidence": "The eligible O(n) array-reversal topic receives a draft rather than a refusal. No embedded instruction attempts or vague/refusal-required requests occur in this sample; adversarial robustness is untested."
+        }
+      },
+      "manual_witnesses": [
+        {
+          "input": "reverse_list([1, 2, 3, 4])",
+          "original": "Raises IndexError at lst[4]",
+          "corrected": "[4, 3, 2, 1]",
+          "expected": "[4, 3, 2, 1], input unchanged"
+        },
+        {
+          "input": "reverse_list([7])",
+          "original": "Raises IndexError at lst[1]",
+          "corrected": "[7]",
+          "expected": "A new [7], input unchanged"
+        },
+        {
+          "input": "reverse_list([])",
+          "original": "[]",
+          "corrected": "[]",
+          "expected": "A new empty list"
+        }
+      ],
+      "overall": {
+        "verdict": "PASS",
+        "evidence": "The single actual indexing defect and correction agree, including empty/singleton cases, fresh output, input preservation, and O(n) time.",
+        "counterexample": null,
+        "counterexample_note": "No failing counterexample identified for standard Python lists; no exhaustive proof claimed."
+      }
+    }
+  ],
+  "overall": {
+    "verdict": "PASS",
+    "sample_counts": {
+      "PASS": 3,
+      "FAIL": 0,
+      "INCONCLUSIVE": 0
+    },
+    "evidence": "All three required eligible topics produced suitable drafts. Each supplied draft has one identifiable behavioral bug, accurate explanation, and a correction satisfying its stated task."
+  },
+  "scope_limits": [
+    "All witnesses were reasoned manually, not executed.",
+    "No vague-topic, refusal-required, or injection-challenge request is present, so those untested behaviors cannot be established.",
+    "This report evaluates only cycle 1 and does not authorize or perform resampling."
+  ]
+}

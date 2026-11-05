@@ -1,0 +1,217 @@
+{
+  "as_of": "2026-11-04T20:49:54.901011+00:00",
+  "start_utc": "2026-11-04T19:19:03.881471+00:00",
+  "candidate_utc": "2026-11-04T20:06:41.826249+00:00",
+  "reviewed_utc": "2026-11-04T20:49:53.889257+00:00",
+  "start_to_candidate_seconds": 2857.944778,
+  "start_to_reviewed_seconds": 5450.007786,
+  "candidate_to_reviewed_seconds": 2592.063008,
+  "first_complete_local_green_utc": "2026-11-04T20:01:30.743534+00:00",
+  "logical_agent_spans": {
+    "coordinator": {
+      "source": "experiment start-to-reviewed boundary",
+      "seconds": 5450.007786
+    },
+    "acceptance": {
+      "source": "own turn_context to final_answer metadata; not CPU/idle time",
+      "intervals": [
+        {
+          "start": "2026-11-04T19:20:38.733Z",
+          "end": "2026-11-04T19:55:00.326Z",
+          "seconds": 2061.593
+        },
+        {
+          "start": "2026-11-04T20:20:19.535Z",
+          "end": "2026-11-04T20:25:08.799Z",
+          "seconds": 289.264
+        },
+        {
+          "start": "2026-11-04T20:29:18.854Z",
+          "end": "2026-11-04T20:30:57.889Z",
+          "seconds": 99.035
+        }
+      ],
+      "seconds": 2449.892
+    },
+    "implementer": {
+      "source": "own turn_context to final_answer metadata; not CPU/idle time",
+      "intervals": [
+        {
+          "start": "2026-11-04T19:25:19.924Z",
+          "end": "2026-11-04T19:47:58.727Z",
+          "seconds": 1358.803
+        },
+        {
+          "start": "2026-11-04T20:20:08.135Z",
+          "end": "2026-11-04T20:25:39.106Z",
+          "seconds": 330.971
+        }
+      ],
+      "seconds": 1689.7740000000001
+    },
+    "functional-review": {
+      "source": "own turn_context to final_answer metadata; not CPU/idle time",
+      "intervals": [
+        {
+          "start": "2026-11-04T20:10:19.643Z",
+          "end": "2026-11-04T20:16:44.432Z",
+          "seconds": 384.789
+        },
+        {
+          "start": "2026-11-04T20:34:12.516Z",
+          "end": "2026-11-04T20:35:34.190Z",
+          "seconds": 81.674
+        }
+      ],
+      "seconds": 466.46299999999997
+    },
+    "standards-review": {
+      "source": "own turn_context to final_answer metadata; not CPU/idle time",
+      "intervals": [
+        {
+          "start": "2026-11-04T20:10:46.117Z",
+          "end": "2026-11-04T20:16:53.452Z",
+          "seconds": 367.335
+        },
+        {
+          "start": "2026-11-04T20:34:34.071Z",
+          "end": "2026-11-04T20:35:41.810Z",
+          "seconds": 67.739
+        }
+      ],
+      "seconds": 435.07399999999996
+    },
+    "security-review": {
+      "source": "own turn_context to final_answer metadata; not CPU/idle time",
+      "intervals": [
+        {
+          "start": "2026-11-04T20:11:07.710Z",
+          "end": "2026-11-04T20:15:30.546Z",
+          "seconds": 262.836
+        },
+        {
+          "start": "2026-11-04T20:34:53.265Z",
+          "end": "2026-11-04T20:36:02.714Z",
+          "seconds": 69.449
+        }
+      ],
+      "seconds": 332.285
+    }
+  },
+  "summed_logical_agent_seconds": 10823.495786,
+  "development_tokens": {
+    "cache_write": 0,
+    "cached_input": 72746624,
+    "input": 73733024,
+    "output": 341640,
+    "reasoning_output": 144955,
+    "total": 74074664
+  },
+  "derived_uncached_input": 986400,
+  "per_actor": [
+    {
+      "actor": "acceptance",
+      "cache_write": 0,
+      "cached_input": 13833728,
+      "input": 13991725,
+      "output": 81132,
+      "reasoning_output": 23135,
+      "total": 14072857,
+      "derived_uncached_input": 157997
+    },
+    {
+      "actor": "coordinator",
+      "cache_write": 0,
+      "cached_input": 40486016,
+      "input": 40692499,
+      "output": 175715,
+      "reasoning_output": 100152,
+      "total": 40868214,
+      "derived_uncached_input": 206483
+    },
+    {
+      "actor": "functional-review",
+      "cache_write": 0,
+      "cached_input": 5115264,
+      "input": 5284492,
+      "output": 13045,
+      "reasoning_output": 4076,
+      "total": 5297537,
+      "derived_uncached_input": 169228
+    },
+    {
+      "actor": "implementer",
+      "cache_write": 0,
+      "cached_input": 7366528,
+      "input": 7483894,
+      "output": 51253,
+      "reasoning_output": 10988,
+      "total": 7535147,
+      "derived_uncached_input": 117366
+    },
+    {
+      "actor": "security-review",
+      "cache_write": 0,
+      "cached_input": 2583680,
+      "input": 2741680,
+      "output": 10777,
+      "reasoning_output": 4085,
+      "total": 2752457,
+      "derived_uncached_input": 158000
+    },
+    {
+      "actor": "standards-review",
+      "cache_write": 0,
+      "cached_input": 3361408,
+      "input": 3538734,
+      "output": 9718,
+      "reasoning_output": 2519,
+      "total": 3548452,
+      "derived_uncached_input": 177326
+    }
+  ],
+  "candidate_snapshot_tokens": {
+    "cache_write": 0,
+    "cached_input": 38299776,
+    "input": 38705994,
+    "output": 190869,
+    "reasoning_output": 63088,
+    "total": 38896863
+  },
+  "postcandidate_observed_token_delta": 35177801,
+  "independent_review_cohort_tokens": {
+    "cache_write": 0,
+    "cached_input": 11060352,
+    "input": 11564906,
+    "output": 33540,
+    "reasoning_output": 10680,
+    "total": 11598446
+  },
+  "soft_estimates": {
+    "wall_seconds": 7200,
+    "observed_tokens": 5000000
+  },
+  "warnings": ["tokens_soft_budget_reached"],
+  "diagnostics": {
+    "legacy_cumulative_tokens_unsupported_v1": 485,
+    "unknown_record_schema": 115
+  },
+  "application_provider_usage": {
+    "live_calls": 0,
+    "live_input_tokens": null,
+    "live_output_tokens": null,
+    "synthetic_counts": "fake/null or injected fixture values; not real provider consumption",
+    "retry_consumption": "unavailable"
+  },
+  "limits": [
+    "All mapped coordinator/writer/reviewer sessions are included; no cumulative token snapshots or inherited response double counting.",
+    "Cached input and reasoning output are subsets; totals are neither unique context nor billing/quota attribution.",
+    "Snapshots are observed as-of cutoffs; last reporting/final-answer usage may not yet be observable.",
+    "Phase token deltas are snapshot differences; boundary-crossing responses cannot be subdivided.",
+    "Logical spans include tools/waits, overlap across actors and are not CPU time. Silence proves no idle interval.",
+    "Monitor closure events include observation lag; own turn metadata gives separate logical spans.",
+    "Sparse monitor requirement events do not replace the exhaustive coverage artifact or external acceptance obligations.",
+    "This is one paired case study; no other-arm result or causal/statistical comparison was made.",
+    "Core tool profile lists execution/delegation families; no exhaustive available-connector inventory fingerprint was recorded."
+  ]
+}

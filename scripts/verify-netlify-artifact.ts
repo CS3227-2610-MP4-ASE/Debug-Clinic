@@ -132,6 +132,56 @@ async function smoke(artifact: string): Promise<number> {
     );
     step = "wrong-role denial";
     expectStatus(await request("/api/v1/ai/hint-preview", {}, cookie), 403);
+    step = "instructor generation in packaged composition";
+    const generated = await request(
+      "/api/v1/instructor/questions/generate",
+      { topic: "Python lists and for loops" },
+      cookie,
+    );
+    expectStatus(generated, 200);
+    const preview = (await generated.json()) as {
+      topic: string;
+      draft: Record<string, string>;
+      generation: { id: string; provider: string };
+    };
+    if (
+      preview.generation.provider !== "fake" ||
+      Object.keys(preview.draft).length !== 6
+    )
+      throw new Error("Incorrect packaged generation contract");
+    step = "explicit draft persistence in packaged composition";
+    const saved = await request(
+      "/api/v1/instructor/drafts",
+      {
+        topic: preview.topic,
+        draft: { ...preview.draft, title: "Packaged private draft" },
+        generationId: preview.generation.id,
+      },
+      cookie,
+    );
+    expectStatus(saved, 201);
+    const savedBody = (await saved.json()) as {
+      draft: { id: string; status: string; title: string };
+    };
+    if (
+      savedBody.draft.status !== "DRAFT" ||
+      savedBody.draft.title !== "Packaged private draft"
+    )
+      throw new Error("Incorrect packaged persistence contract");
+    step = "packaged owner list and read-only retrieval";
+    const list = await request("/api/v1/instructor/drafts", undefined, cookie);
+    expectStatus(list, 200);
+    const listed = (await list.json()) as { drafts: { id: string }[] };
+    if (!listed.drafts.some((draft) => draft.id === savedBody.draft.id))
+      throw new Error("Packaged draft missing from owner list");
+    expectStatus(
+      await request(
+        `/api/v1/instructor/drafts/${encodeURIComponent(savedBody.draft.id)}`,
+        undefined,
+        cookie,
+      ),
+      200,
+    );
     step = "signout";
     expectStatus(await request("/api/auth/sign-out", {}, cookie), 200);
     step = "revoked-cookie denial";
@@ -163,6 +213,8 @@ async function smoke(artifact: string): Promise<number> {
     // Construct cleanup access after exercising the artifact, so its startup
     // cannot accidentally reuse a source-created global Prisma client.
     const database = createPrismaClient(readEnv());
+    await database.aiUsageEvent.deleteMany({ where: { user: { email } } });
+    await database.exercise.deleteMany({ where: { author: { email } } });
     await database.user.deleteMany({ where: { email } });
     await database.$disconnect();
   }
