@@ -93,6 +93,12 @@ export function GenerateQuestionPage() {
         </Stack>
       )}
       {error && <Alert severity="error">{error}</Alert>}
+      {(sessionExpired || !user) && !preview && (
+        <Alert severity="warning">
+          Your session expired.{" "}
+          <RouterLink to="/sign-in">Sign in again</RouterLink> to continue.
+        </Alert>
+      )}
       {pending && (
         <Stack gap={1}>
           <Typography role="status">Generating question…</Typography>

@@ -361,7 +361,9 @@ test("B24/B25 Remove has exact cancellation/focus and retains read-only Removed 
     .getByRole("button", { name: "Remove", exact: true })
     .click();
   await expect(
-    page.getByText("Removed. Your read-only record is retained."),
+    page.getByText("Removed. Your read-only record is retained.", {
+      exact: true,
+    }),
   ).toBeVisible();
   expect(state.removeCalls).toBe(1);
   await expect(
@@ -370,4 +372,80 @@ test("B24/B25 Remove has exact cancellation/focus and retains read-only Removed 
       exact: true,
     }),
   ).toHaveCount(0);
+});
+
+test("B08 pending publication locks all conflicting actions and ignores duplicate activation", async ({
+  page,
+}) => {
+  const state = await install(page);
+  let release!: () => void;
+  const wait = new Promise<void>((resolve) => {
+    release = resolve;
+  });
+  let calls = 0;
+  await page.route("**/api/v1/instructor/questions/publish", async (route) => {
+    calls++;
+    await wait;
+    await route.fulfill({
+      json: {
+        question: {
+          ...question,
+          status: "PUBLISHED",
+          publishedAt: "2026-11-06T00:00:00.000Z",
+          revision: 1,
+        },
+        outcome: "published",
+      },
+    });
+  });
+  await preview(page);
+  await page.getByRole("checkbox", { name: review }).check();
+  const publish = page.getByRole("button", { name: "Publish", exact: true });
+  await publish.click();
+  await expect(page.getByRole("status")).toContainText("Publishing question");
+  await expect(publish).toBeDisabled();
+  await expect(
+    page.getByRole("button", { name: "Save draft", exact: true }),
+  ).toBeDisabled();
+  await expect(
+    page.getByRole("button", { name: "New question", exact: true }),
+  ).toBeDisabled();
+  await expect(page.getByRole("textbox", { name: /^Title/ })).toBeDisabled();
+  await publish.evaluate((button) =>
+    button.dispatchEvent(new MouseEvent("click", { bubbles: true })),
+  );
+  release();
+  await expect(
+    page.getByText("Published. Question content is read-only."),
+  ).toBeVisible();
+  expect(calls).toBe(1);
+  expect(state.patches).toHaveLength(0);
+});
+
+test("B35 independent AuthProvider session loss retains dirty saved editor and explicit logout clears it", async ({
+  page,
+}) => {
+  const state = await install(page);
+  await page.goto(`/instructor/questions/${question.id}`);
+  await page
+    .getByRole("textbox", { name: /^Title/ })
+    .fill("Dirty before session loss");
+  const reads = state.gets;
+  state.user = null;
+  await page.evaluate(() => window.dispatchEvent(new Event("focus")));
+  await expect(
+    page.getByRole("alert").filter({ hasText: "Your session expired" }),
+  ).toBeVisible();
+  await expect(page.getByRole("textbox", { name: /^Title/ })).toHaveValue(
+    "Dirty before session loss",
+  );
+  await expect(
+    page.getByRole("button", { name: "Save changes", exact: true }),
+  ).toBeDisabled();
+  expect(state.gets).toBe(reads);
+  expect(state.patches).toHaveLength(0);
+  await page.getByRole("link", { name: "Sign in again", exact: true }).click();
+  await page.getByRole("button", { name: "Leave", exact: true }).click();
+  await expect(page).toHaveURL(/\/sign-in$/);
+  await expect(page.getByRole("textbox", { name: /^Title/ })).toHaveCount(0);
 });

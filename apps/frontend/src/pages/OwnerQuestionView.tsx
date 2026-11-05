@@ -31,6 +31,7 @@ export function OwnerQuestionView({
   const [confirm, setConfirm] = useState(false);
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [feedback, setFeedback] = useState<string | null>(null);
   const busy = useRef(false);
   const cancelButton = useRef<HTMLButtonElement>(null);
   const active = useRef(true);
@@ -50,7 +51,10 @@ export function OwnerQuestionView({
     setConfirm(false);
     try {
       const result = await removeQuestion(question.id);
-      if (active.current) onChange(result.question);
+      if (active.current) {
+        onChange(result.question);
+        setFeedback("Question removed. Your read-only record is retained.");
+      }
     } catch (failed) {
       if (active.current)
         setError(
@@ -67,9 +71,9 @@ export function OwnerQuestionView({
   }
   return (
     <Stack gap={3} minWidth={0}>
-      {message && (
+      {(feedback ?? message) && (
         <Alert severity="success" role="status">
-          {message}
+          {feedback ?? message}
         </Alert>
       )}
       <Typography>
@@ -97,7 +101,7 @@ export function OwnerQuestionView({
       <Typography sx={{ overflowWrap: "anywhere" }}>
         Topic: {question.topic}
       </Typography>
-      <InstructorDraftFields value={question} />
+      <InstructorDraftFields value={question} showDraftNotice={false} />
       {expired && (
         <Alert severity="warning">
           Your session expired. Sign in again before making changes.

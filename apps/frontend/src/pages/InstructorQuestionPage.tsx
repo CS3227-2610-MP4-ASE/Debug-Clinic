@@ -1,7 +1,7 @@
 import { Alert, Button, Stack, Typography } from "@mui/material";
 import type { OwnerQuestion } from "@debugclinic/contracts";
 import { useEffect, useState } from "react";
-import { useLocation, useParams } from "react-router-dom";
+import { Link as RouterLink, useLocation, useParams } from "react-router-dom";
 import { useAuth } from "../auth/AuthProvider.js";
 import {
   getOwnerQuestion,
@@ -53,6 +53,12 @@ export function InstructorQuestionPage() {
       </Typography>
       {pending && <Typography role="status">Loading question…</Typography>}
       {error && <Alert severity="error">{error}</Alert>}
+      {(sessionExpired || !user) && !question && (
+        <Alert severity="warning">
+          Your session expired.{" "}
+          <RouterLink to="/sign-in">Sign in again</RouterLink> to continue.
+        </Alert>
+      )}
       {error && (
         <Button
           disabled={sessionExpired || !user}
