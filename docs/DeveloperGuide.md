@@ -213,8 +213,9 @@ GitHub Actions provides:
 
 Native Netlify owns trusted-team PR previews on the development site; there is no
 duplicate GitHub preview deployment job. The dependency-free ignore command allows
-only that site's `deploy-preview` context. It skips native master, branch, and
-production-site builds before the build command runs. Its `npm run build:netlify` validates
+that site's `deploy-preview` context and production-context builds from `master`.
+It skips branch deploys and all production-site native builds before the build
+command runs. Its `npm run build:netlify` validates
 the development Supabase target, applies migrations, and builds before publishing.
 Build metadata bundles each preview's exact origin with its Function. It contains
 no secrets, and simultaneous PRs do not overwrite shared origin variables.
@@ -222,9 +223,9 @@ no secrets, and simultaneous PRs do not overwrite shared origin variables.
 Google login uses Better Auth's dev-only OAuth proxy through the stable dev
 callback. Configure the same dedicated proxy secret on stable dev and trusted
 previews, and deploy stable dev first. Actual production cannot enable this proxy.
-The stable dev callback is a separately bootstrapped service; it is not updated
-automatically on master pushes. Retain its existing deployment for Google preview
-login, or explicitly replace this callback design before removing it.
+The stable dev callback updates automatically after merges to `master`, along
+with the development frontend and API. It remains required for Google preview
+login; PR builds publish their own preview URLs without replacing stable dev.
 See [credential setup](CredentialsSetup.md#automatic-preview-origins-and-a-fixed-google-callback)
 for the required one-time dashboard configuration and trust boundaries.
 
