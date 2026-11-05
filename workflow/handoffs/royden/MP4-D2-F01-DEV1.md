@@ -1,5 +1,22 @@
 # Developer 1-safe local implementation handoff
 
+## Post-experiment repair update
+
+The owner authorized targeted correction of final-review issues, at most two
+cycles. Cycle 1 resolves the shared CI test-database target and default-browser
+opt-in regressions. Prompt `soc-question-v2` clarifies beginner topics and one-bug
+coherence; provenance uses the same version authority. The unchanged wire grammar,
+auth interfaces, migration and publication boundary are preserved.
+
+Observed targeted checks: 12 unit/transport passes, one real-PG provenance pass,
+two correct opt-out skips, changed-file lint/format and backend declaration build.
+A calibrated independent evaluator passed all three targeted live cases; source,
+standards and security repair reviews pass. No second cycle or full-suite rerun.
+This does not replace the frozen experiment or establish full release acceptance.
+Owner authorization covers pushing this branch after resolving these findings;
+PR creation, merge and deployment need their own authority. The earlier frozen
+handoff follows as historical evidence.
+
 Local branch `royden/f01-multi`, corrected source commit
 `4e610dd504b42cbb4ea648ee0ebc24282605a8ae`. No push, merge or deployment performed.
 

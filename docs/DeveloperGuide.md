@@ -107,7 +107,7 @@ instructor-reported; the generation ID does not attest to edited content.
 The additive migration adds four nullable version fields without backfilling
 legacy records. Incomplete legacy records are excluded from this draft surface.
 
-`soc-question-v1` sends exactly fixed system instructions and one topic JSON
+`soc-question-v2` sends exactly fixed system instructions and one topic JSON
 message. Structured output, two streaming byte caps (65,536-byte envelope and
 32,768-byte selected content), one overall deadline and bounded transient retries
 protect the boundary. String limits explicitly use JavaScript UTF-16 length.

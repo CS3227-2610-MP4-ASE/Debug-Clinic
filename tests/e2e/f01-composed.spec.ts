@@ -9,6 +9,10 @@ import { PrismaClient } from "../../generated/prisma/client.js";
 import { f01DatabaseUrl } from "../support/f01-database.js";
 import { f01Edited, f01Origin, f01Topic } from "../support/f01-fixtures.js";
 
+test.skip(
+  process.env["E2E_AUTH_COMPLETION"] !== "1",
+  "Requires the opt-in captured-outbox authentication runtime",
+);
 test.use({ trace: "off", screenshot: "off" });
 const recipients: string[] = [];
 const channel = resolve(".workflow-state/browser-auth");
@@ -21,10 +25,6 @@ const fields = {
   correctedSolution: /^Corrected solution/i,
 };
 test.beforeAll(() => {
-  if (process.env["E2E_AUTH_COMPLETION"] !== "1")
-    throw new Error(
-      "F01 composed browser requires the existing captured-outbox auth runtime",
-    );
   const db = f01DatabaseUrl();
   if (process.env["E2E_TEST_DATABASE_URL"] !== db)
     throw new Error(

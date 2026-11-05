@@ -1,0 +1,72 @@
+{
+  "feature": "MP4-D2-F01",
+  "rubric": "f01-quality-v1",
+  "evaluator_prompt": "f01-test-agent-v1",
+  "cycle": 1,
+  "promptVersion": "soc-question-v2",
+  "generator": {
+    "provider": "soc",
+    "model": "qwen3-coder-next",
+    "timeoutMs": 30000,
+    "maxRetries": 2
+  },
+  "samples": [
+    {
+      "id": "R1-1",
+      "topic": "Python loop accumulators",
+      "outcome": "DRAFT",
+      "response": {
+        "schemaVersion": "f01-question-v1",
+        "kind": "draft",
+        "language": "python",
+        "level": "beginner-undergraduate",
+        "draft": {
+          "title": "Incorrect Accumulator Initialization in Summing a List",
+          "problemStatement": "A student wrote a function to compute the sum of all integers in a list. The function uses a loop and an accumulator variable `total`. However, the current implementation contains a subtle error in how the accumulator is initialized. Given a list of integers, what sum does the buggy function return for the list `[1, 2, 3, 4]`, and what sum should it correctly return?",
+          "buggyCode": "def sum_list(nums):\n    total = 1  # Bug: initialized to 1 instead of 0\n    for n in nums:\n        total = total + n\n    return total",
+          "expectedBehavior": "For the input list `[1, 2, 3, 4]`, the correct sum should be `10`. The buggy function returns `11` because it starts with `total = 1`, and the loop adds all elements: `1 + 1 + 2 + 3 + 4 = 11`.",
+          "bugExplanation": "The accumulator variable `total` is incorrectly initialized to `1` instead of `0`. Since `0` is the additive identity, initializing with `1` causes every computed sum to be off by exactly `1` (too large by 1). This is a classic mistake when using accumulators: the initial value must match the identity element for the operation being accumulated (addition \u00e2\u2020\u2019 0, multiplication \u00e2\u2020\u2019 1, etc.).",
+          "correctedSolution": "def sum_list(nums):\n    total = 0  # Fixed: initialize accumulator to identity for addition\n    for n in nums:\n        total = total + n\n    return total"
+        }
+      }
+    },
+    {
+      "id": "R1-2",
+      "topic": "Python function return values",
+      "outcome": "DRAFT",
+      "response": {
+        "schemaVersion": "f01-question-v1",
+        "kind": "draft",
+        "language": "python",
+        "level": "beginner-undergraduate",
+        "draft": {
+          "title": "Returning the Sum of List Elements",
+          "problemStatement": "A student is asked to write a function `sum_list(nums)` that takes a list of integers `nums` and returns the sum of all its elements. However, their implementation contains a subtle bug in the return statement. Identify the issue and provide the corrected version.",
+          "buggyCode": "def sum_list(nums):\n    total = 0\n    for num in nums:\n        total = total + num\n    print(total)",
+          "expectedBehavior": "For a list like [1, 2, 3, 4], the function should return 10, not print 10 and return None.",
+          "bugExplanation": "The buggy function uses `print(total)` instead of `return total`. The `print()` function outputs to the console but does not pass a value back to the caller; therefore, the function implicitly returns `None`. When called, `sum_list([1, 2, 3, 4])` will display `10` but evaluate to `None`, which causes issues if the return value is used in further computations (e.g., `sum_list([1,2,3]) + 5` raises a TypeError).",
+          "correctedSolution": "def sum_list(nums):\n    total = 0\n    for num in nums:\n        total = total + num\n    return total"
+        }
+      }
+    },
+    {
+      "id": "R1-3",
+      "topic": "Reversing an array in python in O(n) time complexity",
+      "outcome": "DRAFT",
+      "response": {
+        "schemaVersion": "f01-question-v1",
+        "kind": "draft",
+        "language": "python",
+        "level": "beginner-undergraduate",
+        "draft": {
+          "title": "Fix the List Reversal Function",
+          "problemStatement": "A student is asked to write a function that takes a list and returns a *new* list containing the elements in reverse order. The function should run in O(n) time and must not modify the original list. They wrote the following code, but it has a bug. Identify and fix the bug.",
+          "buggyCode": "def reverse_list(lst):\n    result = []\n    for i in range(len(lst)):\n        result.append(lst[len(lst) - i])\n    return result",
+          "expectedBehavior": "For a non-empty list like [1, 2, 3, 4], the function should return [4, 3, 2, 1]. For an empty list [], it should return []. The original list must remain unchanged.",
+          "bugExplanation": "The bug is an off-by-one index error: `lst[len(lst) - i]` accesses an out-of-bounds index when `i = 0`, because list indices run from `0` to `len(lst) - 1`. So when `i = 0`, the code tries to access `lst[len(lst)]`, which raises an IndexError. The correct index for the element at position `i` from the end should be `len(lst) - 1 - i`.",
+          "correctedSolution": "def reverse_list(lst):\n    result = []\n    for i in range(len(lst)):\n        result.append(lst[len(lst) - 1 - i])\n    return result"
+        }
+      }
+    }
+  ]
+}

@@ -21,6 +21,7 @@ import {
 
 import { Prisma } from "../../../../generated/prisma/client.js";
 import type { AiProvider } from "../ai/provider.js";
+import { QUESTION_PROMPT_VERSION } from "../ai/question-prompt.js";
 import type { AppConfig } from "../config/env.js";
 import type { DebugClinicPrisma } from "../db/client.js";
 import { AppError, DependencyUnavailableError } from "../lib/errors.js";
@@ -107,7 +108,9 @@ export function createInstructorDrafts(
     provider: config.aiProvider,
     model: config.aiProvider === "soc" ? (config.socLlmModel ?? null) : null,
     promptVersion:
-      config.aiProvider === "soc" ? "soc-question-v1" : "fake-question-v1",
+      config.aiProvider === "soc"
+        ? QUESTION_PROMPT_VERSION
+        : "fake-question-v1",
   };
 
   return {

@@ -714,7 +714,7 @@ describe("F01 real PostgreSQL failure integrity", () => {
         outputTokens: expected,
         provider: "soc",
         model: "f01-synthetic-model",
-        promptVersion: "soc-question-v1",
+        promptVersion: "soc-question-v2",
       });
       await save(app, id).expect(201);
       expect(transport).toHaveBeenCalledOnce();
