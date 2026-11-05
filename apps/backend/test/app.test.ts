@@ -7,6 +7,8 @@ import { FakeAiProvider, type AiProvider } from "../src/ai/provider.js";
 import { createApp, type ProfileUpdater } from "../src/app.js";
 import type { SessionResolver } from "../src/auth/session.js";
 import type { AppConfig } from "../src/config/env.js";
+import { PassThrough } from "node:stream";
+import { createLogger } from "../src/lib/logger.js";
 
 const config: AppConfig = {
   nodeEnv: "test",
@@ -87,6 +89,57 @@ describe("DebugClinic API", () => {
     expect(response.body.error.code).toBe("DEPENDENCY_UNAVAILABLE");
     expect(JSON.stringify(response.body)).not.toContain("offline");
   });
+
+  it.each([
+    [
+      {
+        meta: {
+          driverAdapterError: {
+            cause: {
+              kind: "TlsConnectionError",
+              reason: "self-signed certificate PRIVATE_CANARY",
+            },
+          },
+        },
+      },
+      "tls",
+    ],
+    [{ cause: { code: "28P01", message: "PRIVATE_CANARY" } }, "credentials"],
+    [{ code: "ENOTFOUND", message: "PRIVATE_CANARY" }, "connectivity"],
+    [new Error("PRIVATE_CANARY"), "unknown"],
+  ])(
+    "logs only a safe category when the readiness query fails",
+    async (failure, expected) => {
+      const output = new PassThrough();
+      let logs = "";
+      output.on("data", (chunk) => {
+        logs += String(chunk);
+      });
+      const app = createApp({
+        config,
+        database: { $queryRawUnsafe: vi.fn().mockRejectedValue(failure) },
+        sessionResolver,
+        profileUpdater: async () => learner,
+        logger: createLogger({ ...config, logLevel: "info" }, output),
+      });
+      const response = await request(app).get("/api/ready").expect(503);
+      const entries = logs
+        .trim()
+        .split("\n")
+        .map((line) => JSON.parse(line));
+      expect(entries).toContainEqual(
+        expect.objectContaining({
+          category: "database_readiness_failure",
+          reason: expected,
+          requestId: response.headers["x-request-id"],
+        }),
+      );
+      expect(logs + JSON.stringify(response.body)).not.toContain(
+        "PRIVATE_CANARY",
+      );
+      expect(logs).not.toContain(config.runtimeDatabaseUrl);
+    },
+  );
 
   it("rejects missing and revoked sessions", async () => {
     await request(buildApp()).get("/api/v1/me").expect(401);
