@@ -36,6 +36,7 @@ import {
 import { createSessionResolver, type SessionResolver } from "./auth/session.js";
 import type { DebugClinicAuth } from "./auth/auth.js";
 import type { AppConfig } from "./config/env.js";
+import { classifyDatabaseFailure } from "./db/diagnostics.js";
 import type { InstructorDrafts } from "./exercises/instructor-drafts.js";
 import { AppError, DependencyUnavailableError } from "./lib/errors.js";
 import {
@@ -264,7 +265,15 @@ export function createApp(options: CreateAppOptions) {
     asyncHandler(async (_request, response) => {
       try {
         await options.database.$queryRawUnsafe("SELECT 1");
-      } catch {
+      } catch (error) {
+        logger.warn(
+          {
+            category: "database_readiness_failure",
+            reason: classifyDatabaseFailure(error),
+            requestId: response.locals.requestId,
+          },
+          "Database readiness query failed",
+        );
         throw new DependencyUnavailableError("The database is not ready");
       }
       response.json(
