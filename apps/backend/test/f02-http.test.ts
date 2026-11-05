@@ -110,6 +110,17 @@ describe("F02 HTTP middleware doubles (no PG claim)", () => {
       .send(payload)
       .expect(503);
     expect(unknown.body.error.mutationOutcome).toBe("UNKNOWN");
+    expect(logs.join("")).not.toMatch(
+      /"stack"|node_modules|node:internal|\.ts:\d+|F02_PRIVATE/,
+    );
+    const httpErrors = logs
+      .map((line) => JSON.parse(line) as { err?: unknown; requestId?: string })
+      .filter((line) => line.err);
+    expect(httpErrors).toHaveLength(2);
+    for (const entry of httpErrors) {
+      expect(entry.err).toEqual({ category: "HTTP_RESPONSE_ERROR" });
+      expect(entry.requestId).toEqual(expect.any(String));
+    }
   });
   it("B33 strict queries and unconfirmed publication fail before the module", async () => {
     const publish = vi.fn();

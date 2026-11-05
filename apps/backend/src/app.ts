@@ -233,6 +233,9 @@ export function createApp(options: CreateAppOptions) {
     pinoHttp({
       logger,
       serializers: {
+        // pino-http synthesizes an Error for 5xx responses. Never serialize its
+        // stack, cause or arbitrary metadata; status and requestId are separate.
+        err: () => ({ category: "HTTP_RESPONSE_ERROR" }),
         req: (request) => ({
           id: request.id,
           method: request.method,
