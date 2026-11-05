@@ -58,3 +58,23 @@ resolved only by the separate three-case result, not by assuming prompt text is
 proof. Exact synthetic outcomes and criterion evidence are retained in
 `cycle-1-samples.json` and `cycle-1-quality.json`. `RESULTS.json` lists commands
 and limits. The original common batch remains a historical failure.
+
+## Cycle 2 — database-identity assertion
+
+The actual PR CI run revealed a second experiment-only database name in the
+integration suite's `beforeAll`, missed by the first repair and PR review. CI's
+`debugclinic_test` target was correct; the suite still expected
+`debugclinic_f01_test` after connecting successfully. The strict connected-database
+identity assertion now uses the decoded name from the already validated URL.
+The query, URL safety guard, fixtures and application logic are unchanged.
+
+The exact assertion failure was reproduced on a fresh owned PostgreSQL container
+with database `debugclinic_test`. After the fix, the same single F01 integration
+case passed on both `debugclinic_test` and `debugclinic_f01_test` (one pass and
+119 skipped each). A scoped independent review passed. No full suite or live
+provider calls were performed locally. This uses the second and final authorized
+repair cycle. The earlier cycle-1 statement that a second cycle was unnecessary
+was based on incomplete configuration coverage; the original evidence is retained.
+Detailed outcomes are in `cycle-2-database-identity.json`. Whole-PR and hosted-CI
+readiness must be established by the actual updated PR checks, not inferred from
+this focused result.

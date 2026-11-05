@@ -146,7 +146,10 @@ beforeAll(async () => {
   const names = await prisma.$queryRaw<
     Array<{ name: string }>
   >`SELECT current_database() AS name`;
-  expect(names).toEqual([{ name: "debugclinic_f01_test" }]);
+  // Verify the connected database, not the experiment-only database name.
+  expect(names).toEqual([
+    { name: decodeURIComponent(new URL(url).pathname.slice(1)) },
+  ]);
   await prisma.user.createMany({
     data: [owner, other, learner].map((user) => ({
       ...user,
