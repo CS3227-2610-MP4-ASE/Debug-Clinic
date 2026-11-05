@@ -8,6 +8,10 @@
   NODE_VERSION = "24"
   NPM_VERSION = "11"
   NPM_FLAGS = "--include=dev"
+  # Public settings only. File-based values replace the dashboard exclusion list.
+  # Exclude each public URL key, even when several keys contain the same origin.
+  # Keep credentials (API keys, passwords, auth secrets and database URLs) scanned.
+  SECRETS_SCAN_OMIT_KEYS = "AI_MAX_RETRIES,AI_PROVIDER,AI_TIMEOUT_MS,APP_ORIGIN,BETTER_AUTH_URL,CORS_ORIGINS,GOOGLE_CLIENT_ID,LOG_LEVEL,NODE_ENV,OAUTH_PROXY_URL,SMTP_HOST,SMTP_PORT,SMTP_SECURE,SOC_LLM_ENDPOINT,SOC_LLM_MODEL,SECRETS_SCAN_OMIT_KEYS"
 
 [functions]
   node_bundler = "esbuild"

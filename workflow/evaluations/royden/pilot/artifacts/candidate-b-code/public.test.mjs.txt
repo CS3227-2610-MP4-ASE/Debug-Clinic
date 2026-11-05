@@ -1,0 +1,6 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {publicationEligibility} from './publication-guard.ts';
+const exercise = {ownerId:'i',status:'DRAFT',hints:[1,2,3].map(stage=>({stage,approved:true,content:'hint'}))};
+test('owner can publish a valid draft',()=>assert.deepEqual(publicationEligibility({id:'i',role:'INSTRUCTOR'},exercise),{ok:true}));
+test('anonymous users cannot publish',()=>assert.deepEqual(publicationEligibility(null,exercise),{ok:false,code:'UNAUTHENTICATED'}));

@@ -43,6 +43,8 @@ jobs:
           node-version-file: .nvmrc
           cache: npm
       - run: npm ci
+      - name: Verify workflow accounting and monitoring
+        run: python3 -B -m unittest discover -s tests/workflow -v
       - run: npm run format:check
       - run: npm run lint
       - run: npm run typecheck

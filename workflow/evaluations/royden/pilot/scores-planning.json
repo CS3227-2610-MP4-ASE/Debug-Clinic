@@ -1,0 +1,37 @@
+{
+  "samples": {
+    "sample-08": {
+      "scores": {
+        "requirement_coverage": 2,
+        "security_failure": 1,
+        "decision_completeness": 1,
+        "acceptance_traceability": 2,
+        "feasibility": 2
+      },
+      "total": 8,
+      "qualifies": true,
+      "findings": [
+        "Material concurrency gap: TDD.md's coaching body carries revisionId, idempotencyKey and optional supersedesRequestId, but no caller-observed progress version. Admission chooses successfulStages + 1 and only rejects an active request. Two distinct keys issued from the same workspace state can overlap, yet if B's admission is delayed until A has committed and cleared the active pointer, B remains on the same revision and is admitted for the next stage. This can consume two stages and application stage charges for overlapping actions, contrary to COACH-06. The active-request lock protects simultaneous active work but does not fence a stale action after fast completion. Add and fingerprint an expected progression/version, check it for new admissions, and explicitly test the delayed-admission ordering."
+      ]
+    },
+    "sample-31": {
+      "scores": {
+        "requirement_coverage": 2,
+        "security_failure": 2,
+        "decision_completeness": 2,
+        "acceptance_traceability": 2,
+        "feasibility": 2
+      },
+      "total": 10,
+      "qualifies": true,
+      "findings": []
+    }
+  },
+  "limitations": [
+    "This planning pass read only planning-task.md, planning-owner-requirements.json, and PRD.md, TDD.md and RequirementsToTests.md in sample-08 and sample-31. It did not inspect other artifacts, raw owner transcripts, histories, telemetry, method labels or external resources, and did not change delivery judgments.",
+    "These are draft plans, not application implementations. Planned tests and concurrency protocols were reviewed statically; no feature tests, database migrations, compiler checks or provider calls were executed or independently verified.",
+    "Owner-confirmed constraints are judged against the supplied COACH-01 through COACH-15 answers. Proposed interfaces, recovery mechanics and educational stage wording are not treated as additional owner-confirmed facts. Claims about how owner answers were retrieved were not independently verified from raw transcripts.",
+    "The real product repository/schema was not inspected. Feasibility is assessed against the supplied Node24, React/MUI, Express, Better Auth database-session, PostgreSQL/Prisma, shared Zod and offline AiProvider baseline; exact integration compatibility remains to be reviewed during implementation.",
+    "Both samples explicitly leave retention/deletion and live-provider numeric/capability verification as pre-real-user or production gates. These truthfully pending owner decisions are allowed and are not scored as missing scope or approvals. Both deny human approval and executed-feature-test claims."
+  ]
+}

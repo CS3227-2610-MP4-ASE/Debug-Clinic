@@ -1,0 +1,3 @@
+interface:
+  display_name: "Verify MP4 App"
+  short_description: "Verify MP4 behavior with runtime evidence"

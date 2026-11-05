@@ -1,0 +1,10 @@
+{
+  "schema_version": 1,
+  "candidate": "candidate-b-code",
+  "checked_at": "2026-11-03T08:17:21.791480+00:00",
+  "evaluator_sha256": "0a4febef69cc8d18e1be68c6a261117ec8e7606d5c5b51dcb4c58c6d60300846",
+  "exit_code": 0,
+  "tests": 12,
+  "passed": 12,
+  "failed": 0
+}

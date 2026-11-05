@@ -1,0 +1,210 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import * as guard from './publication-guard.ts';
+
+const { publicationEligibility } = guard;
+const owner = () => ({ id: 'instructor-1', role: 'INSTRUCTOR' });
+const validHints = () => [1, 2, 3].map(stage => ({
+  stage,
+  approved: true,
+  content: `Hint ${stage}`,
+}));
+const exercise = (hints = validHints(), status = 'DRAFT') => ({
+  ownerId: 'instructor-1',
+  status,
+  hints,
+});
+const error = code => ({ ok: false, code });
+
+test('runtime public surface contains only publicationEligibility', () => {
+  assert.deepEqual(Object.keys(guard), ['publicationEligibility']);
+  assert.equal(typeof publicationEligibility, 'function');
+});
+
+// Fixed expected outcomes in order: valid draft, invalid draft,
+// valid published exercise, invalid published exercise.
+const precedenceRows = [
+  {
+    label: 'anonymous actor',
+    actor: () => null,
+    expected: ['UNAUTHENTICATED', 'UNAUTHENTICATED', 'UNAUTHENTICATED', 'UNAUTHENTICATED'],
+  },
+  {
+    label: 'learner whose ID matches the owner',
+    actor: () => ({ id: 'instructor-1', role: 'LEARNER' }),
+    expected: ['FORBIDDEN', 'FORBIDDEN', 'FORBIDDEN', 'FORBIDDEN'],
+  },
+  {
+    label: 'learner whose ID differs from the owner',
+    actor: () => ({ id: 'learner-2', role: 'LEARNER' }),
+    expected: ['FORBIDDEN', 'FORBIDDEN', 'FORBIDDEN', 'FORBIDDEN'],
+  },
+  {
+    label: 'foreign instructor',
+    actor: () => ({ id: 'instructor-2', role: 'INSTRUCTOR' }),
+    expected: ['FORBIDDEN', 'FORBIDDEN', 'FORBIDDEN', 'FORBIDDEN'],
+  },
+  {
+    label: 'owning instructor',
+    actor: owner,
+    expected: [null, 'INVALID_HINTS', 'CONFLICT', 'CONFLICT'],
+  },
+];
+const precedenceInputs = [
+  { label: 'valid draft', status: 'DRAFT', hints: validHints },
+  { label: 'invalid draft', status: 'DRAFT', hints: () => [] },
+  { label: 'valid published exercise', status: 'PUBLISHED', hints: validHints },
+  { label: 'invalid published exercise', status: 'PUBLISHED', hints: () => [] },
+];
+
+for (const row of precedenceRows) {
+  for (const [index, input] of precedenceInputs.entries()) {
+    test(`precedence: ${row.label}, ${input.label}`, () => {
+      const expected = row.expected[index];
+      assert.deepEqual(
+        publicationEligibility(row.actor(), exercise(input.hints(), input.status)),
+        expected === null ? { ok: true } : error(expected),
+      );
+    });
+  }
+}
+
+for (const id of ['INSTRUCTOR-1', ' instructor-1', 'instructor-1 ']) {
+  test(`owner ID must match exactly: ${JSON.stringify(id)}`, () => {
+    assert.deepEqual(
+      publicationEligibility({ id, role: 'INSTRUCTOR' }, exercise()),
+      error('FORBIDDEN'),
+    );
+  });
+}
+
+const invalidHints = [
+  { label: 'zero hints', make: () => [] },
+  { label: 'one hint', make: () => validHints().slice(0, 1) },
+  { label: 'two hints', make: () => validHints().slice(0, 2) },
+  { label: 'four hints', make: () => [...validHints(), { stage: 4, approved: true, content: 'Fourth' }] },
+];
+
+for (const stages of [[1, 3, 2], [2, 1, 3], [2, 3, 1], [3, 1, 2], [3, 2, 1]]) {
+  invalidHints.push({
+    label: `out-of-order stages ${stages.join(',')}`,
+    make: () => stages.map(stage => ({ stage, approved: true, content: `Hint ${stage}` })),
+  });
+}
+
+for (const stages of [[1, 1, 3], [1, 2, 2], [2, 2, 3], [0, 2, 3], [1, 0, 3], [1, 2, 0], [1, 2, 4], [-1, 2, 3], [1, 1.5, 3], [1, 2, NaN], [Infinity, 2, 3]]) {
+  invalidHints.push({
+    label: `invalid stages ${stages.map(String).join(',')}`,
+    make: () => stages.map(stage => ({ stage, approved: true, content: 'Nonempty' })),
+  });
+}
+
+for (const index of [0, 1, 2]) {
+  invalidHints.push({
+    label: `unapproved hint at position ${index + 1}`,
+    make: () => validHints().map((hint, position) => position === index ? { ...hint, approved: false } : hint),
+  });
+  for (const [label, content] of [
+    ['empty', ''],
+    ['ASCII whitespace', ' \t\r\n '],
+    ['Unicode whitespace', '\u00a0\u2003\u2028\u2029\ufeff'],
+  ]) {
+    invalidHints.push({
+      label: `${label} content at position ${index + 1}`,
+      make: () => validHints().map((hint, position) => position === index ? { ...hint, content } : hint),
+    });
+  }
+}
+
+invalidHints.push({
+  label: 'combined order, approval, and content defects',
+  make: () => [
+    { stage: 3, approved: false, content: ' ' },
+    { stage: 1, approved: true, content: '' },
+    { stage: 2, approved: false, content: 'Nonempty' },
+  ],
+});
+
+for (const input of invalidHints) {
+  test(`invalid hints: ${input.label}`, () => {
+    assert.deepEqual(publicationEligibility(owner(), exercise(input.make())), error('INVALID_HINTS'));
+  });
+}
+
+// Every malformed-hint category must remain below the status check.
+for (const input of invalidHints) {
+  test(`published status takes precedence over ${input.label}`, () => {
+    assert.deepEqual(publicationEligibility(owner(), exercise(input.make(), 'PUBLISHED')), error('CONFLICT'));
+  });
+}
+
+for (const index of [0, 1, 2]) {
+  test(`trimmed nonempty content is accepted at position ${index + 1}`, () => {
+    const hints = validHints();
+    hints[index].content = '\u00a0 \t\nUseful hint\r\n\ufeff';
+    const input = exercise(hints);
+    const before = structuredClone(input);
+    assert.deepEqual(publicationEligibility(owner(), input), { ok: true });
+    assert.deepEqual(input, before, 'validation must not trim content in place');
+  });
+}
+
+test('internal whitespace and non-ASCII text remain valid content', () => {
+  const hints = validHints();
+  hints[0].content = 'Line one\nLine two';
+  hints[1].content = '提示';
+  hints[2].content = '0';
+  assert.deepEqual(publicationEligibility(owner(), exercise(hints)), { ok: true });
+});
+
+const preservationCases = [
+  { label: 'success', actor: owner, input: () => exercise(), expected: { ok: true } },
+  { label: 'unauthenticated', actor: () => null, input: () => exercise([], 'PUBLISHED'), expected: error('UNAUTHENTICATED') },
+  { label: 'forbidden learner', actor: () => ({ id: 'instructor-1', role: 'LEARNER' }), input: () => exercise(), expected: error('FORBIDDEN') },
+  { label: 'forbidden foreign instructor', actor: () => ({ id: 'instructor-2', role: 'INSTRUCTOR' }), input: () => exercise([], 'PUBLISHED'), expected: error('FORBIDDEN') },
+  { label: 'conflict', actor: owner, input: () => exercise([], 'PUBLISHED'), expected: error('CONFLICT') },
+  {
+    label: 'invalid order',
+    actor: owner,
+    input: () => exercise([3, 1, 2].map(stage => ({ stage, approved: true, content: 'Hint' }))),
+    expected: error('INVALID_HINTS'),
+  },
+  {
+    label: 'padded content',
+    actor: owner,
+    input: () => exercise(validHints().map(hint => ({ ...hint, content: ' \tHint\n ' }))),
+    expected: { ok: true },
+  },
+];
+
+function freezeInputs(actor, input) {
+  if (actor !== null) Object.freeze(actor);
+  for (const hint of input.hints) Object.freeze(hint);
+  Object.freeze(input.hints);
+  Object.freeze(input);
+}
+
+for (const inputCase of preservationCases) {
+  test(`preserves inputs and repeats consistently: ${inputCase.label}`, () => {
+    const actor = inputCase.actor();
+    const input = inputCase.input();
+    const before = structuredClone({ actor, input });
+    const hintsReference = input.hints;
+    const hintReferences = [...input.hints];
+    for (let call = 0; call < 2; call += 1) {
+      assert.deepEqual(publicationEligibility(actor, input), inputCase.expected);
+      assert.deepEqual({ actor, input }, before);
+      assert.equal(input.hints, hintsReference, 'hint array reference must be preserved');
+      input.hints.forEach((hint, index) => {
+        assert.equal(hint, hintReferences[index], 'hint object references and order must be preserved');
+      });
+    }
+  });
+
+  test(`accepts recursively frozen inputs: ${inputCase.label}`, () => {
+    const actor = inputCase.actor();
+    const input = inputCase.input();
+    freezeInputs(actor, input);
+    assert.deepEqual(publicationEligibility(actor, input), inputCase.expected);
+  });
+}

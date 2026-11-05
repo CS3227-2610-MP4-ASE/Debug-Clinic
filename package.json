@@ -27,6 +27,7 @@
     "test": "vitest run",
     "test:api": "vitest run apps/backend/test",
     "test:integration": "vitest run --config vitest.integration.config.ts",
+    "test:workflow": "python -B -m unittest discover -s tests/workflow -v",
     "test:e2e": "playwright test",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
@@ -42,6 +43,7 @@
     "prepare": "npm run deployment:generate && npm run db:generate && npm run build -w @debugclinic/contracts"
   },
   "dependencies": {
+    "@better-auth/core": "1.7.14",
     "serverless-http": "^4.0.0",
     "zod": "^4.6.6"
   },

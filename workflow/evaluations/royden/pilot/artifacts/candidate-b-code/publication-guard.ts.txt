@@ -1,0 +1,26 @@
+export type Actor = { id: string; role: 'LEARNER' | 'INSTRUCTOR' } | null;
+export type Hint = { stage: number; approved: boolean; content: string };
+export type Exercise = { ownerId: string; status: 'DRAFT' | 'PUBLISHED'; hints: readonly Hint[] };
+export type Decision = { ok: true } | { ok: false; code: 'UNAUTHENTICATED' | 'FORBIDDEN' | 'CONFLICT' | 'INVALID_HINTS' };
+
+export function publicationEligibility(actor: Actor, exercise: Exercise): Decision {
+  if (actor === null) {
+    return { ok: false, code: 'UNAUTHENTICATED' };
+  }
+  if (actor.role !== 'INSTRUCTOR' || exercise.ownerId !== actor.id) {
+    return { ok: false, code: 'FORBIDDEN' };
+  }
+  if (exercise.status !== 'DRAFT') {
+    return { ok: false, code: 'CONFLICT' };
+  }
+  if (
+    exercise.hints.length !== 3 ||
+    ![1, 2, 3].every((stage, index) => {
+      const hint = exercise.hints[index];
+      return hint?.stage === stage && hint.approved === true && hint.content.trim().length > 0;
+    })
+  ) {
+    return { ok: false, code: 'INVALID_HINTS' };
+  }
+  return { ok: true };
+}

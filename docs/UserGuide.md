@@ -1,25 +1,57 @@
 # DebugClinic User Guide
 
-This guide describes only the behavior available in the basic infrastructure milestone.
+This guide describes the implemented authentication flows and foundation workspaces.
+Availability on a deployed site depends on its database, Google and email configuration.
 
 ## Public pages
 
 - `/` explains the intended debugging-practice loop.
 - `/sign-in` provides Google and email/password sign-in controls.
-- `/register` creates learner accounts through email/password authentication.
+- `/register` requires you to choose **Learner** or **Instructor** before using
+  email/password or Google registration. Neither role is selected for you.
+- `/verification` lets you request another verification link.
+- `/forgot-password` requests a link to reset or establish a password.
 
-Google sign-in requires configured OAuth credentials. If it cannot start, the
-sign-in page displays an error and lets you retry or use email/password.
+Your initial role stays with your account. Signing in, registering again,
+recovering a password or adding another login method cannot change it. Email
+addresses are matched after surrounding whitespace is removed and letters are
+lowercased; dots and aliases remain distinct.
 
-When SMTP is configured, email/password accounts must verify their email before
-signing in. After registration, open the verification link sent to your inbox,
-then return to sign in. Local development without SMTP does not require this
-step; production requires SMTP credentials.
+Google sign-in requires configured OAuth credentials and a verified Google email.
+Use registration with an explicit role for a new account. If Google cannot start
+or complete, the interface offers safe retry, registration, verification and
+password-recovery paths. Existing accounts retain their role even if a different
+role is selected during a later registration attempt.
 
-Password-reset delivery works through the API: request a link with
-`POST /api/auth/request-password-reset`, then set a new password with
-`POST /api/auth/reset-password` using the token from that link. A dedicated
-password-reset screen is deferred. Resetting a password revokes existing sessions.
+## Password registration and verification
+
+Choose a role, enter your name and email, and use a password with 12 to 128
+characters. When email verification is required, registration leaves you signed
+out with verification guidance. Open the verification link, then sign in.
+Verification alone does not sign you in. If sign-in is blocked by verification,
+use **Resend verification email**.
+
+An accepted resend request does not guarantee delivery or confirm whether an
+account exists. If a message does not arrive, check your inbox/spam and retry.
+Invalid or expired links offer another verification request or sign-in. Local
+development without SMTP skips verification; production requires SMTP setup.
+
+## Recovery and using both login methods
+
+Select **Forgot password** from sign-in, enter your email and request a recovery
+link. Follow the link to choose a new 12–128 character password, then sign in.
+Expired, invalid or already-used recovery links require a new request. Successful
+recovery ends existing sessions and replaces the old password.
+
+A Google-first account can use this same recovery flow to establish its first
+password while keeping Google access, identity and role. A verified password
+account can use verified same-email Google sign-in for the same identity. Verify
+the local account first if ownership has not been established. Registering again
+does not replace an existing password or create a new role.
+
+Recovery requests use the same acceptance message for existing and unknown
+addresses. Acceptance is not proof of email delivery. Request and reset failures
+show safe guidance and leave the controls available to retry.
 
 ## Role workspaces
 

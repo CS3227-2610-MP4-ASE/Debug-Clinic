@@ -1,0 +1,16 @@
+{
+  "schema_version": 1,
+  "baselines": {
+    "delivery": "ddce0edd26014877001fdb5a39977be5576c3a19",
+    "planning": "b5e4b625bd605f000b05606f249c8a9c5c4b0aa9"
+  },
+  "sha256": {
+    "delivery-base/TASK.md": "39c42385d862bd9f9cd9f20ce2aca73c450f02e9a6da11540cd15ae90c1082dc",
+    "delivery-base/publication-guard.ts": "d57a12090f839ca5e2ed1aa2c86a41c47eff58f30a4239639cbc273525561220",
+    "delivery-base/public.test.mjs": "a48d8ee0c0f1e5dfdedfd47a08afcfbe976ef3c663f1f81d307190f1e9549b67",
+    "planning-base/TASK.md": "cbe656e5049c3de9dcae314b57deacd729bb749c36f22cb0cb2d4dce2b1355eb",
+    "private/oracle.json": "412d83fea6ea0c46070a921c1e463734bc2ae43eebe3488fedbccfe88236ab7b",
+    "private/heldout.test.mjs": "0a4febef69cc8d18e1be68c6a261117ec8e7606d5c5b51dcb4c58c6d60300846",
+    "private/oracle_service.py": "d053a21f4635800a48b5f77967c3a3494530bfe11f4c6b24bd72f2efa22207c7"
+  }
+}

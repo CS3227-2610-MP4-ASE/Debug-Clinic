@@ -10,9 +10,14 @@ import {
 } from "@mui/material";
 import { useState, type FormEvent } from "react";
 import { Link as RouterLink, useLocation, useNavigate } from "react-router-dom";
-
-import { authClient } from "../auth/auth-client.js";
+import {
+  authRequest,
+  failureMessage,
+  startGoogle,
+  workspace,
+} from "../auth/actions.js";
 import { useAuth } from "../auth/AuthProvider.js";
+import { AuthError } from "../auth/AuthError.js";
 
 export function SignInPage() {
   const [error, setError] = useState<string | null>(null);
@@ -20,47 +25,50 @@ export function SignInPage() {
   const { refresh } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
-  const destination = (location.state as { from?: string } | null)?.from ?? "/";
-
+  const destination = (location.state as { from?: string } | null)?.from;
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (busy) return;
+    const values = new FormData(event.currentTarget);
     setBusy("email");
     setError(null);
-    const values = new FormData(event.currentTarget);
-    const result = await authClient.signIn.email({
-      email: String(values.get("email")),
-      password: String(values.get("password")),
-      rememberMe: true,
-    });
-    if (result.error) {
-      setError(
-        result.error.message ??
-          "Sign-in failed. Check your details and try again.",
-      );
-      setBusy(null);
-      return;
-    }
-    await refresh();
-    await navigate(destination, { replace: true });
-  }
-
-  async function googleSignIn() {
-    setError(null);
-    setBusy("google");
-    const fallback = "Google sign-in could not start. Try again or use email.";
     try {
-      const result = await authClient.signIn.social({
-        provider: "google",
-        callbackURL: destination,
+      await authRequest("/sign-in/email", {
+        email: String(values.get("email")).trim().toLowerCase(),
+        password: String(values.get("password")),
+        rememberMe: true,
       });
-      if (result.error) setError(result.error.message || fallback);
-    } catch {
-      setError(fallback);
+      const session = await refresh();
+      if (!session.ok || !session.user) throw new Error("Session unavailable");
+      await navigate(workspace(session.user, destination), { replace: true });
+    } catch (failure) {
+      setError(
+        failureMessage(
+          failure,
+          "Sign-in failed. Check your details and try again.",
+        ),
+      );
     } finally {
       setBusy(null);
     }
   }
-
+  async function google() {
+    if (busy) return;
+    setError(null);
+    setBusy("google");
+    try {
+      await startGoogle(undefined, destination);
+    } catch (failure) {
+      setError(
+        failureMessage(
+          failure,
+          "Google sign-in could not start. Try again or use email.",
+        ),
+      );
+    } finally {
+      setBusy(null);
+    }
+  }
   return (
     <Stack maxWidth={460} mx="auto" gap={3}>
       <div>
@@ -72,20 +80,27 @@ export function SignInPage() {
           Continue your debugging practice
         </Typography>
         <Typography color="text.secondary" mt={1.5}>
-          Sign in with the account approved for your DebugClinic role.
+          Sign in to your Learner or Instructor workspace.
         </Typography>
       </div>
-      {error && <Alert severity="error">{error}</Alert>}
+      <AuthError message={error} />
       {(location.state as { verificationPending?: boolean } | null)
         ?.verificationPending && (
         <Alert severity="info">
-          Check your email and verify your address before signing in.
+          Registration request accepted. If verification is needed, check your
+          email and verify your address before signing in. Already registered?
+          Sign in or reset your password.
         </Alert>
+      )}
+      {busy && (
+        <Typography role="status">
+          {busy === "google" ? "Connecting to Google…" : "Signing in…"}
+        </Typography>
       )}
       <Button
         variant="outlined"
         startIcon={<Google />}
-        onClick={() => void googleSignIn()}
+        onClick={() => void google()}
         disabled={busy !== null}
       >
         {busy === "google" ? "Connecting to Google…" : "Continue with Google"}
@@ -114,10 +129,16 @@ export function SignInPage() {
           {busy === "email" ? "Signing in…" : "Sign in"}
         </Button>
       </Stack>
+      <Link component={RouterLink} to="/verification">
+        Resend verification email
+      </Link>
+      <Link component={RouterLink} to="/forgot-password">
+        Forgot password or need to establish a password?
+      </Link>
       <Typography color="text.secondary">
         New to DebugClinic?{" "}
         <Link component={RouterLink} to="/register">
-          Create a learner account
+          Create an account
         </Link>
       </Typography>
     </Stack>

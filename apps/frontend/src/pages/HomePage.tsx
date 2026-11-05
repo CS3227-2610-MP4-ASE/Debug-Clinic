@@ -60,7 +60,7 @@ export function HomePage() {
             size="large"
             endIcon={<ArrowForwardRounded />}
           >
-            Create a learner account
+            Create an account
           </Button>
           <Button
             component={RouterLink}

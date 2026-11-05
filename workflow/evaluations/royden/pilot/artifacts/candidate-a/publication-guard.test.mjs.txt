@@ -1,0 +1,103 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { publicationEligibility } from './publication-guard.ts';
+
+const instructor = { id: 'owner', role: 'INSTRUCTOR' };
+const makeHints = (stages = [1, 2, 3]) => stages.map(stage => ({
+  stage,
+  approved: true,
+  content: `Hint ${stage}`,
+}));
+const makeExercise = (overrides = {}) => ({
+  ownerId: 'owner',
+  status: 'DRAFT',
+  hints: makeHints(),
+  ...overrides,
+});
+
+// Cross competing failure conditions so later checks cannot mask earlier ones.
+for (const [label, actor, authorizationError] of [
+  ['anonymous', null, 'UNAUTHENTICATED'],
+  ['learner with owner ID', { id: 'owner', role: 'LEARNER' }, 'FORBIDDEN'],
+  ['other learner', { id: 'other', role: 'LEARNER' }, 'FORBIDDEN'],
+  ['other instructor', { id: 'other', role: 'INSTRUCTOR' }, 'FORBIDDEN'],
+  ['owning instructor', instructor, null],
+]) {
+  for (const status of ['DRAFT', 'PUBLISHED']) {
+    for (const validHints of [true, false]) {
+      test(`${label}, ${status}, ${validHints ? 'valid' : 'invalid'} hints respects precedence`, () => {
+        const exercise = makeExercise({ status, hints: validHints ? makeHints() : [] });
+        const code = authorizationError
+          ?? (status === 'PUBLISHED' ? 'CONFLICT' : validHints ? null : 'INVALID_HINTS');
+        assert.deepEqual(publicationEligibility(actor, exercise), code
+          ? { ok: false, code }
+          : { ok: true });
+      });
+    }
+  }
+}
+
+for (const stages of [[], [1], [1, 2], [1, 2, 3, 4]]) {
+  test(`rejects ${stages.length} hints`, () => {
+    assert.deepEqual(publicationEligibility(instructor, makeExercise({ hints: makeHints(stages) })), {
+      ok: false, code: 'INVALID_HINTS',
+    });
+  });
+}
+
+for (const [label, stages] of [
+  ['swapped', [2, 1, 3]],
+  ['reversed', [3, 2, 1]],
+  ['duplicate', [1, 2, 2]],
+  ['zero-based', [0, 1, 2]],
+  ['fractional', [1, 2, 3.5]],
+]) {
+  test(`rejects ${label} stages without reordering them`, () => {
+    const exercise = makeExercise({ hints: makeHints(stages) });
+    const before = structuredClone(exercise);
+    assert.deepEqual(publicationEligibility(instructor, exercise), { ok: false, code: 'INVALID_HINTS' });
+    assert.deepEqual(exercise, before);
+  });
+}
+
+for (let index = 0; index < 3; index += 1) {
+  for (const [label, change] of [
+    ['unapproved', { approved: false }],
+    ['empty', { content: '' }],
+    ['whitespace-only', { content: ' \t\n\r\u00a0\u2003' }],
+  ]) {
+    test(`rejects ${label} hint at stage ${index + 1}`, () => {
+      const hints = makeHints();
+      hints[index] = { ...hints[index], ...change };
+      assert.deepEqual(publicationEligibility(instructor, makeExercise({ hints })), {
+        ok: false, code: 'INVALID_HINTS',
+      });
+    });
+  }
+}
+
+test('accepts surrounding whitespace and preserves deeply frozen inputs', () => {
+  const actor = Object.freeze({ ...instructor });
+  const hints = Object.freeze(makeHints().map(hint => Object.freeze({
+    ...hint, content: ` \t${hint.content}\n `,
+  })));
+  const exercise = Object.freeze(makeExercise({ hints }));
+  const before = structuredClone({ actor, exercise });
+
+  assert.deepEqual(publicationEligibility(actor, exercise), { ok: true });
+  assert.deepEqual({ actor, exercise }, before);
+  assert.strictEqual(exercise.hints, hints);
+});
+
+test('preserves inputs for every failure category', () => {
+  for (const [actor, exercise, code] of [
+    [null, makeExercise(), 'UNAUTHENTICATED'],
+    [{ id: 'owner', role: 'LEARNER' }, makeExercise(), 'FORBIDDEN'],
+    [instructor, makeExercise({ status: 'PUBLISHED' }), 'CONFLICT'],
+    [instructor, makeExercise({ hints: makeHints([2, 1, 3]) }), 'INVALID_HINTS'],
+  ]) {
+    const before = structuredClone({ actor, exercise });
+    assert.deepEqual(publicationEligibility(actor, exercise), { ok: false, code });
+    assert.deepEqual({ actor, exercise }, before);
+  }
+});
