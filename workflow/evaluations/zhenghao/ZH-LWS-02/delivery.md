@@ -84,3 +84,36 @@ Coordinator 39workflowtests pass and canonical monitor/templates/Royden output
 paths are unchanged relative to 1211495. Owned loopback PostgreSQL was prepared
 with all four existing migrations and seed for real-cookie persistence regressions;
 allconnected commands have explicit identical test-target variables.
+
+## Independent round0 and repair1
+
+Independent freeze d6edfb9; expected-red tests/evidence82e0954. Functional and
+standards need F1–F5 repair; resource controls need F2/F3 repair while actual
+origin/storage/network/host isolation probes pass. Passing layers:531 root,9
+frontend boundary/protocol,8 composed, production real execution and both
+production isolation cases. Final full normal browser remains required after
+repair. F5 is a static range finding; new runtime assertions were not yet run.
+The generic IDE-F5 event flags that static review, not a claimed browser run.
+
+All five findings were sent together to the same Luna-medium implementation
+conversation at82e0954. Source/tests are separately owned; no assertions may be
+weakened. Repair1 retains the original budget and execution boundary.
+
+Monitoring caveat: initial receiving-task findings used run IDE-review-round0,
+while retry events used IDE-repair-round1. The canonical collector groups by
+task/run/retry-group, so retry_evidence_missing remains an honest historical
+diagnostic. Current still-open baseline findings were explicitly linked under
+the repair run after inspecting the collector; no prior event was rewritten.
+Future attempt/resolution records must keep those exact grouping keys. AGENTS
+guidance was corrected. Canonical monitor/schema and Royden artifacts unchanged.
+
+Coordinator development confirmation: an intermediate focused browser run had
+6 passes/6 failures while the builder's output-bridge correction overlapped it;
+it is diagnostic chronology, not final verification. A separate real-module
+probe then confirmed newline output worked while no-newline output was buffered.
+The builder added Python stream flushing before the terminal result. A fresh
+unchanged independent focused browser selection passed all 12 desktop/mobile
+cases in 30.1s: Unicode/flood/no-newline output, stopped/timed-out initialization
+followed by a healthy rerun, and description/expanded-controls/resize behavior.
+Node24, no database or auth opt-ins, owned ports51821/51822. Source was frozen
+for the rerun. Independent full verification still follows the repair commit.

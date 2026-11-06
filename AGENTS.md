@@ -53,6 +53,10 @@ evaluation record.
   from the accessible name. Prefer semantic role/name queries for browser tests.
 - Load every declared non-system font and verify design documentation against
   resolved MUI values, including numeric radius multipliers.
+- Freeze browser test files while their suite is running; worker retries can
+  otherwise load a different test definition. Use editor keyboard selection for
+  CodeMirror replacement and assert complete long documents through real save
+  payloads, since rendered lines can be virtualized.
 - Validate hand-built response fixtures against strict wire schemas before
   attributing an acceptance failure to product code. Build OAuth fixtures from
   installed provider types: identity belongs in the raw profile/account subject,
@@ -95,8 +99,8 @@ evaluation record.
   sections and give stage agents concise file pointers rather than transcripts.
 - Map monitor requirement IDs to their verification owner. For cross-stage
   repairs, log the receiving task's linked finding before its retry event;
-  preserve the independent failure and stable retry-group IDs. Retry events
-  require the check, retry group and attempt number together.
+  use identical task/run/retry-group keys throughout the chain and preserve the
+  independent failure. Retry events require check, retry group and attempt.
 - Playwright skip declarations do not prevent module evaluation. Initialize
   opt-in database clients only inside guarded hooks and verify normal test
   collection with database variables unset.
