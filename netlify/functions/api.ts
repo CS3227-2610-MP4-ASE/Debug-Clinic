@@ -8,6 +8,7 @@ import { readEnv } from "../../apps/backend/src/config/env.js";
 import { deploymentEnvironment } from "../../apps/backend/src/config/deployment.js";
 import { createPrismaClient } from "../../apps/backend/src/db/client.js";
 import { createInstructorDrafts } from "../../apps/backend/src/exercises/instructor-drafts.js";
+import { createInstructorQuestions } from "../../apps/backend/src/exercises/instructor-questions.js";
 import { createLogger } from "../../apps/backend/src/lib/logger.js";
 import { toWebHandler } from "../../apps/backend/src/lib/web-handler.js";
 
@@ -21,6 +22,7 @@ const app = createApp({
   database: prisma,
   auth,
   aiProvider,
+  instructorQuestions: createInstructorQuestions({ prisma, logger }),
   instructorDrafts: createInstructorDrafts({
     prisma,
     provider: aiProvider,

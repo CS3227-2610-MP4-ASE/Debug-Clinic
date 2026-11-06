@@ -12,7 +12,7 @@ React, TypeScript, Vite, MUI, React Router, Node.js, Express, PostgreSQL, Prisma
 
 ## Users
 
-- Instructors create, verify, and publish Python debugging exercises with three approved hint stages, then decide and comment on final learner submissions.
+- Instructors create, review, and publish Python debugging exercises, then decide and comment on final learner submissions. F02 publication is independent of hints; Developer 1 owns future functional hint integration.
 - Learners propose code fixes, explain their reasoning, request progressive coaching, and submit a final attempt.
 
 ## Product Purpose
@@ -30,7 +30,7 @@ Instructors prepare exercises before learners can access them. Learners work thr
 ## Capabilities and Constraints
 
 - Exactly two roles: `LEARNER` and `INSTRUCTOR`.
-- Every published exercise has exactly three approved, ordered hint stages.
+- The intended coaching workflow has three approved, ordered hint stages. Under the approved MP4-D2-F02 exception, publication and learner browsing require no hint records or approval. F02 exposes only a disabled Get Hint placeholder with Coming soon; Developer 1 owns functional hints and their future contract.
 - The NUS SoC LLM is accessed only through a backend adapter with validation, limits, retries, and usage accounting.
 - Development, deploy-preview, and production environments remain separate.
 - Arbitrary learner Python is not executed until a separately reviewed sandbox exists.

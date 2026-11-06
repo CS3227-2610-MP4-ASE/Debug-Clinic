@@ -56,6 +56,7 @@ function setup() {
     create: vi.fn().mockResolvedValue({ id: "generation", createdAt: now }),
     findFirst: vi.fn().mockResolvedValue({
       id: "generation",
+      generationTopicDigest: null,
       provider: "fake",
       model: null,
       promptVersion: "fake-question-v1",

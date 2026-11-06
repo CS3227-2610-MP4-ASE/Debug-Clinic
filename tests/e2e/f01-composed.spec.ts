@@ -157,8 +157,8 @@ test("B01/B05/B13/B14/B19/B23 actual instructor cookie flow generates unsaved pr
   });
   await page.reload();
   await expect(
-    page.getByText(f01Edited.bugExplanation, { exact: true }),
-  ).toBeVisible();
+    page.getByRole("textbox", { name: fields.bugExplanation }),
+  ).toHaveValue(f01Edited.bugExplanation);
   await page.goto("/instructor/drafts");
   await page
     .getByRole("link", { name: f01Edited.title, exact: true })
@@ -171,9 +171,13 @@ test("B01/B05/B13/B14/B19/B23 actual instructor cookie flow generates unsaved pr
     .click();
   await expect(page).toHaveURL(new RegExp(`/instructor/drafts/${draft.id}$`));
   await expect(
-    page.getByText(f01Edited.correctedSolution, { exact: true }),
-  ).toBeVisible();
+    page.getByRole("textbox", { name: fields.correctedSolution }),
+  ).toHaveValue(f01Edited.correctedSolution);
   await expect(
-    page.getByRole("button", { name: /save|delete|publish|verify/i }),
+    page.getByRole("button", { name: /^Save changes$/i }),
+  ).toBeVisible();
+  await expect(page.getByRole("button", { name: /^Publish$/i })).toBeDisabled();
+  await expect(
+    page.getByRole("button", { name: /delete|verify/i }),
   ).toHaveCount(0);
 });

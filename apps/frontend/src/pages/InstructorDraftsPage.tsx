@@ -29,7 +29,16 @@ export function InstructorDraftsPage() {
       .then((result) => {
         if (!active) return;
         setDrafts((previous) =>
-          offset === 0 ? result.drafts : [...previous, ...result.drafts],
+          offset === 0
+            ? result.drafts
+            : [
+                ...new Map(
+                  [...previous, ...result.drafts].map((item) => [
+                    item.id,
+                    item,
+                  ]),
+                ).values(),
+              ],
         );
         setNextOffset(result.nextOffset);
       })
@@ -53,10 +62,22 @@ export function InstructorDraftsPage() {
         My drafts
       </Typography>
       <Typography>
-        Your private, unverified instructor drafts. Open a draft to review it
-        read-only.
+        Your private, unverified instructor drafts. Open a draft to review, edit
+        and publish it.
       </Typography>
       <Stack direction="row" gap={1} flexWrap="wrap">
+        <Button
+          component={RouterLink}
+          to="/instructor/questions?status=PUBLISHED"
+        >
+          Published
+        </Button>
+        <Button
+          component={RouterLink}
+          to="/instructor/questions?status=ARCHIVED"
+        >
+          Removed
+        </Button>
         <Button
           component={RouterLink}
           to="/instructor/questions/new"

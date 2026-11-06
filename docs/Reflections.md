@@ -1,5 +1,53 @@
 # MP4 development reflections
 
+## 6 November 2026 — F02 publication delivery
+
+A subsequent owner review caught an auth lifecycle regression: a successful
+focus-triggered session check briefly set global loading, unmounted ordinary
+protected pages and lost their loaded pagination. Gating the actual browser
+session response reproduced it for both roles. The fix separates background
+focus checks from initial/manual loading, with identity-keyed disposal to keep
+account changes from inheriting old list data. Tests now cover pending checks,
+page-three continuation, identity replacement and expiry on desktop/mobile.
+This illustrates a gap in the earlier green review: authentication success alone
+does not establish preservation of already-mounted application state.
+
+The approved package gave two builders stable contracts and disjoint backend/UI
+ownership. Contract exports landed first, then coherent implementation and test
+commits integrated locally. No blind independent acceptance author was assigned;
+the builders wrote tests and fresh reviewers independently checked functionality,
+standards and security. This run does not compare topologies or establish that
+parallel builders reduced cost or elapsed time.
+
+Independent review found defects after green checks: failed sign-out could clear
+discard registration while leaving an editor mounted, and pino-http automatically
+serialized internal stacks despite safe application error logging. The schema
+review also removed duplicated field policy. These findings support testing
+recovery after a failed recovery action and checking the complete logging path,
+including middleware, rather than only explicit logger calls.
+
+Actual PostgreSQL races, rollback triggers, unavailable replay reads and lost
+COMMIT acknowledgments supplied different evidence from mocked HTTP and browser
+state tests. A separate browser transport proxy drains a real committed response
+before dropping it. These fault seams live in tests, preserving production module
+interfaces. Old-schema/FK rehearsal is labelled structural evidence; it does not
+replace public behavior assertions.
+
+The full database run exposed two old fixture assumptions superseded by the
+approved design: undated ARCHIVED rows and Save using a different generated topic.
+The fixtures now construct valid archived chronology and retain the generated
+topic while preserving their original privacy and UTF16 expectations. Windows
+verification also needed the installed npm JS launcher rather than spawning the
+Unix npm executable. Disposable containers were removed on both failure and pass.
+
+The initial resource estimates were exceeded. Raw telemetry remains outside Git;
+observed response tokens include cached input and are not billing or quota.
+A host usage-limit interruption required the owner's later resume. Wall spans
+include that interruption; silence is not measured active work or inferred wait.
+Scoped repair packets and incremental review avoided restarting the package, but
+no causal savings percentage is claimed. Final reports retain missing manual,
+remote CI and unchanged live-provider evidence explicitly.
+
 ## 3 November 2026 — workflow bootstrap and four-run pilot
 
 Evidence: [pilot results](../workflow/evaluations/royden/pilot/REPORT.md),

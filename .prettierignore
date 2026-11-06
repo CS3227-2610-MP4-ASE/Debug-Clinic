@@ -19,3 +19,17 @@ docs/features/MP4-D2-F01/PackageApproval.md
 workflow/evaluations/royden/MP4-D2-F01/report.json
 workflow/evaluations/royden/MP4-D2-F01/report.md
 workflow/experiments/MP4-D2-F01/multi/acceptance-interpretation.md
+# Exact immutable F02 snapshots approved under PACKAGE-APPROVAL-01.
+docs/mission-brief/MP4-D2-F02-publish-question.md
+docs/features/MP4-D2-F02/GrillingDecisions.md
+docs/features/MP4-D2-F02/PRD.md
+docs/features/MP4-D2-F02/PRDClarifications.md
+docs/features/MP4-D2-F02/ApprovalRecord.md
+docs/features/MP4-D2-F02/TDD.md
+docs/features/MP4-D2-F02/RequirementsToTests.md
+docs/features/MP4-D2-F02/PackageReview.md
+docs/features/MP4-D2-F02/SecurityReview.md
+docs/features/MP4-D2-F02/PackageApproval.md
+# Verbatim generated monitor reports; mutable evidence stays format-checked.
+workflow/evaluations/royden/MP4-D2-F02/report.json
+workflow/evaluations/royden/MP4-D2-F02/report.md
