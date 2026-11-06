@@ -63,8 +63,8 @@ show safe guidance and leave the controls available to retry.
   returns to sign-in. If it fails, the interface reports the error and keeps the
   sign-out action available for retry; do not assume you are signed out.
 
-The learner workspace remains a foundation screen. Instructors can prepare
-private debugging drafts from the instructor workspace.
+The learner workspace links to published instructor questions. Instructors can
+prepare questions and manage their own Drafts, Published and Removed views.
 
 ## Preparing an instructor draft
 
@@ -72,22 +72,75 @@ Choose **New question** in the instructor workspace and enter a beginner Python 
 **Generate**. A successful response shows one unsaved preview with six editable
 fields: title, problem statement, buggy Python code, expected behavior, bug
 explanation and corrected solution. The original topic stays read-only after
-generation. **New question** clears the topic and preview to start again.
+generation. **New question** starts again after any discard warning.
 
 Review and edit the fields, then select **Save draft** to create a private draft.
-The saved view is read-only. **My drafts** lists your saved drafts, with **Load
-more** when another page is available, and lets you reopen them after reload.
+Open a saved draft to edit the same fields; **Save changes** updates that same
+draft. **My drafts** lists your drafts, with **Load more** when another page is
+available, and lets you reopen them after reload.
 Other instructors and learners cannot retrieve your private drafts.
 
 Generation and Save show progress and disable repeated actions. A generation
 failure retains your topic and offers **Retry**; a failed Save retains your edits
-for another explicit **Save draft** attempt. Leaving or reloading discards unsaved
-work. Saved drafts remain available in **My drafts**.
+for another explicit **Save draft** attempt. Unsaved previews and changed saved
+fields trigger **“You have unsaved changes. Leave and discard them?”**, with
+**Stay** and **Leave**. Browser unload uses the browser's own warning. Accepted
+navigation/unload discards current-page work; there is no autosave or cross-reload
+recovery. Saved drafts remain available in **My drafts**.
 
-Every preview and saved draft is visibly unverified. Check the explanation and
-corrected solution yourself; this flow neither executes Python nor verifies or
-publishes exercises. Hint authoring, learner attempts and publication remain
-separate work.
+Every preview and saved draft is unverified. Check the explanation and corrected
+solution yourself; this flow never executes Python or certifies correctness.
+
+## Reviewing and publishing
+
+Publish directly from the generated preview or open one of your saved drafts.
+Review your current edits and select **“I have reviewed this question and
+understand that published content cannot be edited.”**, then **Publish**.
+Changing content resets confirmation. A saved draft publishes its current edits
+without a separate Save. Pending publication locks conflicting actions.
+
+An older preview without a trusted original-topic binding cannot publish directly.
+Save draft, reopen it, then Publish, or generate a new question. Previously saved
+drafts can publish without regeneration. Publication requires no hints.
+
+If another tab saved newer content, the stale operation is rejected and your
+entries remain. **Reload latest** asks for discard consent before replacing them.
+An already-published result displays the authoritative published content; stale
+submitted edits are not applied.
+
+If publication completion is unconfirmed, keep the page and use **Retry** to
+resolve the same reviewed snapshot. Fields and Save stay locked while that
+publication is unresolved. A lost response does not prove rollback. A definite
+failed attempt permits editing and a fresh confirmation. Starting New question or
+leaving can abandon current-page recovery after the discard warning; it cannot
+cancel a transaction that already committed. Session expiry preserves already
+loaded editor entries on the current page and disables mutations; follow sign-in
+guidance when ready to leave.
+
+## Published and removed questions
+
+Your **Published** view is read-only. Choose **Remove** to withdraw a question.
+The dialog asks **“Remove this question? It will no longer be available to
+learners. Your read-only record will be retained.”** **Cancel** keeps it published;
+**Remove** confirms. Failed or unconfirmed removal offers retry/refresh guidance.
+
+Successful removal retains the question under **Removed**. Future learner list
+and detail requests exclude it; an already-open learner page may retain loaded
+content until refresh or navigation. There is no hard delete, restore or republish
+action. Drafts are newest-created-first, Published newest-published-first and
+Removed newest-removed-first, with Load more for further pages.
+
+## Viewing questions as a learner
+
+Follow the published-questions link in your learner workspace. All signed-in
+learners can browse all instructors' current publications, newest first. Items
+show title, topic, instructor display name and publication time. Detail shows the
+problem, buggy Python code and expected behavior. Explanations, corrected
+solutions and private generation metadata stay instructor-only.
+
+**Get Hint** is disabled with **Coming soon** text and performs no request or
+attempt creation. Developer 1 owns future functional hints. Learner answering,
+execution, coaching, submission and grading are outside this publication flow.
 
 ## Development fixtures
 

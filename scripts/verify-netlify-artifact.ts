@@ -61,6 +61,7 @@ type WebHandler = (request: Request) => Promise<Response>;
 
 async function smoke(artifact: string): Promise<number> {
   const email = `package-${randomUUID()}@example.test`;
+  const learnerEmail = `package-learner-${randomUUID()}@example.test`;
   let step = "load packaged ESM export";
   try {
     const loaded: unknown = await import(pathToFileURL(artifact).href);
@@ -182,6 +183,115 @@ async function smoke(artifact: string): Promise<number> {
       ),
       200,
     );
+    step = "packaged current-edits publication without hints";
+    const published = await request(
+      "/api/v1/instructor/questions/publish",
+      {
+        source: "saved",
+        id: savedBody.draft.id,
+        expectedRevision: 0,
+        topic: preview.topic,
+        draft: { ...preview.draft, title: "Packaged reviewed publication" },
+        reviewConfirmed: true,
+      },
+      cookie,
+    );
+    expectStatus(published, 200);
+    const publication = (await published.json()) as {
+      question: {
+        id: string;
+        versionId: string;
+        status: string;
+        title: string;
+      };
+      outcome: string;
+    };
+    if (
+      publication.question.id !== savedBody.draft.id ||
+      publication.question.status !== "PUBLISHED" ||
+      publication.question.title !== "Packaged reviewed publication" ||
+      publication.outcome !== "published"
+    )
+      throw new Error("Incorrect packaged publication");
+    step = "packaged learner registration";
+    const learnerSignup = await request("/api/auth/sign-up/email", {
+      name: "Packaged smoke learner",
+      email: learnerEmail,
+      password: randomUUID(),
+      registrationRole: "LEARNER",
+    });
+    expectStatus(learnerSignup, 200);
+    const learnerCookie = learnerSignup.headers
+      .getSetCookie()
+      .map((value) => value.split(";", 1)[0])
+      .join("; ");
+    if (!learnerCookie) throw new Error("Missing learner cookie");
+    step = "packaged public allowlist";
+    const learnerDetail = await request(
+      `/api/v1/learner/questions/${encodeURIComponent(publication.question.id)}`,
+      undefined,
+      learnerCookie,
+    );
+    expectStatus(learnerDetail, 200);
+    const publicBody = (await learnerDetail.json()) as {
+      question: Record<string, unknown>;
+    };
+    const allowed = [
+      "id",
+      "versionId",
+      "title",
+      "topic",
+      "instructorName",
+      "publishedAt",
+      "problemStatement",
+      "buggyCode",
+      "expectedBehavior",
+    ].sort();
+    if (
+      JSON.stringify(Object.keys(publicBody.question).sort()) !==
+        JSON.stringify(allowed) ||
+      publicBody.question["title"] !== "Packaged reviewed publication" ||
+      publicBody.question["versionId"] !== publication.question.versionId
+    )
+      throw new Error("Incorrect packaged public projection");
+    step = "packaged archive and subsequent learner denial";
+    const removed = await request(
+      `/api/v1/instructor/questions/${encodeURIComponent(publication.question.id)}/remove`,
+      { confirmed: true },
+      cookie,
+    );
+    expectStatus(removed, 200);
+    const removedBody = (await removed.json()) as {
+      question: { id: string; status: string };
+    };
+    if (
+      removedBody.question.id !== publication.question.id ||
+      removedBody.question.status !== "ARCHIVED"
+    )
+      throw new Error("Incorrect packaged archive");
+    expectStatus(
+      await request(
+        `/api/v1/learner/questions/${encodeURIComponent(publication.question.id)}`,
+        undefined,
+        learnerCookie,
+      ),
+      404,
+    );
+    const learnerList = await request(
+      "/api/v1/learner/questions",
+      undefined,
+      learnerCookie,
+    );
+    expectStatus(learnerList, 200);
+    const publicList = (await learnerList.json()) as {
+      questions: { id: string }[];
+    };
+    if (
+      publicList.questions.some(
+        (question) => question.id === publication.question.id,
+      )
+    )
+      throw new Error("Archived question remains publicly listed");
     step = "signout";
     expectStatus(await request("/api/auth/sign-out", {}, cookie), 200);
     step = "revoked-cookie denial";
@@ -215,7 +325,9 @@ async function smoke(artifact: string): Promise<number> {
     const database = createPrismaClient(readEnv());
     await database.aiUsageEvent.deleteMany({ where: { user: { email } } });
     await database.exercise.deleteMany({ where: { author: { email } } });
-    await database.user.deleteMany({ where: { email } });
+    await database.user.deleteMany({
+      where: { email: { in: [email, learnerEmail] } },
+    });
     await database.$disconnect();
   }
 }

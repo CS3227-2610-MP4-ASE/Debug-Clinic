@@ -81,7 +81,10 @@ The initial SQL migration adds checks that Prisma cannot express directly:
 - published exercises require `publishedAt`;
 - usage counters cannot be negative.
 
-The requirement that a published version have exactly three approved hints requires a transaction-level service check; a row-level SQL constraint cannot count sibling rows safely.
+MP4-D2-F02 explicitly permits publication without hints or hint approval.
+Developer 1 owns future functional hint integration; F02 does not create hint
+rows or impose a future hint lifecycle. A future sibling-row prerequisite would
+need a separately approved transaction-level policy rather than a row SQL check.
 
 ## AI adapter
 
@@ -145,15 +148,86 @@ an explicit `DATABASE_URL`; there is no implicit database write target.
   and a successful generation ID belonging to the current instructor.
 - `GET /api/v1/instructor/drafts` lists the owner's complete drafts in descending
   creation-time/ID order, 50 at a time, with a bounded optional offset.
-- `GET /api/v1/instructor/drafts/:id` returns an owner-only read-only draft.
+- `GET /api/v1/instructor/drafts/:id` returns an owner-only draft DTO.
   Missing, foreign, non-DRAFT and incomplete records share the same safe 404.
 
 Both instructor POSTs require an exact configured Origin and JSON content type
 after server session/role checks. Save performs no publication or verification.
 
+### Reviewed publication and withdrawal
+
+`InstructorQuestions` is the server boundary for owner list/get, same-draft Save,
+Publish, Remove and learner list/get. Both the long-running server and Netlify
+function compose the real Prisma implementation. Missing composition returns503.
+F01 draft contracts retain their literal DRAFT status and fresh-per-Save creation.
+
+| HTTP boundary                                                        | Contract                                                                                    |
+| -------------------------------------------------------------------- | ------------------------------------------------------------------------------------------- |
+| `GET /api/v1/instructor/questions?status=DRAFT\|PUBLISHED\|ARCHIVED` | Own state list, max50 plus bounded offset/nextOffset                                        |
+| `GET/PATCH /api/v1/instructor/questions/:id`                         | Full owner record; PATCH updates current DRAFT using expectedRevision                       |
+| `POST /api/v1/instructor/questions/publish`                          | Confirmed saved or preview discriminated request; published/existing authoritative response |
+| `POST /api/v1/instructor/questions/:id/remove`                       | Confirmed archive; repeated Remove returns retained archive                                 |
+| `GET /api/v1/learner/questions[/:id]`                                | LEARNER-only currently published explicit public projection                                 |
+
+All mutation guards enforce real session, role, configured Origin, JSON, strict
+schemas, ownership and current state. Parent-first conditional updates and version
+writes run in one short READ COMMITTED transaction. Save and initial saved Publish
+increment the bounded revision once. Database time supplies first publication and
+archive timestamps. Published/archived content is immutable; archive retains IDs,
+version references, provenance, timestamps and preview key.
+
+One lowercase UUID per preview workflow is retained in an owner-scoped unique
+publication key. Same-key replay returns existing authority before new association
+lookup, including an archived result. Only that named uniqueness collision permits
+one authoritative reread after transaction abort. Ambiguous commit acknowledgment
+is UNKNOWN, never inferred rollback. The client freezes an uncertain publication's
+captured normalized payload/key/revision and retries that exact attempt.
+
+New generation events store a server-private normalized-topic SHA256 digest.
+Bound previews must match it; old unbound previews use Save/open/Publish or
+regeneration. Existing saved drafts use their persisted fixed topic. This binds
+topic association, not the correctness or original generation of edited content.
+Shared validation rejects NUL/unpaired surrogates before hashing or persistence,
+retains UTF16 maxima, trims prose and preserves code verbatim.
+
+Learner selection and DTOs expose identity/title/topic/instructor display name/
+publication time plus version ID/problem/buggy code/expected behavior in detail.
+Solutions, explanations, generation metadata, author email, hints and attempts
+are absent. A separate public renderer displays literal text. Get Hint is disabled
+and performs no request.
+
+UI routes are `/instructor/questions?status=...`, `/instructor/questions/:id`,
+`/instructor/questions/new`, `/learner/questions` and `/learner/questions/:id`.
+Legacy `/instructor/drafts[/:id]` URLs remain supported. The data-router discard
+boundary covers Link/POP/New/reload/sign-out; beforeunload uses the browser warning.
+An admitted editor stays mounted with mutations disabled after expiry. Identity
+keys dispose prior editor memory before another identity receives an authorized
+fresh read. No autosave or cross-reload recovery is implemented.
+
+Apply the additive F02 migration before new code rollout; migration/function
+deployment is not atomic. Its archive preflight stops existing undated archived
+rows for owner reconciliation rather than inventing dates. Rollback disables new
+routes while retaining additive fields and committed outcomes. Structural
+old-schema/FK rehearsal is separate from public behavior integration tests.
+
 Every response carries an `x-request-id`. Error bodies contain a stable code, recoverable message, request ID, and optional validation details. Internal stack traces, Prisma errors, provider responses, cookies, and credentials are not returned.
 
 ## Testing strategy
+
+F02 checks include contracts, focused HTTP policy doubles, real-cookie/PG public
+behavior, CAS races and real SQL rollback faults, PG wire faults for unavailable
+replay reads/lost COMMIT acknowledgments, intercepted desktop/mobile UI, composed
+browser cookies/PG/fake AI, and extracted Netlify publication/read/archive smoke.
+The opt-in browser runtime's owned loopback transport proxy can drain one committed
+publication success then drop the downstream response via a private marker; this
+fault is outside production composition. See the F02 implementation handoff for
+actual commands/results and remaining manual/CI limitations.
+
+When defaults are occupied, set `E2E_APP_ORIGIN=http://127.0.0.1:5273` and
+`E2E_BACKEND_PORT=3101`; the test origin validator allows only a bare HTTP loopback
+origin. The harness forwards that backend port to Vite's test proxy. Defaults stay
+5173/3001. Preserve unrelated listeners and always use a verified owned `_test`
+database with matching direct/pooled/test/E2E URLs for composed checks.
 
 - Contract tests cover accepted and rejected shared schemas.
 - Vitest covers configuration parsing and AI response validation.

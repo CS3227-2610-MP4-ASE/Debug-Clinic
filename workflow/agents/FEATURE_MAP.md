@@ -1,6 +1,6 @@
 # DebugClinic feature and verification map
 
-Maintained against local authentication and instructor draft implementation on 2026-11-05. Update this map when routes,
+Maintained against authentication, instructor drafts and F02 publication on 2026-11-06. Update this map when routes,
 journeys, API boundaries, or verification prerequisites change. Read route and
 test definitions before choosing a check; this map distinguishes delivered
 foundation from intended future behavior.
@@ -13,7 +13,7 @@ foundation from intended future behavior.
 | `/forgot-password`, `/reset-password`                           | `RecoveryPages`, Better Auth reset routes                                                                     | Captured recovery links, password replacement/Google-first establishment, token history removal and session revocation; no public outbox endpoint                                                                                       |
 | `/auth/complete`, `/auth/error`                                 | session refresh/completion and safe result pages                                                              | Google transport doubles with real local state/cookies/PG; controller substitutes external authorization hop. UI failure tests are separately intercepted                                                                               |
 | Session restore / sign-out                                      | frontend `AuthProvider`, `AppShell`, `lib/api`; backend session resolver                                      | `tests/e2e/auth-feedback.spec.ts` covers delayed/failing sign-out and route protection with mocked session endpoints; integration covers real sessions/revocation                                                                       |
-| `/learner`, `/instructor`                                       | role routes and dashboard pages                                                                               | Learner dashboard is a foundation screen; instructor dashboard links to draft preparation. `app-shell.spec.ts` preserves unauthenticated learner redirect; F01 specs cover instructor authoring.                                        |
+| `/learner`, `/instructor`                                       | role routes and dashboard pages                                                                               | Dashboards link to learner publication browsing and instructor question management. `app-shell.spec.ts` preserves unauthenticated learner redirect; F01/F02 specs cover authoring and publication.                                      |
 | `/forbidden`, unknown routes                                    | frontend ForbiddenPage / NotFoundPage                                                                         | Inspect route and role guard; add targeted assertions when affected                                                                                                                                                                     |
 | `/api/health`, `/api/ready`                                     | `apps/backend/src/app.ts`                                                                                     | backend `app.test.ts`; readiness uses injected DB probe in unit/API tests                                                                                                                                                               |
 | `/api/v1/me`, `/api/v1/profile`, instructor ping                | backend app, Better Auth, shared contracts                                                                    | backend `app.test.ts` and `tests/integration/auth-database.test.ts`: role enforcement, profile validation, DB-backed sessions                                                                                                           |
@@ -25,6 +25,35 @@ foundation from intended future behavior.
 | Built frontend                                                  | Vite production output; `scripts/verify-built-frontend.ts`                                                    | Real browser loads emitted assets for eight public routes × desktop/mobile with a local anonymous API stub. This catches chunk initialization failures hidden by the dev server                                                         |
 
 ## Existing check routes
+
+F02 adds owner `/instructor/questions?status=DRAFT|PUBLISHED|ARCHIVED` and detail,
+retaining old `/instructor/drafts[/:id]` URLs. Draft editors share six-field
+validation, review, same-draft Save, publication recovery and discard state.
+Published/Removed views are read-only; Remove archives without deleting references.
+Learner `/learner/questions[/:id]` uses a separate public renderer/strict DTOs and
+a disabled Get Hint/Coming soon placeholder. No functional hints or attempts are
+added, and hints do not gate publication.
+
+`InstructorQuestions` supplies the corresponding role-guarded HTTP APIs. New
+contracts are separate from literal-DRAFT F01 contracts. Source server and Netlify
+function both inject the Prisma implementation. The F02 migration adds revisions,
+owner-scoped forever publication keys, archive time and trusted-topic digest.
+
+| F02 check                                       | Boundary and limit                                                                                                                             |
+| ----------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
+| `packages/contracts/test/f02-contracts.test.ts` | Strict requests/DTOs, UTF16/storage/boundary policy; no persistence proof                                                                      |
+| `apps/backend/test/f02-http.test.ts`            | Explicit HTTP dependency/session doubles; safe policy/error grammar                                                                            |
+| `tests/integration/f02-publication.test.ts`     | Real PG/public module + BetterAuth cookies, roles/origins/body limits, CAS races/rollback/replay/privacy/paging and actual PG transport faults |
+| `tests/integration/f02-migration.test.ts`       | Owned isolated-schema old-data/FK/preflight/constraint rehearsal; structural evidence                                                          |
+| `f02-instructor.spec.ts`, `f02-learner.spec.ts` | Intercepted browser desktop/mobile editor/recovery/expiry/navigation/learner states                                                            |
+| `f02-composed.spec.ts`                          | Opt-in real cookies/PG/fake AI and owned committed-response-loss proxy; captured email replaces SMTP                                           |
+| `scripts/verify-netlify-artifact.ts`            | Extracted function publication/public allowlist/archive smoke; separate from source or build                                                   |
+
+Manual screen-reader/focus/contrast/unload observations, actual remote CI and
+unchanged live-provider evidence remain distinct. The implementation handoff
+records actual outcomes and any remaining gaps; test existence alone is no pass.
+Alternative owned test ports use validated `E2E_APP_ORIGIN` and
+`E2E_BACKEND_PORT`; defaults remain5173/3001.
 
 Inspect `package.json`, `.nvmrc`, `playwright.config.ts`, and
 `vitest.integration.config.ts` for the current commands and runtime. Node 24 and
