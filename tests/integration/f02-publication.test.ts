@@ -1354,3 +1354,353 @@ it("B10/B25/B37 concurrent actual Remove retains referenced content and invokes 
     await prisma.hintStage.deleteMany({ where: { id: hint.id } });
   }
 });
+
+async function freshAuthenticatedComposition(email: string, register = false) {
+  const freshClient = client();
+  const freshAuth = createDebugClinicAuth(config, freshClient, async () => {});
+  const freshQuestions = createInstructorQuestions({
+    prisma: freshClient,
+    logger,
+  });
+  const freshApp = createApp({
+    config,
+    database: freshClient,
+    auth: freshAuth,
+    logger,
+    instructorQuestions: freshQuestions,
+    instructorDrafts: createInstructorDrafts({
+      prisma: freshClient,
+      logger,
+      config,
+      provider: new FakeAiProvider(),
+    }),
+    profileUpdater: async () => {
+      throw new Error("Unused");
+    },
+  });
+  const password = "F02-durable-synthetic-password-12345";
+  try {
+    if (register) {
+      await request(freshApp)
+        .post("/api/auth/sign-up/email")
+        .set("origin", config.appOrigin)
+        .send({
+          name: "Durable Instructor",
+          email,
+          password,
+          registrationRole: "INSTRUCTOR",
+        })
+        .expect(200);
+      const registered = await freshClient.user.findUniqueOrThrow({
+        where: { email },
+      });
+      ownedUsers.push(registered.id);
+      await freshClient.user.update({
+        where: { id: registered.id },
+        data: { emailVerified: true },
+      });
+    }
+    const signIn = await request(freshApp)
+      .post("/api/auth/sign-in/email")
+      .set("origin", config.appOrigin)
+      .send({ email, password })
+      .expect(200);
+    const cookie = (signIn.headers["set-cookie"] as unknown as string[])
+      .map((value) => value.split(";")[0])
+      .join("; ");
+    const principal = await request(freshApp)
+      .get("/api/v1/me")
+      .set("cookie", cookie)
+      .expect(200);
+    let closed = false;
+    return {
+      app: freshApp,
+      module: freshQuestions,
+      ownerId: principal.body.user.id as string,
+      cookie,
+      close: async () => {
+        if (closed) return;
+        closed = true;
+        try {
+          await request(freshApp)
+            .post("/api/auth/sign-out")
+            .set("origin", config.appOrigin)
+            .set("cookie", cookie)
+            .send({})
+            .expect(200);
+        } finally {
+          await freshClient.$disconnect();
+        }
+      },
+    };
+  } catch (error) {
+    await freshClient.$disconnect();
+    throw error;
+  }
+}
+
+it("B26 definite real SQL Remove rollback preserves public availability and retry archives", async () => {
+  const draft = await fresh();
+  const published = await questions.publish(owner, {
+    source: "saved",
+    id: draft.id,
+    topic,
+    draft: fields,
+    expectedRevision: 0,
+    reviewConfirmed: true,
+  });
+  const publicBefore = await questions.getPublished(draft.id);
+  const trigger = `f02_remove_abort_${suffix.replaceAll("-", "")}`;
+  await prisma.$executeRawUnsafe(
+    `CREATE FUNCTION "${trigger}"() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN IF NEW.id='${draft.id}' AND NEW.status='ARCHIVED' THEN RAISE EXCEPTION 'safe removal abort' USING ERRCODE='23514'; END IF; RETURN NEW; END $$`,
+  );
+  try {
+    await prisma.$executeRawUnsafe(
+      `CREATE TRIGGER "${trigger}" BEFORE UPDATE ON "Exercise" FOR EACH ROW EXECUTE FUNCTION "${trigger}"()`,
+    );
+    await expect(
+      questions.remove(owner, draft.id, { confirmed: true }),
+    ).rejects.toMatchObject({ status: 503, mutationOutcome: "NOT_APPLIED" });
+    expect(await questions.getOwner(owner, draft.id)).toEqual({
+      question: published.question,
+    });
+    expect(await questions.getPublished(draft.id)).toEqual(publicBefore);
+    await prisma.$executeRawUnsafe(`DROP TRIGGER "${trigger}" ON "Exercise"`);
+    const removed = await questions.remove(owner, draft.id, {
+      confirmed: true,
+    });
+    expect(removed.question).toEqual({
+      ...published.question,
+      status: "ARCHIVED",
+      archivedAt: expect.any(String),
+    });
+    await expect(questions.getPublished(draft.id)).rejects.toMatchObject({
+      status: 404,
+    });
+  } finally {
+    await prisma.$executeRawUnsafe(
+      `DROP TRIGGER IF EXISTS "${trigger}" ON "Exercise"`,
+    );
+    await prisma.$executeRawUnsafe(`DROP FUNCTION IF EXISTS "${trigger}"()`);
+  }
+});
+
+it("B26/B37 lost actual Remove COMMIT acknowledgment resolves original archive through fresh authenticated composition", async () => {
+  const email = `f02-remove-durable-${suffix}@example.test`;
+  const first = await freshAuthenticatedComposition(email, true);
+  const sessions = [first];
+  const sockets = new Set<Socket>();
+  let dropped = 0;
+  const proxy = createServer((incoming) => {
+    const upstream = createConnection({
+      host: new URL(url).hostname,
+      port: Number(new URL(url).port),
+    });
+    sockets.add(incoming);
+    sockets.add(upstream);
+    for (const socket of [incoming, upstream]) {
+      socket.on("error", () => {
+        incoming.destroy();
+        upstream.destroy();
+      });
+      socket.on("close", () => sockets.delete(socket));
+    }
+    incoming.pipe(upstream);
+    let buffered = Buffer.alloc(0);
+    upstream.on("data", (data) => {
+      buffered = Buffer.concat([buffered, data]);
+      while (buffered.length >= 5) {
+        const length = buffered.readInt32BE(1) + 1;
+        if (buffered.length < length) return;
+        const frame = buffered.subarray(0, length);
+        buffered = buffered.subarray(length);
+        if (frame[0] === 67 && frame.subarray(5).toString() === "COMMIT\0") {
+          // The database completed COMMIT; withhold its actual acknowledgment.
+          dropped++;
+          incoming.destroy();
+          upstream.destroy();
+          return;
+        }
+        incoming.write(frame);
+      }
+    });
+  });
+  await new Promise<void>((resolve) => proxy.listen(0, "127.0.0.1", resolve));
+  const address = proxy.address();
+  if (!address || typeof address === "string")
+    throw new Error("Missing proxy port");
+  const proxyUrl = new URL(url);
+  proxyUrl.port = String(address.port);
+  const faultClient = new PrismaClient({
+    adapter: new PrismaPg({
+      connectionString: testDatabaseUrl(proxyUrl.toString()),
+      max: 1,
+    }),
+  });
+  try {
+    const generation = await drafts.generate(first.ownerId, topic);
+    const publication = await first.module.publish(first.ownerId, {
+      source: "preview",
+      previewKey: randomUUID(),
+      generationId: generation.generation.id,
+      topic,
+      draft: fields,
+      reviewConfirmed: true,
+    });
+    const faultModule = createInstructorQuestions({
+      prisma: faultClient,
+      logger,
+    });
+    await expect(
+      faultModule.remove(first.ownerId, publication.question.id, {
+        confirmed: true,
+      }),
+    ).rejects.toMatchObject({ status: 503, mutationOutcome: "UNKNOWN" });
+    expect(dropped).toBe(1);
+    const authority = await questions.getOwner(
+      first.ownerId,
+      publication.question.id,
+    );
+    expect(authority.question).toEqual({
+      ...publication.question,
+      status: "ARCHIVED",
+      archivedAt: expect.any(String),
+    });
+    await first.close();
+    const second = await freshAuthenticatedComposition(email);
+    sessions.push(second);
+    const path = `/api/v1/instructor/questions/${publication.question.id}`;
+    const restored = await request(second.app)
+      .get(path)
+      .set("cookie", second.cookie)
+      .expect(200);
+    expect(restored.body).toEqual(authority);
+    const replay = await request(second.app)
+      .post(`${path}/remove`)
+      .set("cookie", second.cookie)
+      .set("origin", config.appOrigin)
+      .send({ confirmed: true })
+      .expect(200);
+    expect(replay.body).toEqual(authority);
+    await expect(
+      questions.getPublished(publication.question.id),
+    ).rejects.toMatchObject({ status: 404 });
+  } finally {
+    await faultClient.$disconnect();
+    for (const socket of sockets) socket.destroy();
+    await new Promise<void>((resolve, reject) =>
+      proxy.close((error) => (error ? reject(error) : resolve())),
+    );
+    for (const session of sessions) await session.close();
+  }
+}, 20000);
+
+it("B37 same saved, published and archived authority survives new real sessions and app/client compositions", async () => {
+  const email = `f02-states-durable-${suffix}@example.test`;
+  const first = await freshAuthenticatedComposition(email, true);
+  const sessions = [first];
+  try {
+    const generated = await request(first.app)
+      .post("/api/v1/instructor/questions/generate")
+      .set("origin", config.appOrigin)
+      .set("cookie", first.cookie)
+      .send({ topic })
+      .expect(200);
+    const saved = await request(first.app)
+      .post("/api/v1/instructor/drafts")
+      .set("origin", config.appOrigin)
+      .set("cookie", first.cookie)
+      .send({
+        topic,
+        draft: fields,
+        generationId: generated.body.generation.id,
+      })
+      .expect(201);
+    const path = `/api/v1/instructor/questions/${saved.body.draft.id}`;
+    const changed = await request(first.app)
+      .patch(path)
+      .set("origin", config.appOrigin)
+      .set("cookie", first.cookie)
+      .send({
+        topic,
+        draft: { ...fields, title: "Durable reviewed edits" },
+        expectedRevision: 0,
+      })
+      .expect(200);
+    await first.close();
+    const second = await freshAuthenticatedComposition(email);
+    sessions.push(second);
+    expect(
+      (
+        await request(second.app)
+          .get(path)
+          .set("cookie", second.cookie)
+          .expect(200)
+      ).body,
+    ).toEqual(changed.body);
+    const published = await request(second.app)
+      .post("/api/v1/instructor/questions/publish")
+      .set("origin", config.appOrigin)
+      .set("cookie", second.cookie)
+      .send({
+        source: "saved",
+        id: saved.body.draft.id,
+        topic,
+        draft: { ...fields, title: "Durable reviewed edits" },
+        expectedRevision: 1,
+        reviewConfirmed: true,
+      })
+      .expect(200);
+    expect(published.body.question).toMatchObject({
+      id: saved.body.draft.id,
+      versionId: changed.body.question.versionId,
+      revision: 2,
+      status: "PUBLISHED",
+    });
+    await second.close();
+    const third = await freshAuthenticatedComposition(email);
+    sessions.push(third);
+    expect(
+      (
+        await request(third.app)
+          .get(path)
+          .set("cookie", third.cookie)
+          .expect(200)
+      ).body,
+    ).toEqual({ question: published.body.question });
+    const removed = await request(third.app)
+      .post(`${path}/remove`)
+      .set("origin", config.appOrigin)
+      .set("cookie", third.cookie)
+      .send({ confirmed: true })
+      .expect(200);
+    await third.close();
+    const fourth = await freshAuthenticatedComposition(email);
+    sessions.push(fourth);
+    expect(
+      (
+        await request(fourth.app)
+          .get(path)
+          .set("cookie", fourth.cookie)
+          .expect(200)
+      ).body,
+    ).toEqual(removed.body);
+    expect(removed.body.question).toEqual({
+      ...published.body.question,
+      status: "ARCHIVED",
+      archivedAt: expect.any(String),
+    });
+    expect(
+      (
+        await request(fourth.app)
+          .post(`${path}/remove`)
+          .set("origin", config.appOrigin)
+          .set("cookie", fourth.cookie)
+          .send({ confirmed: true })
+          .expect(200)
+      ).body,
+    ).toEqual(removed.body);
+  } finally {
+    for (const session of sessions) await session.close();
+  }
+}, 20000);
