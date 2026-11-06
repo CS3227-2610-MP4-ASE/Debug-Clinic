@@ -94,7 +94,7 @@ test("search opens an attempt, saves it, confirms final submission and retains t
     .getByRole("link", { name: `Open question: ${question.title}` })
     .click();
   await expect(
-    page.getByRole("heading", { name: question.title }),
+    page.getByRole("heading", { name: question.title, level: 1 }),
   ).toBeVisible();
   await expect(
     page.getByRole("button", { name: "Run", exact: true }),

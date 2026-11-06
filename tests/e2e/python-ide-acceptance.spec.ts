@@ -281,7 +281,9 @@ test("IDE Stop and real five-second timeout destroy infinite runs and permit fre
   await completed(page);
   await expect(output(page)).toContainText("fresh-state");
   await run(page, "while True:\n    pass\n");
-  await expect(result(page).getByRole("status")).toHaveText("Running…");
+  await expect(result(page).getByRole("status")).toHaveText("Running…", {
+    timeout: 30_000,
+  });
   const started = Date.now();
   await expect(result(page).getByRole("status")).toHaveText("Timed out", {
     timeout: 10_000,
@@ -741,4 +743,25 @@ test("IDE description and expanded scratch/input/reasoning preserve independent 
       .soft(background, "approved IDE-05 description reading surface is white")
       .toBe("rgb(255, 255, 255)");
   }
+});
+
+test("IDE separator range follows viewport changes while editor remains at minimum", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 1280, height: 600 });
+  await fixture(page);
+  const separator = page.getByRole("separator", {
+    name: "Resize editor and output",
+  });
+  await expect(separator).toHaveAttribute("aria-valuenow", "180");
+  await expect(separator).toHaveAttribute("aria-valuemax", "180");
+  await page.setViewportSize({ width: 1280, height: 900 });
+  await expect(separator).toHaveAttribute("aria-valuemax", "480");
+  await expect(separator).toHaveAttribute("aria-valuenow", "180");
+  await separator.focus();
+  await page.keyboard.press("ArrowDown");
+  await expect(separator).toHaveAttribute("aria-valuenow", "204");
+  await page.setViewportSize({ width: 1280, height: 600 });
+  await expect(separator).toHaveAttribute("aria-valuemax", "180");
+  await expect(separator).toHaveAttribute("aria-valuenow", "180");
 });

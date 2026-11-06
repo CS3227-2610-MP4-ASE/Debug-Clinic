@@ -1,5 +1,9 @@
 # ZH-LWS-02 independent acceptance and verification
 
+Current review: **repair round 1 still requires F5 correction** on product source
+`36df16b7a3942a978f24bbe0450093da2bffcbef`. See the final repair-round section;
+round-0 findings/results below remain historical evidence.
+
 ## Frozen acceptance before implementation diff
 
 6 November 2026 (Asia/Singapore). Single reused independent testing chat,
@@ -352,6 +356,149 @@ Diagnostic runs and their corrections are retained separately.
 Screenshots under `.workflow-state/ide-testing/round0/screenshots/` are
 `ide-1440x900.png`, `ide-1280x600.png`, `ide-320x800.png` (mobile full page 320×3929
 for the valid long fixture). Auth/composed traces/screenshots remain disabled.
+
+## Repair round 1 — independent verification
+
+Product source frozen at `36df16b7a3942a978f24bbe0450093da2bffcbef`.
+Inspection HEAD `1d6581c725af425c44d14533ea28c55052cc5cda` adds documentation
+and CI only; `git diff 36df16b HEAD -- apps packages prisma netlify tests`
+is empty. Working test edits are documented below, not product repairs.
+Complete repair handoff and unchanged approved plan were checked before review.
+Single existing tester chat/model and Developer 2 exclusions remain in force.
+No extra UI polish or new design round was started.
+
+### Remaining F5 — P2: viewport changes can leave separator maximum stale
+
+Actual desktop browser probe: load at 1280×600, where current/min/max are
+180/180/180; resize the existing page to 1280×900. The separator still exposes
+`aria-valuemax="180"` after 5 seconds, although the current viewport formula
+allows 480. This is a viewport-change case, not a fresh navigation. The original
+fresh-viewport layout tests pass. Reproduction is now the permanent independent
+test `IDE separator range follows viewport changes while editor remains at minimum`.
+
+Source basis: `LearnerWorkspace.tsx:60–65` sets only clamped editor height on
+resize. When that height remains 180, the state value does not change; the
+`aria-valuemax={maxEditorHeight()}` expression needs a render to reflect the
+new viewport. Preserve current clamping and update the accessible range on
+every viewport change. Keep pointer/keyboard behavior, fixed description header,
+and short-viewport action reachability. Builder owns the source repair.
+
+Raw reproduction:
+`.workflow-state/ide-testing/round1/resize-failure/result.log`, screenshot and
+error context alongside it. Initial temporary probe was removed after promoting
+the same observed invariant into the maintained acceptance file. No product
+source was changed by the tester.
+
+The maintained regression confirms **0 pass / 2 expected fail**, desktop and
+mobile projects, both at the unchanged maximum after growth. Later keyboard
+increment and shrink-back assertions are deliberately retained, but were not
+reached on this source. They remain required after repair. No unrelated failure
+was observed in this targeted command.
+
+### Completed evidence
+
+- Focused immutable IDE matrix: **33 pass / 1 fail**, 34 cases. The failure was
+  the second Running assertion's default 5-second startup wait, while actual
+  state remained Loading Python. The exact unchanged desktop retry passed
+  **1/1** before any harness correction.
+- Full normal browser command: **199 pass / 20 opt-in skip / 3 fail**, 222 cases,
+  13.0 minutes. Failures: desktop/mobile legacy title query became ambiguous
+  between existing h1 and new description h3; mobile repeated the startup wait.
+  This command remains a failing run and is not relabelled green.
+- Authorized harness corrections: scope the existing title assertion to h1;
+  give only the second Running expectation the approved 30-second initialization
+  allowance. The actual 5-second execution deadline, >4-second elapsed assertion,
+  10-second timeout observation, frame removal and fresh reruns are unchanged.
+  Exact affected desktop/mobile rerun: **4/4 pass** (32.9 seconds).
+- Root unit/API **531/531 pass**, 30 files; frontend **9/9 pass**, 2 files;
+  typecheck and sequential lint pass. Initial lint ENOENT was concurrent
+  Playwright test-results deletion; preserved, then rerun sequentially.
+- No-DB browser collection **222 cases / 16 files** before the new viewport test.
+- Full production build passes under Node v24.22.2. Existing third-party
+  annotation and >500 kB chunk advisories are non-fatal.
+- Built frontend anonymous smoke: **16 route/viewport loads pass**, plus existing
+  desktop/mobile keyboard, role-choice, focused-alert and mobile navigation
+  assertions; zero page errors/external assets.
+- CI-only `1d6581c` correctly adds `npm test -w @debugclinic/frontend` after root
+  tests. This closes the root Vitest exclusion gap; remote CI was not run.
+- Coordinator separately reports Node24 npm audit at moderate threshold:
+  exit 0, zero vulnerabilities. This is coordinator-observed evidence, not a
+  tester-executed command.
+
+- Production-BUILT real Python: **20/20 pass**, 1.3 minutes, desktop/mobile.
+  Uses Vite preview of emitted JavaScript with actual pinned runtime assets:
+  stdout/stderr/stdin/assertions, blank/syntax/error/stale feedback, Stop and
+  real five-second timeout/fresh reruns, Unicode/flood byte bounds and explicit
+  notice, trailing no-newline output, origin/storage/network/host-file denial,
+  asset failure, and Stop/deadline recovery from held assets. Auth/question/attempt
+  HTTP remain synthetic doubles; these cases do not establish real providers.
+- Composed F01/F02/learner: **8/8 pass**, 38.3 seconds, desktop/mobile. Real local
+  cookies and isolated PostgreSQL, captured email and fake AI. No browser API
+  interception. The deliberate lost-response socket-hangup diagnostic is expected.
+  Traces/screenshots remain off for these sensitive journeys.
+
+### Repaired runtime contracts and review limits
+
+F1–F4 pass the corresponding independent browser cases. Original streams are
+captured before learner code and flushed before decoder tails and terminal state;
+actual no-newline output remains visible. F2 now uses UTF-8 bytes: ordinary
+worker budget is 65,500 bytes (65,536 minus 30-byte notice minus 6-byte decoder
+tail reserve), total parent aggregate is 65,536 bytes, and errors are separately
+bounded at **8,000 bytes** (not 8,192). Actual Unicode scalar/truncation assertions
+pass. F3 caches resolved bytes only; AbortController ownership/generation and
+reader cancellation are consistent with real fresh-rerun recovery tests.
+F4 white fixed header/title/topic and independently scrolling body pass the
+bounded confirmation. Screenshots at 1440×900, 1280×600, 320×800 were inspected
+under `.workflow-state/ide-testing/round1/screenshots/`. The mobile full page is
+320×3974. No further visual direction or polish round is requested.
+
+Functional verdict: **changes required for remaining F5**. Standards verdict:
+**changes required for stale accessible range**; reviewed against CodingStandards,
+with the other four scoped repairs and CI addition conforming. Security verdict:
+**pass within the tested browser isolation/resource scope** on frozen source;
+the previous output-unit and cancellation findings are repaired. No observed
+app-storage/API/host escape. Hard browser memory/process quotas, IPC-flood
+resistance, physical-device touch, screen-reader certification, live providers,
+remote CI/deployment and a hard total initialization wall-clock guarantee remain
+unestablished. The 30-second timer can restart on loading messages; execution
+deadline remains five seconds after Running. No destructive OOM probe was run.
+
+### Round-1 reproduction and evidence
+
+All browser commands use `E2E_APP_ORIGIN=http://127.0.0.1:51821` and
+`E2E_BACKEND_PORT=51822`, preserving unrelated 51820. Ordinary collection and
+mocked browser commands explicitly unset all four DB variables. Production build
+and composed checks use all four matching URLs for loopback port 64067 and
+`debugclinic_ide_test`. Docker inspect plus SQL reverified exact coordinator-owned
+container `7ba98aa…f3db2`, PostgreSQL 17, loopback mapping and DB/user identity
+before the build/composed commands. No migration or seed was run by tester.
+
+Normal full command: `npm run test:e2e -- --workers=1`.
+Corrected subset: the learner-workspace and Python acceptance files with
+`--grep 'search opens an attempt|Stop and real' --workers=1`.
+Production command: Python acceptance file with
+`--config .workflow-state/zh02-built/playwright.config.ts` and
+`--grep 'real Python executes|blank tests|Stop and real|output is bounded|without a newline|real sandbox denies|asset failure|stalled asset' --workers=1`.
+Composed command: the same three F01/F02/learner files documented above with
+`E2E_AUTH_COMPLETION=1` and `--workers=1`.
+
+Raw synthetic logs are under `.workflow-state/ide-testing/round1/`; the original
+full failure contexts/screenshots and initial failed retry evidence are retained
+separately. No complete 222-case command is claimed green. The new viewport test
+adds two project cases after that frozen full run. Source repair returns to the
+existing builder; no source edit, push, comment, deployment or provider call was
+made by tester. Coordinator retains ownership of DB cleanup.
+
+Final handoff checks: sequential whole-tree lint, scoped formatting for four
+repaired source files/two test files/CI, report formatting, `git diff --check`,
+and ES2023/NodeNext strict targeted E2E typecheck with DOM.Iterable all pass.
+An initial standalone typecheck omitted DOM.Iterable; rerunning with the same
+browser libs as the project corrected that invocation without code changes.
+No-DB collection now finds **224 cases / 16 files**, including the two new
+viewport cases. All owned browser commands are finished; neither 51821 nor
+51822 has a remaining listener. Builder source mutation may resume. AGENTS
+lessons are preserved unstaged for the coordinator; only tests and this report
+belong to the tester's handoff commit. No skill was created or revised.
 
 Coordinator-reported since-bounded testing usage is **2,468,173 tokens**, above
 the 1.5m initial estimate; Sol high stayed selected and repeated output/reads were
