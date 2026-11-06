@@ -5,7 +5,7 @@ import type {
   LearnerAttemptWrite,
   PublishedQuestion,
 } from "@debugclinic/contracts";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useId, useRef, useState } from "react";
 import { Link as RouterLink, useLocation, useParams } from "react-router-dom";
 import { useAuth } from "../auth/AuthProvider.js";
 import { QuestionError } from "../lib/instructor-questions.js";
@@ -22,7 +22,7 @@ import {
 export function PublishedQuestionPage() {
   const { id = "" } = useParams();
   const location = useLocation();
-  const { sessionExpired, user } = useAuth();
+  const { sessionEpoch, sessionExpired, user } = useAuth();
   const { setDirty } = useUnsavedWork();
   const [question, setQuestion] = useState<PublishedQuestion | null>(null);
   const [attempt, setAttempt] = useState<LearnerAttempt | null>(null);
@@ -35,17 +35,40 @@ export function PublishedQuestionPage() {
   const [unavailable, setUnavailable] = useState(false);
   const [loadRevision, setLoadRevision] = useState(0);
   const dirty = useRef(false);
+  const lifecycle = useRef(0);
+  const currentUserId = user?.id ?? null;
+  const identity = useRef({ userId: currentUserId, revision: 0 });
+  if (identity.current.userId !== currentUserId) {
+    identity.current = {
+      userId: currentUserId,
+      revision: identity.current.revision + 1,
+    };
+  }
+  const session = useRef({
+    userId: currentUserId,
+    sessionEpoch,
+    sessionExpired,
+    identityRevision: identity.current.revision,
+  });
+  session.current = {
+    userId: currentUserId,
+    sessionEpoch,
+    sessionExpired,
+    identityRevision: identity.current.revision,
+  };
+  const ownerId = useId();
   const retryingAttemptLoad = useRef(false);
   const back = `/learner/questions${location.search}`;
   const updateDirty = useCallback(
     (value: boolean) => {
       dirty.current = value;
-      setDirty(value);
+      setDirty(value, ownerId);
     },
-    [setDirty],
+    [ownerId, setDirty],
   );
   useEffect(() => {
     let active = true;
+    const generation = ++lifecycle.current;
     const retry = retryingAttemptLoad.current;
     retryingAttemptLoad.current = false;
     if (!retry) {
@@ -84,9 +107,15 @@ export function PublishedQuestionPage() {
       });
     return () => {
       active = false;
-      updateDirty(false);
+      if (lifecycle.current === generation) {
+        lifecycle.current += 1;
+        updateDirty(false);
+      }
     };
-  }, [id, loadRevision, updateDirty]);
+  }, [id, loadRevision, sessionEpoch, updateDirty]);
+  useEffect(() => {
+    if (sessionExpired || !user) setSaving(false);
+  }, [sessionExpired, user]);
   function editCode(value: string) {
     setCode(value);
     updateDirty(
@@ -101,6 +130,16 @@ export function PublishedQuestionPage() {
     );
   }
   async function persist(submit: boolean) {
+    const generation = lifecycle.current;
+    const learnerId = user?.id ?? null;
+    const requestSessionEpoch = sessionEpoch;
+    const requestIdentityRevision = identity.current.revision;
+    const isCurrent = () =>
+      lifecycle.current === generation &&
+      session.current.userId === learnerId &&
+      session.current.sessionEpoch === requestSessionEpoch &&
+      session.current.identityRevision === requestIdentityRevision &&
+      !session.current.sessionExpired;
     const input: LearnerAttemptWrite = {
       code,
       reasoning,
@@ -112,12 +151,17 @@ export function PublishedQuestionPage() {
       const result = submit
         ? await submitLearnerAttempt(id, input)
         : await saveLearnerAttempt(id, input);
+      if (!isCurrent()) return;
       setAttempt(result.attempt);
+      if (submit && result.attempt) {
+        setCode(result.attempt.code);
+        setReasoning(result.attempt.reasoning);
+      }
       updateDirty(false);
     } catch (failed) {
-      setError(questionFailure(failed));
+      if (isCurrent()) setError(questionFailure(failed));
     } finally {
-      setSaving(false);
+      if (isCurrent()) setSaving(false);
     }
   }
   const submitted = attempt?.status === "FINAL_SUBMITTED";
@@ -132,8 +176,8 @@ export function PublishedQuestionPage() {
       }}
     >
       <Stack
-        direction="row"
-        alignItems="center"
+        direction={{ xs: "column", sm: "row" }}
+        alignItems={{ xs: "flex-start", sm: "center" }}
         justifyContent="space-between"
         gap={1}
       >
@@ -250,6 +294,7 @@ export function PublishedQuestionPage() {
             reasoning={reasoning}
             disabled={
               pending ||
+              saving ||
               Boolean(loadError) ||
               submitted ||
               sessionExpired ||

@@ -9,6 +9,10 @@ import {
 import { Prisma } from "../../../../generated/prisma/client.js";
 import type { DebugClinicPrisma } from "../db/client.js";
 import { AppError } from "../lib/errors.js";
+import {
+  findCanonicalPublishedQuestion,
+  InvalidPublishedQuestionError,
+} from "./instructor-questions.js";
 
 export interface LearnerAttempts {
   get(learnerId: string, exerciseId: string): Promise<LearnerAttemptResponse>;
@@ -34,6 +38,18 @@ const notFound = () => new AppError(404, "NOT_FOUND", "Question not found");
 const conflict = (
   message = "This attempt changed. Reload it before saving again.",
 ) => new AppError(409, "CONFLICT", message, undefined, "NOT_APPLIED");
+
+async function canonicalPublishedQuestion(
+  client: Pick<Prisma.TransactionClient, "exercise">,
+  exerciseId: string,
+) {
+  try {
+    return await findCanonicalPublishedQuestion(client, exerciseId);
+  } catch (error) {
+    if (error instanceof InvalidPublishedQuestionError) return null;
+    throw error;
+  }
+}
 
 function project(row: {
   id: string;
@@ -76,20 +92,9 @@ export function createLearnerAttempts(
       SELECT "id" FROM "Exercise" WHERE "id" = ${exerciseId} AND "status" = 'PUBLISHED' FOR UPDATE
     `;
     if (!rows.length) throw notFound();
-    const version = await transaction.exerciseVersion.findFirst({
-      where: {
-        exerciseId,
-        version: 1,
-        language: "python",
-        topic: { not: null },
-        bugExplanation: { not: null },
-        correctedSolution: { not: null },
-        generationProvenance: { not: Prisma.DbNull },
-      },
-      select: { id: true },
-    });
-    if (!version) throw notFound();
-    return version.id;
+    const question = await canonicalPublishedQuestion(transaction, exerciseId);
+    if (!question) throw notFound();
+    return question.versionId;
   }
   async function read(learnerId: string, versionId: string) {
     const row = await prisma.attempt.findUnique({
@@ -108,29 +113,8 @@ export function createLearnerAttempts(
     async get(learnerId, rawExerciseId) {
       const exerciseId = DraftIdSchema.parse(rawExerciseId);
       try {
-        const question = await prisma.exercise.findFirst({
-          where: {
-            id: exerciseId,
-            status: "PUBLISHED",
-            versions: {
-              some: {
-                version: 1,
-                language: "python",
-                topic: { not: null },
-                bugExplanation: { not: null },
-                correctedSolution: { not: null },
-                generationProvenance: { not: Prisma.DbNull },
-              },
-            },
-          },
-          select: {
-            versions: {
-              where: { version: 1, language: "python" },
-              select: { id: true },
-            },
-          },
-        });
-        const versionId = question?.versions[0]?.id;
+        const question = await canonicalPublishedQuestion(prisma, exerciseId);
+        const versionId = question?.versionId;
         if (!versionId) throw notFound();
         return await read(learnerId, versionId);
       } catch (error) {

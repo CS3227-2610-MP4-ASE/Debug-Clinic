@@ -18,7 +18,7 @@ import { useBlocker } from "react-router-dom";
 
 type DiscardAction = () => void | boolean | Promise<void | boolean>;
 interface DiscardState {
-  setDirty: (value: boolean) => void;
+  setDirty: (value: boolean, owner?: string) => void;
   confirmDiscard: (action: DiscardAction) => void;
   clear: () => void;
 }
@@ -29,9 +29,15 @@ export function UnsavedWorkProvider({ children }: PropsWithChildren) {
   const [isDirty, setIsDirty] = useState(false);
   const [action, setAction] = useState<DiscardAction | null>(null);
   const registration = useRef(0);
+  const owner = useRef<string | null>(null);
   const blocker = useBlocker(() => dirty.current);
   const stayButton = useRef<HTMLButtonElement>(null);
-  const setDirty = useCallback((value: boolean) => {
+  const setDirty = useCallback((value: boolean, nextOwner?: string) => {
+    if (nextOwner !== undefined) {
+      if (!value && owner.current !== null && owner.current !== nextOwner)
+        return;
+      owner.current = nextOwner;
+    }
     registration.current += 1;
     dirty.current = value;
     setIsDirty(value);

@@ -167,6 +167,29 @@ function projectPublic(row: PublicRow) {
     expectedBehavior: version?.expectedBehavior,
   });
 }
+export class InvalidPublishedQuestionError extends Error {
+  constructor() {
+    super("The stored published question is invalid");
+    this.name = "InvalidPublishedQuestionError";
+  }
+}
+export async function findCanonicalPublishedQuestion(
+  client: Pick<Transaction, "exercise">,
+  id: string,
+) {
+  const row = await client.exercise.findFirst({
+    where: { ...published, id },
+    select: publicSelect,
+  });
+  if (!row) return null;
+  try {
+    return projectPublic(row);
+  } catch {
+    // A stored row that cannot satisfy the owner/public contracts is not a
+    // canonical published question and must never authorize learner attempts.
+    throw new InvalidPublishedQuestionError();
+  }
+}
 function nextOffset(offset: number, count: number): number | null {
   return count > 50 ? DraftOffsetSchema.parse(offset + 50) : null;
 }
@@ -593,12 +616,9 @@ export function createInstructorQuestions({
     getPublished(rawId) {
       const id = DraftIdSchema.parse(rawId);
       return retrieval(async () => {
-        const row = await prisma.exercise.findFirst({
-          where: { ...published, id },
-          select: publicSelect,
-        });
-        if (!row) throw notFound();
-        return { question: projectPublic(row) };
+        const question = await findCanonicalPublishedQuestion(prisma, id);
+        if (!question) throw notFound();
+        return { question };
       });
     },
   };

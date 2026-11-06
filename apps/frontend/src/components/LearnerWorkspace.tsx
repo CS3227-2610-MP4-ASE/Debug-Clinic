@@ -122,7 +122,12 @@ export function LearnerWorkspace({
             "& textarea": {
               height: "100% !important",
               overflow: "auto !important",
+              "&:focus-visible": { outline: "none", boxShadow: "none" },
             },
+            "& .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline":
+              {
+                borderWidth: 2,
+              },
           }}
         />
         <TextField
@@ -133,6 +138,16 @@ export function LearnerWorkspace({
           onChange={(event) => onReasoningChange(event.target.value)}
           inputProps={{ maxLength: 5_000 }}
           disabled={disabled}
+          sx={{
+            "& textarea:focus-visible": {
+              outline: "none",
+              boxShadow: "none",
+            },
+            "& .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline":
+              {
+                borderWidth: 2,
+              },
+          }}
         />
         <Stack
           direction={{ xs: "column", sm: "row" }}
@@ -200,6 +215,18 @@ export function LearnerWorkspace({
           touchAction: "none",
           borderBlock: 1,
           borderColor: "divider",
+          position: "relative",
+          "&::after": {
+            content: '""',
+            position: "absolute",
+            width: 48,
+            height: 4,
+            borderRadius: 2,
+            bgcolor: "text.disabled",
+            top: "50%",
+            left: "50%",
+            transform: "translate(-50%, -50%)",
+          },
           "&:focus-visible": {
             outline: "2px solid",
             outlineColor: "primary.main",
