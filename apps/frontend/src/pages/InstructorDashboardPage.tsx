@@ -13,9 +13,21 @@ export function InstructorDashboardPage() {
       </Typography>
       <Typography variant="h6" color="text.secondary" fontWeight={400}>
         Prepare a beginner Python debugging question, review and edit the
-        preview, then save a private draft.
+        preview, then save a private draft or publish the reviewed question.
       </Typography>
       <Stack direction={{ xs: "column", sm: "row" }} gap={2}>
+        <Button
+          component={RouterLink}
+          to="/instructor/questions?status=PUBLISHED"
+        >
+          Published
+        </Button>
+        <Button
+          component={RouterLink}
+          to="/instructor/questions?status=ARCHIVED"
+        >
+          Removed
+        </Button>
         <Button
           component={RouterLink}
           to="/instructor/questions/new"

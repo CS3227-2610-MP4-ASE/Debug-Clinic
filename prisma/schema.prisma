@@ -128,8 +128,13 @@ model Exercise {
   createdAt   DateTime          @default(now())
   updatedAt   DateTime          @updatedAt
   publishedAt DateTime?
+  editRevision Int @default(0)
+  previewPublicationKey String?
+  archivedAt DateTime?
 
   @@index([authorId, status])
+  @@unique([authorId, previewPublicationKey])
+  @@index([authorId, status, archivedAt])
   @@index([status, publishedAt])
 }
 
@@ -235,6 +240,7 @@ model AiUsageEvent {
   outputTokens  Int?
   latencyMs     Int?
   errorCode     String?
+  generationTopicDigest String?
   user          User?         @relation(fields: [userId], references: [id], onDelete: SetNull)
   attempt       Attempt?      @relation(fields: [attemptId], references: [id], onDelete: SetNull)
   createdAt     DateTime      @default(now())

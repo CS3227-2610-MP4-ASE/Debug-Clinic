@@ -72,6 +72,7 @@ try {
     DATABASE_URL: url,
     DATABASE_URL_POOLED: url,
     TEST_DATABASE_URL: url,
+    E2E_TEST_DATABASE_URL: url,
   };
   console.log(
     `Verifying PostgreSQL 17 in an isolated container using Node ${process.versions.node}`,
@@ -82,7 +83,11 @@ try {
     "db:seed",
     "test:integration",
   ]) {
-    execFileSync("npm", ["run", script], {
+    // npm is a .cmd shim on Windows; invoke its installed JS CLI directly.
+    const npmCli = process.env.npm_execpath;
+    if (!npmCli || !existsSync(npmCli))
+      throw new Error("Run this verification through npm run db:verify");
+    execFileSync(process.execPath, [npmCli, "run", script], {
       cwd: root,
       env,
       stdio: "inherit",

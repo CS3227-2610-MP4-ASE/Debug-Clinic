@@ -24,6 +24,16 @@ import {
   GenerateQuestionResponseSchema,
   SaveDraftRequestSchema,
   SavedDraftResponseSchema,
+  OwnerQuestionListQuerySchema,
+  OwnerQuestionListResponseSchema,
+  OwnerQuestionResponseSchema,
+  SaveQuestionChangesRequestSchema,
+  PublishQuestionRequestSchema,
+  PublishQuestionResponseSchema,
+  RemoveQuestionRequestSchema,
+  PublishedQuestionListQuerySchema,
+  PublishedQuestionListResponseSchema,
+  PublishedQuestionResponseSchema,
   type CurrentUser,
   type Role,
 } from "@debugclinic/contracts";
@@ -38,6 +48,7 @@ import type { DebugClinicAuth } from "./auth/auth.js";
 import type { AppConfig } from "./config/env.js";
 import { classifyDatabaseFailure } from "./db/diagnostics.js";
 import type { InstructorDrafts } from "./exercises/instructor-drafts.js";
+import type { InstructorQuestions } from "./exercises/instructor-questions.js";
 import { AppError, DependencyUnavailableError } from "./lib/errors.js";
 import {
   createLogger,
@@ -61,6 +72,7 @@ export interface CreateAppOptions {
   sessionResolver?: SessionResolver;
   aiProvider?: AiProvider;
   instructorDrafts?: InstructorDrafts;
+  instructorQuestions?: InstructorQuestions;
   profileUpdater: ProfileUpdater;
   logger?: AppLogger;
 }
@@ -118,7 +130,7 @@ function requireRole(role: Role): RequestHandler {
 }
 
 function createErrorHandler(logger: AppLogger): ErrorRequestHandler {
-  return (error: unknown, _request, response, _next) => {
+  return (error: unknown, request, response, _next) => {
     const requestId = response.locals.requestId;
     let appError: AppError;
 
@@ -131,7 +143,10 @@ function createErrorHandler(logger: AppLogger): ErrorRequestHandler {
         "The request was invalid",
         error.issues.map((issue) => ({
           path: issue.path.join("."),
-          message: issue.message,
+          message:
+            issue.code === "unrecognized_keys"
+              ? "Unexpected fields are not allowed"
+              : issue.message,
         })),
       );
     } else if (
@@ -159,7 +174,10 @@ function createErrorHandler(logger: AppLogger): ErrorRequestHandler {
         "The request body exceeds the 64kb limit",
       );
     } else {
-      logger.error({ err: error, requestId }, "Unhandled request error");
+      logger.error(
+        { category: "UNHANDLED_REQUEST_ERROR", requestId },
+        "Unhandled request error",
+      );
       appError = new AppError(
         500,
         "INTERNAL_ERROR",
@@ -172,6 +190,17 @@ function createErrorHandler(logger: AppLogger): ErrorRequestHandler {
         code: appError.code,
         message: appError.message,
         requestId,
+        ...((request.method === "POST" || request.method === "PATCH") &&
+        request.path.startsWith("/api/v1/instructor/questions")
+          ? {
+              mutationOutcome:
+                appError.mutationOutcome ??
+                (appError.status < 500 ||
+                error instanceof DependencyUnavailableError
+                  ? "NOT_APPLIED"
+                  : "UNKNOWN"),
+            }
+          : {}),
         ...(appError.details ? { details: appError.details } : {}),
       },
     });
@@ -204,6 +233,9 @@ export function createApp(options: CreateAppOptions) {
     pinoHttp({
       logger,
       serializers: {
+        // pino-http synthesizes an Error for 5xx responses. Never serialize its
+        // stack, cause or arbitrary metadata; status and requestId are separate.
+        err: () => ({ category: "HTTP_RESPONSE_ERROR" }),
         req: (request) => ({
           id: request.id,
           method: request.method,
@@ -385,6 +417,114 @@ export function createApp(options: CreateAppOptions) {
       response.json(
         SavedDraftResponseSchema.parse(
           await drafts().get(response.locals.user!.id, id),
+        ),
+      );
+    }),
+  );
+
+  const questions = (): InstructorQuestions => {
+    if (!options.instructorQuestions)
+      throw new DependencyUnavailableError(
+        "Questions are temporarily unavailable",
+      );
+    return options.instructorQuestions;
+  };
+  app.get(
+    "/api/v1/instructor/questions",
+    ...instructor,
+    asyncHandler(async (request, response) => {
+      const query = OwnerQuestionListQuerySchema.parse(request.query);
+      response.json(
+        OwnerQuestionListResponseSchema.parse(
+          await questions().listOwner(response.locals.user!.id, query),
+        ),
+      );
+    }),
+  );
+  app.post(
+    "/api/v1/instructor/questions/publish",
+    ...instructor,
+    requireDraftMutation,
+    validateBody(PublishQuestionRequestSchema),
+    asyncHandler(async (request, response) => {
+      response.json(
+        PublishQuestionResponseSchema.parse(
+          await questions().publish(response.locals.user!.id, request.body),
+        ),
+      );
+    }),
+  );
+  app.get(
+    "/api/v1/instructor/questions/:id",
+    ...instructor,
+    asyncHandler(async (request, response) => {
+      response.json(
+        OwnerQuestionResponseSchema.parse(
+          await questions().getOwner(
+            response.locals.user!.id,
+            DraftIdSchema.parse(request.params["id"]),
+          ),
+        ),
+      );
+    }),
+  );
+  app.patch(
+    "/api/v1/instructor/questions/:id",
+    ...instructor,
+    requireDraftMutation,
+    validateBody(SaveQuestionChangesRequestSchema),
+    asyncHandler(async (request, response) => {
+      response.json(
+        OwnerQuestionResponseSchema.parse(
+          await questions().saveChanges(
+            response.locals.user!.id,
+            DraftIdSchema.parse(request.params["id"]),
+            request.body,
+          ),
+        ),
+      );
+    }),
+  );
+  app.post(
+    "/api/v1/instructor/questions/:id/remove",
+    ...instructor,
+    requireDraftMutation,
+    validateBody(RemoveQuestionRequestSchema),
+    asyncHandler(async (request, response) => {
+      response.json(
+        OwnerQuestionResponseSchema.parse(
+          await questions().remove(
+            response.locals.user!.id,
+            DraftIdSchema.parse(request.params["id"]),
+            request.body,
+          ),
+        ),
+      );
+    }),
+  );
+  const learner = [requireUser(sessionResolver), requireRole("LEARNER")];
+  app.get(
+    "/api/v1/learner/questions",
+    ...learner,
+    asyncHandler(async (request, response) => {
+      response.json(
+        PublishedQuestionListResponseSchema.parse(
+          await questions().listPublished(
+            PublishedQuestionListQuerySchema.parse(request.query),
+          ),
+        ),
+      );
+    }),
+  );
+  app.get(
+    "/api/v1/learner/questions/:id",
+    ...learner,
+    asyncHandler(async (request, response) => {
+      response.json(
+        PublishedQuestionResponseSchema.parse(
+          await questions().getPublished(
+            DraftIdSchema.parse(request.params["id"]),
+          ),
         ),
       );
     }),

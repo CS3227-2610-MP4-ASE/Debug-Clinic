@@ -1,6 +1,10 @@
 import { defineConfig, devices } from "@playwright/test";
+import {
+  browserTestBackendPort,
+  browserTestOrigin,
+} from "./tests/support/browser-target.js";
 
-const appOrigin = "http://127.0.0.1:5173";
+const appOrigin = browserTestOrigin();
 const appAddress = new URL(appOrigin);
 const testDatabaseUrl =
   process.env["E2E_TEST_DATABASE_URL"] ??
@@ -27,7 +31,9 @@ if (
 
 const testEnvironment = {
   NODE_ENV: "test",
-  PORT: "3001",
+  PORT: browserTestBackendPort(),
+  E2E_BACKEND_PORT: browserTestBackendPort(),
+  E2E_APP_ORIGIN: appOrigin,
   APP_ORIGIN: appOrigin,
   CORS_ORIGINS: appOrigin,
   DATABASE_URL: testDatabaseUrl,

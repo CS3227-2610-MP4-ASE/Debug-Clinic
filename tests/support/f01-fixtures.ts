@@ -1,5 +1,6 @@
 // Independent acceptance data: never derive expected values from app schemas.
-export const f01Origin = "http://127.0.0.1:5173";
+import { browserTestOrigin } from "./browser-target.js";
+export const f01Origin = browserTestOrigin();
 export const f01Topic = "Python lists and for loops";
 export const f01Draft = {
   title: "Sum every list element",

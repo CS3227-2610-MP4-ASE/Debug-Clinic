@@ -16,6 +16,7 @@ import { useState, type PropsWithChildren } from "react";
 import { Link as RouterLink, useLocation, useNavigate } from "react-router-dom";
 
 import { useAuth } from "../auth/AuthProvider.js";
+import { useUnsavedWork } from "./UnsavedWork.js";
 
 const publicLinks = [
   { label: "Home", to: "/" },
@@ -27,6 +28,7 @@ export function AppShell({ children }: PropsWithChildren) {
   const [signingOut, setSigningOut] = useState(false);
   const [signOutError, setSignOutError] = useState<string | null>(null);
   const { user, signOut } = useAuth();
+  const { confirmDiscard } = useUnsavedWork();
   const navigate = useNavigate();
   const location = useLocation();
   const links = user
@@ -48,11 +50,13 @@ export function AppShell({ children }: PropsWithChildren) {
       await signOut();
       setOpen(false);
       await navigate("/sign-in", { replace: true });
+      return true;
     } catch {
       setOpen(false);
       setSignOutError(
         "You are not signed out yet. Check your connection and try Sign out again.",
       );
+      return false;
     } finally {
       setSigningOut(false);
     }
@@ -81,7 +85,10 @@ export function AppShell({ children }: PropsWithChildren) {
         <Button
           color="inherit"
           disabled={signingOut}
-          onClick={() => void handleSignOut()}
+          onClick={() => {
+            setOpen(false);
+            confirmDiscard(handleSignOut);
+          }}
           sx={{ justifyContent: "flex-start" }}
         >
           {signingOut ? "Signing out…" : "Sign out"}

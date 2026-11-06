@@ -32,6 +32,8 @@ async function request<T>(
       ...(body === undefined ? {} : { body: JSON.stringify(body) }),
     });
     const value: unknown = await response.json().catch(() => null);
+    if (response.status === 401)
+      window.dispatchEvent(new Event("debugclinic:session-expired"));
     if (!response.ok) {
       const parsed = ApiErrorSchema.safeParse(value);
       if (parsed.success) {

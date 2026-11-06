@@ -25,6 +25,7 @@ type Props = {
   disabled?: boolean;
   errors?: Partial<Record<keyof QuestionFields, string>>;
   onChange?: (key: keyof QuestionFields, value: string) => void;
+  showDraftNotice?: boolean;
 };
 
 export function InstructorDraftFields({
@@ -32,13 +33,16 @@ export function InstructorDraftFields({
   disabled,
   errors,
   onChange,
+  showDraftNotice = true,
 }: Props) {
   return (
     <Stack gap={3} minWidth={0}>
-      <Alert severity="warning">
-        Unverified instructor draft. Review every field before using this
-        content.
-      </Alert>
+      {showDraftNotice && (
+        <Alert severity="warning">
+          Unverified instructor draft. Review every field before using this
+          content.
+        </Alert>
+      )}
       <Typography color="text.secondary">
         Bug explanation and corrected solution are instructor-only.
       </Typography>

@@ -131,9 +131,10 @@ function save(
   app: ReturnType<typeof createApp>,
   generationId: string,
   draft = f01Edited,
+  topic = f01Topic,
 ) {
   return post(app, "/api/v1/instructor/drafts", {
-    topic: f01Topic,
+    topic,
     draft,
     generationId,
   });
@@ -290,7 +291,11 @@ describe("F01 real PostgreSQL through public HTTP", () => {
     const corrupt = await get(app, id).expect(404);
     await prisma.exercise.update({
       where: { id: id },
-      data: { status: "ARCHIVED" },
+      data: {
+        status: "ARCHIVED",
+        publishedAt: new Date("2026-11-06T00:00:00Z"),
+        archivedAt: new Date("2026-11-06T00:00:01Z"),
+      },
     });
     const archived = await get(app, id).expect(404);
     for (const r of [foreign, missing, old, corrupt, archived]) {
@@ -809,14 +814,24 @@ describe("F01 real PostgreSQL failure integrity", () => {
     await post(app, "/api/v1/instructor/questions/generate", {
       topic: "😀".repeat(151),
     }).expect(400);
-    await save(app, generationId, {
-      ...f01Edited,
-      title: "😀".repeat(60),
-    }).expect(201);
-    await save(app, generationId, {
-      ...f01Edited,
-      title: "😀".repeat(61),
-    }).expect(400);
+    await save(
+      app,
+      generationId,
+      {
+        ...f01Edited,
+        title: "😀".repeat(60),
+      },
+      "😀".repeat(150),
+    ).expect(201);
+    await save(
+      app,
+      generationId,
+      {
+        ...f01Edited,
+        title: "😀".repeat(61),
+      },
+      "😀".repeat(150),
+    ).expect(400);
   });
   it("B04/B19 detail ID bounds retain opaque IDs; over128 fails validation", async () => {
     const { app } = fixture();

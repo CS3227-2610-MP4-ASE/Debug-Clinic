@@ -117,7 +117,19 @@ async function install(page: Page) {
     const draft = state.saved.find((item) => item.id === id);
     return route.fulfill(
       draft
-        ? { json: { draft } }
+        ? {
+            json: url.pathname.includes("/questions/")
+              ? {
+                  question: {
+                    ...draft,
+                    versionId: `version-${draft.id}`,
+                    revision: 0,
+                    publishedAt: null,
+                    archivedAt: null,
+                  },
+                }
+              : { draft },
+          }
         : {
             status: 404,
             json: {
@@ -157,7 +169,7 @@ function draftLink(page: Page, title: string) {
     .or(page.getByRole("link", { name: `Open draft: ${title}`, exact: true }));
 }
 
-test("B13/B14/B19 all six fields edit then explicit Save opens unverified read-only detail, reload and own list", async ({
+test("B13/B14/B19 all six fields edit then explicit Save opens editable private detail, reload and own list", async ({
   page,
 }) => {
   const state = await install(page);
@@ -176,7 +188,7 @@ test("B13/B14/B19 all six fields edit then explicit Save opens unverified read-o
     0,
   );
   await expect(
-    page.getByRole("button", { name: /regenerat|cancel|publish|verify/i }),
+    page.getByRole("button", { name: /regenerat|cancel|verify/i }),
   ).toHaveCount(0);
   expect(state.saveCalls).toBe(0);
   await edit(page);
@@ -191,24 +203,30 @@ test("B13/B14/B19 all six fields edit then explicit Save opens unverified read-o
   await expect(
     page.getByText(/^Unverified instructor draft(?:\.|$)/),
   ).toBeVisible();
-  for (const text of Object.values(f01Edited))
-    await expect(page.getByText(text, { exact: true })).toBeVisible();
+  for (const [key, name] of Object.entries(fields))
+    await expect(page.getByRole("textbox", { name })).toHaveValue(
+      f01Edited[key as keyof typeof f01Edited],
+    );
   await expect(
     page.getByRole("button", {
-      name: /save|delete|publish|verify|regenerate|cancel/i,
+      name: /delete|verify|regenerate|cancel/i,
     }),
   ).toHaveCount(0);
-  for (const textbox of await page.getByRole("textbox").all())
-    await expect(textbox).toHaveAttribute("readonly", "");
+  await expect(
+    page.getByRole("button", { name: "Save changes", exact: true }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "Publish", exact: true }),
+  ).toBeDisabled();
   await page.reload();
   await expect(
-    page.getByText(f01Edited.bugExplanation, { exact: true }),
-  ).toBeVisible();
+    page.getByRole("textbox", { name: fields.bugExplanation }),
+  ).toHaveValue(f01Edited.bugExplanation);
   await page.goto("/instructor/drafts");
   await draftLink(page, f01Edited.title).click();
   await expect(
-    page.getByText(f01Edited.correctedSolution, { exact: true }),
-  ).toBeVisible();
+    page.getByRole("textbox", { name: fields.correctedSolution }),
+  ).toHaveValue(f01Edited.correctedSolution);
   expect(state.saveCalls).toBe(1);
 });
 test("B21 generation pending locks topic/actions and exposes explicit retained-topic Retry after safe failure", async ({
@@ -317,18 +335,19 @@ test("B15 invalid required edit blocks Save and retains other fields", async ({
     /too small|required|nonblank|enter.*title|at least/i,
   );
 });
-test("B23 New question clears preview, topic and errors; unsaved reload loses work without dialog", async ({
+test("B23 New question and native unload require discard; accepted reload clears preview", async ({
   page,
 }) => {
   const state = await install(page);
   let dialogs = 0;
   page.on("dialog", async (dialog) => {
     dialogs++;
-    await dialog.dismiss();
+    await dialog.accept();
   });
   await preview(page);
   await edit(page);
   await newQuestion(page);
+  await page.getByRole("button", { name: "Leave", exact: true }).click();
   await expect(page.getByRole("textbox", { name: /topic/i })).toHaveValue("");
   await expect(page.getByRole("textbox", { name: fields.title })).toHaveCount(
     0,
@@ -342,7 +361,7 @@ test("B23 New question clears preview, topic and errors; unsaved reload loses wo
   await expect(page.getByRole("textbox", { name: fields.title })).toHaveCount(
     0,
   );
-  expect(dialogs).toBe(0);
+  expect(dialogs).toBe(1);
   expect(state.saveCalls).toBe(0);
 });
 test("B23 late generation response cannot repopulate a fresh page after unmount", async ({
@@ -436,8 +455,8 @@ test("B24 empty, loading, retryable errors and fixed50 Load more states", async 
   state.detailError = false;
   await page.getByRole("button", { name: /^Retry$/i }).click();
   await expect(
-    page.getByText(f01Saved.bugExplanation, { exact: true }),
-  ).toBeVisible();
+    page.getByRole("textbox", { name: fields.bugExplanation }),
+  ).toHaveValue(f01Saved.bugExplanation);
 });
 test("B25 HTML/script payloads are literal in editable, saved and list views", async ({
   page,
