@@ -47,10 +47,9 @@ export function HomePage() {
           mt={3}
           lineHeight={1.55}
         >
-          DebugClinic is built around instructor-verified exercises and
-          progressive AI coaching. This milestone provides the secure
-          application foundation; exercise practice and review arrive in later
-          specifications.
+          DebugClinic pairs published Python bugs with local browser runs and
+          instructor review. Save a draft as you work, explain your fix, and
+          submit a final attempt when it is ready.
         </Typography>
         <Stack direction={{ xs: "column", sm: "row" }} gap={2} mt={4}>
           <Button

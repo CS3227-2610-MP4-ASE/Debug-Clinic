@@ -1,15 +1,17 @@
 import { Box, Button, Stack, TextField, Typography } from "@mui/material";
 import { useEffect, useRef, useState } from "react";
+import { PythonCodeEditor } from "./PythonCodeEditor.js";
 import {
-  LearnerOutputPanel,
-  type LearnerRunnerResult,
-} from "./LearnerOutputPanel.js";
+  startPythonRun,
+  type PythonOutputChannel,
+  type PythonRunMode,
+  type PythonRunState,
+} from "../python/sandboxed-runner.js";
 
-const MIN_EDITOR = 320;
-const MIN_OUTPUT = 120;
-const MAX_EDITOR = 720;
-const editorHeightLimit = () =>
-  Math.max(MIN_EDITOR, Math.min(MAX_EDITOR, window.innerHeight - 400));
+const MIN_EDITOR = 180;
+const MAX_EDITOR = 640;
+const TEST_LIMIT = 10_000;
+const STDIN_LIMIT = 8_000;
 
 interface LearnerWorkspaceProps {
   code: string;
@@ -20,8 +22,10 @@ interface LearnerWorkspaceProps {
   onReasoningChange: (value: string) => void;
   onSave: () => void;
   onSubmit: () => void;
-  outputResult?: LearnerRunnerResult;
 }
+
+const initialHeight = () =>
+  Math.max(MIN_EDITOR, Math.min(320, window.innerHeight * 0.38));
 
 export function LearnerWorkspace({
   code,
@@ -32,201 +36,190 @@ export function LearnerWorkspace({
   onReasoningChange,
   onSave,
   onSubmit,
-  outputResult,
 }: LearnerWorkspaceProps) {
-  const [editorHeight, setEditorHeight] = useState(() =>
-    Math.max(MIN_EDITOR, Math.min(420, editorHeightLimit())),
-  );
-  const resizing = useRef<{ startY: number; startHeight: number } | null>(null);
+  const [editorHeight, setEditorHeight] = useState(initialHeight);
+  const [scratchTests, setScratchTests] = useState("");
+  const [stdin, setStdin] = useState("");
+  const [runState, setRunState] = useState<PythonRunState | "idle">("idle");
+  const [runMessage, setRunMessage] = useState("");
+  const [lastMode, setLastMode] = useState<PythonRunMode>("run");
+  const [output, setOutput] = useState<Record<PythonOutputChannel, string>>({
+    stdout: "",
+    stderr: "",
+    notice: "",
+  });
+  const [snapshot, setSnapshot] = useState<string | null>(null);
+  const stopRun = useRef<(() => void) | null>(null);
+  const dragStart = useRef<{ y: number; height: number } | null>(null);
+
+  useEffect(() => () => stopRun.current?.(), []);
   useEffect(() => {
-    const resize = () =>
-      setEditorHeight((height) => Math.min(height, editorHeightLimit()));
-    window.addEventListener("resize", resize);
-    return () => window.removeEventListener("resize", resize);
-  }, []);
-  const resizeAt = (clientY: number) => {
-    const start = resizing.current;
-    if (!start) return;
-    setEditorHeight(
-      Math.max(
-        MIN_EDITOR,
-        Math.min(
-          editorHeightLimit(),
-          start.startHeight + clientY - start.startY,
-        ),
-      ),
-    );
+    if (disabled) stopRun.current?.();
+  }, [disabled]);
+
+  const changedSinceRun =
+    snapshot !== null &&
+    snapshot !== JSON.stringify([code, scratchTests, stdin]);
+  const active = runState === "loading" || runState === "running";
+  const run = (mode: PythonRunMode) => {
+    stopRun.current?.();
+    setLastMode(mode);
+    setOutput({ stdout: "", stderr: "", notice: "" });
+    setRunMessage("");
+    setSnapshot(JSON.stringify([code, scratchTests, stdin]));
+    stopRun.current = startPythonRun({
+      code,
+      tests: scratchTests,
+      stdin,
+      mode,
+      onState: (state: PythonRunState, message) => {
+        setRunState(state);
+        setRunMessage(message ?? "");
+        if (
+          state === "completed" ||
+          state === "error" ||
+          state === "stopped" ||
+          state === "timeout"
+        ) {
+          stopRun.current = null;
+        }
+      },
+      onOutput: (channel, text) =>
+        setOutput((current) => ({
+          ...current,
+          [channel]: current[channel] + text,
+        })),
+    });
   };
+  const maxHeight = () =>
+    Math.max(MIN_EDITOR, Math.min(MAX_EDITOR, window.innerHeight - 420));
+  const resize = (delta: number) =>
+    setEditorHeight((current) =>
+      Math.max(MIN_EDITOR, Math.min(maxHeight(), current + delta)),
+    );
+
   return (
     <Stack
       component="section"
       aria-label="Python workspace"
+      gap={1}
       sx={{
         minWidth: 0,
         minHeight: 0,
         overflow: { xs: "visible", md: "auto" },
-        display: "flex",
+        pb: { md: 1 },
       }}
     >
       <Stack
         direction="row"
         alignItems="center"
         justifyContent="space-between"
-        sx={{ mb: 0.5 }}
+        gap={1}
       >
         <Typography variant="body2" color="text.secondary">
-          Python 3
+          Python 3 · Local browser run
         </Typography>
-        <Button
-          disabled
-          aria-describedby="run-placeholder"
-          sx={{ minHeight: 44 }}
-        >
-          Run
-        </Button>
-      </Stack>
-      <Typography
-        id="run-placeholder"
-        variant="body2"
-        color="text.secondary"
-        sx={{ mb: 0.5 }}
-      >
-        Run is unavailable until a secure Python runner is approved.
-      </Typography>
-      <Stack
-        gap={1}
-        sx={{
-          height: { md: editorHeight },
-          minHeight: { md: MIN_EDITOR },
-          flexShrink: 0,
-          overflow: { md: "hidden" },
-        }}
-      >
-        <TextField
-          label="Your Python 3 code"
-          multiline
-          minRows={5}
-          value={code}
-          onChange={(event) => onCodeChange(event.target.value)}
-          inputProps={{ maxLength: 20_000, "aria-label": "Your Python 3 code" }}
-          disabled={disabled}
-          sx={{
-            flex: { md: 1 },
-            minHeight: { md: 80 },
-            "& .MuiInputBase-root": {
-              height: { md: "100%" },
-              alignItems: "flex-start",
-              overflow: "auto",
-              fontFamily: "monospace",
-            },
-            "& textarea": {
-              height: "100% !important",
-              overflow: "auto !important",
-              "&:focus-visible": { outline: "none", boxShadow: "none" },
-            },
-            "& .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline":
-              {
-                borderWidth: 2,
-              },
-          }}
-        />
-        <TextField
-          label="Explain your reasoning"
-          multiline
-          minRows={3}
-          maxRows={4}
-          value={reasoning}
-          onChange={(event) => onReasoningChange(event.target.value)}
-          inputProps={{ maxLength: 5_000 }}
-          disabled={disabled}
-          sx={{
-            "& textarea:focus-visible": {
-              outline: "none",
-              boxShadow: "none",
-            },
-            "& .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline":
-              {
-                borderWidth: 2,
-              },
-          }}
-        />
-        <Stack
-          direction={{ xs: "column", sm: "row" }}
-          gap={1}
-          sx={{ flexShrink: 0 }}
-        >
-          <Button
-            variant="outlined"
-            disabled={disabled || saving}
-            onClick={onSave}
-            sx={{ minHeight: 44 }}
-          >
-            Save draft
-          </Button>
-          <Button
-            variant="contained"
-            disabled={disabled || saving}
-            onClick={onSubmit}
-            sx={{ minHeight: 44 }}
-          >
-            Submit final attempt
-          </Button>
+        <Stack direction="row" gap={0.75}>
+          {active ? (
+            <Button
+              color="error"
+              variant="outlined"
+              onClick={() => stopRun.current?.()}
+              sx={{ minHeight: 40 }}
+            >
+              Stop
+            </Button>
+          ) : (
+            <>
+              <Button
+                variant="outlined"
+                disabled={disabled}
+                onClick={() => run("test")}
+                sx={{ minHeight: 40 }}
+              >
+                Test
+              </Button>
+              <Button
+                variant="contained"
+                disabled={disabled}
+                onClick={() => run("run")}
+                sx={{ minHeight: 40 }}
+              >
+                Run
+              </Button>
+            </>
+          )}
         </Stack>
       </Stack>
+      <Typography variant="caption" color="text.secondary">
+        Runs in an isolated browser sandbox. Results are local feedback, not
+        official grading. Scratch tests and stdin stay on this device and are
+        never saved or submitted.
+      </Typography>
       <Box
+        sx={{
+          height: { xs: 320, md: editorHeight },
+          minHeight: { xs: 240, md: MIN_EDITOR },
+          flexShrink: 0,
+        }}
+      >
+        <PythonCodeEditor
+          value={code}
+          disabled={disabled}
+          onChange={onCodeChange}
+        />
+      </Box>
+      <Stack
         role="separator"
         aria-label="Resize editor and output"
         aria-orientation="horizontal"
         aria-valuemin={MIN_EDITOR}
-        aria-valuemax={editorHeightLimit()}
+        aria-valuemax={maxHeight()}
         aria-valuenow={editorHeight}
         tabIndex={0}
         onKeyDown={(event) => {
           if (event.key === "ArrowUp" || event.key === "ArrowDown") {
             event.preventDefault();
-            setEditorHeight((value) =>
-              Math.max(
-                MIN_EDITOR,
-                Math.min(
-                  editorHeightLimit(),
-                  value + (event.key === "ArrowDown" ? 24 : -24),
-                ),
-              ),
-            );
+            resize(event.key === "ArrowDown" ? 24 : -24);
           }
         }}
         onPointerDown={(event) => {
+          dragStart.current = { y: event.clientY, height: editorHeight };
           event.currentTarget.setPointerCapture(event.pointerId);
-          resizing.current = {
-            startY: event.clientY,
-            startHeight: editorHeight,
-          };
         }}
         onPointerMove={(event) => {
-          if (resizing.current && event.buttons) resizeAt(event.clientY);
+          if (dragStart.current)
+            setEditorHeight(
+              Math.max(
+                MIN_EDITOR,
+                Math.min(
+                  maxHeight(),
+                  dragStart.current.height +
+                    event.clientY -
+                    dragStart.current.y,
+                ),
+              ),
+            );
         }}
         onPointerUp={() => {
-          resizing.current = null;
+          dragStart.current = null;
         }}
         sx={{
-          display: { xs: "none", md: "block" },
-          height: 14,
+          display: { xs: "none", md: "flex" },
+          height: 12,
           flexShrink: 0,
           cursor: "row-resize",
           touchAction: "none",
           borderBlock: 1,
           borderColor: "divider",
-          position: "relative",
+          alignItems: "center",
+          justifyContent: "center",
           "&::after": {
             content: '""',
-            position: "absolute",
             width: 48,
             height: 4,
             borderRadius: 2,
             bgcolor: "text.disabled",
-            top: "50%",
-            left: "50%",
-            transform: "translate(-50%, -50%)",
           },
           "&:focus-visible": {
             outline: "2px solid",
@@ -236,15 +229,183 @@ export function LearnerWorkspace({
       />
       <Box
         sx={{
-          flex: { md: 1 },
-          minHeight: { xs: MIN_OUTPUT, md: 0 },
-          overflow: "auto",
+          display: "grid",
+          gridTemplateColumns: {
+            xs: "1fr",
+            sm: "minmax(0, 3fr) minmax(160px, 2fr)",
+          },
+          gap: 1,
         }}
       >
-        <LearnerOutputPanel
-          {...(outputResult ? { result: outputResult } : {})}
+        <TextField
+          label="Scratch tests (not saved)"
+          multiline
+          minRows={2}
+          maxRows={3}
+          value={scratchTests}
+          onChange={(event) =>
+            setScratchTests(event.target.value.slice(0, TEST_LIMIT))
+          }
+          disabled={disabled || active}
+          inputProps={{
+            maxLength: TEST_LIMIT,
+            "aria-label": "Scratch tests (not saved)",
+          }}
+        />
+        <TextField
+          label="Standard input (not saved)"
+          multiline
+          minRows={2}
+          maxRows={3}
+          value={stdin}
+          onChange={(event) =>
+            setStdin(event.target.value.slice(0, STDIN_LIMIT))
+          }
+          disabled={disabled || active}
+          inputProps={{
+            maxLength: STDIN_LIMIT,
+            "aria-label": "Standard input (not saved)",
+          }}
         />
       </Box>
+      <TextField
+        label="Explain your reasoning"
+        multiline
+        minRows={2}
+        maxRows={3}
+        value={reasoning}
+        onChange={(event) => onReasoningChange(event.target.value)}
+        inputProps={{ maxLength: 5_000 }}
+        disabled={disabled}
+      />
+      <Box
+        component="section"
+        aria-labelledby="python-output-title"
+        sx={{
+          minHeight: { xs: 120, md: 112 },
+          p: 1.25,
+          border: 1,
+          borderColor: "divider",
+          borderRadius: 1.5,
+          bgcolor: "background.paper",
+        }}
+      >
+        <Stack
+          direction="row"
+          alignItems="center"
+          justifyContent="space-between"
+          gap={1}
+          sx={{ mb: 0.75 }}
+        >
+          <Typography
+            id="python-output-title"
+            component="h2"
+            variant="subtitle2"
+          >
+            Output
+          </Typography>
+          <Typography
+            role="status"
+            aria-live="polite"
+            variant="caption"
+            color={
+              runState === "error" || runState === "timeout"
+                ? "error.main"
+                : "text.secondary"
+            }
+          >
+            {runState === "idle"
+              ? "Ready"
+              : runState === "loading"
+                ? "Loading Python…"
+                : runState === "running"
+                  ? "Running…"
+                  : runState === "completed"
+                    ? lastMode === "test"
+                      ? "Scratch tests completed"
+                      : "Completed"
+                    : runState === "timeout"
+                      ? "Timed out"
+                      : runState === "stopped"
+                        ? "Stopped"
+                        : "Error"}
+          </Typography>
+        </Stack>
+        {runMessage && (
+          <Typography
+            role="alert"
+            variant="body2"
+            color="error.main"
+            sx={{ mb: 0.5 }}
+          >
+            {runMessage}
+          </Typography>
+        )}
+        {changedSinceRun && (
+          <Typography variant="caption" color="warning.dark" display="block">
+            Inputs changed since this run; output is from an earlier snapshot.
+          </Typography>
+        )}
+        <Box
+          component="pre"
+          aria-label="Python output"
+          sx={{
+            m: 0,
+            maxHeight: 150,
+            overflow: "auto",
+            whiteSpace: "pre-wrap",
+            overflowWrap: "anywhere",
+            fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace",
+            fontSize: "0.82rem",
+          }}
+        >
+          {output.stdout || output.stderr || output.notice ? (
+            <>
+              {output.stdout && (
+                <Box component="span" sx={{ color: "text.primary" }}>
+                  {output.stdout}
+                </Box>
+              )}
+              {output.stderr && (
+                <Box component="span" sx={{ color: "error.main" }}>
+                  {output.stderr}
+                </Box>
+              )}
+              {output.notice && (
+                <Box component="span" sx={{ color: "text.secondary" }}>
+                  {output.notice}
+                </Box>
+              )}
+            </>
+          ) : (
+            <Typography component="span" variant="body2" color="text.secondary">
+              {runState === "completed"
+                ? lastMode === "test"
+                  ? "Scratch tests completed. No output was printed."
+                  : "The program completed without printing output."
+                : "Run your code to see local output."}
+            </Typography>
+          )}
+        </Box>
+      </Box>
+      <Stack direction={{ xs: "column", sm: "row" }} gap={1}>
+        <Button
+          variant="outlined"
+          disabled={disabled || saving || active}
+          onClick={onSave}
+          sx={{ minHeight: 44 }}
+        >
+          Save draft
+        </Button>
+        <Button
+          variant="contained"
+          disabled={disabled || saving || active}
+          onClick={onSubmit}
+          sx={{ minHeight: 44 }}
+        >
+          Submit final attempt
+        </Button>
+      </Stack>
     </Stack>
   );
 }

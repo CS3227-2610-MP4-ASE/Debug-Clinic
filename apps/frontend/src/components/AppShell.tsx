@@ -36,6 +36,7 @@ export function AppShell({ children }: PropsWithChildren) {
   );
   const links = user
     ? [
+        { label: "Home", to: "/" },
         {
           label:
             user.role === "INSTRUCTOR"

@@ -105,11 +105,12 @@ export function PublishedQuestionPage() {
       .then(async ({ question: found }) => {
         if (!active) return;
         setQuestion(found);
+        setCode(found.buggyCode);
         const { attempt: saved } = await getLearnerAttempt(id);
         if (!active) return;
         if (!dirty.current) {
           setAttempt(saved);
-          setCode(saved?.code ?? "");
+          setCode(saved?.code ?? found.buggyCode);
           setReasoning(saved?.reasoning ?? "");
         }
       })
@@ -137,16 +138,15 @@ export function PublishedQuestionPage() {
   }, [sessionExpired, user]);
   function editCode(value: string) {
     setCode(value);
+    const baselineCode = attempt?.code ?? question?.buggyCode ?? "";
     updateDirty(
-      value !== (attempt?.code ?? "") ||
-        reasoning !== (attempt?.reasoning ?? ""),
+      value !== baselineCode || reasoning !== (attempt?.reasoning ?? ""),
     );
   }
   function editReasoning(value: string) {
     setReasoning(value);
-    updateDirty(
-      code !== (attempt?.code ?? "") || value !== (attempt?.reasoning ?? ""),
-    );
+    const baselineCode = attempt?.code ?? question?.buggyCode ?? "";
+    updateDirty(code !== baselineCode || value !== (attempt?.reasoning ?? ""));
   }
   function captureCurrentSession() {
     const generation = lifecycle.current;
@@ -395,6 +395,9 @@ export function PublishedQuestionPage() {
             gap={1.25}
             sx={{ minWidth: 0, minHeight: 0, overflow: "auto", pr: 1 }}
           >
+            <Typography component="h2" variant="h6">
+              Description
+            </Typography>
             <Typography color="text.secondary">
               Topic: {question.topic}
             </Typography>
@@ -407,7 +410,7 @@ export function PublishedQuestionPage() {
               {question.problemStatement}
             </Typography>
             <Typography component="h2" variant="h6">
-              Buggy Python code
+              Starting code
             </Typography>
             <Box
               component="pre"
@@ -430,14 +433,6 @@ export function PublishedQuestionPage() {
             >
               {question.expectedBehavior}
             </Typography>
-            <Button
-              disabled
-              aria-describedby="hint-placeholder"
-              sx={{ alignSelf: "flex-start", minHeight: 44 }}
-            >
-              Get Hint
-            </Button>
-            <Typography id="hint-placeholder">Coming soon</Typography>
           </Stack>
           <LearnerWorkspace
             code={code}

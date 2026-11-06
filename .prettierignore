@@ -1,4 +1,5 @@
 node_modules
+apps/frontend/public/pyodide-runtime/
 dist
 coverage
 generated

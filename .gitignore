@@ -11,6 +11,7 @@ test-results/
 .DS_Store
 generated/prisma/
 generated/deployment.json
+apps/frontend/public/pyodide-runtime/
 *.tsbuildinfo
 .impeccable/review/
 docs/reflection-requirement.md
