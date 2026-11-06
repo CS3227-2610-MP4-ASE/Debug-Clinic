@@ -132,15 +132,26 @@ Removed newest-removed-first, with Load more for further pages.
 
 ## Viewing questions as a learner
 
-Follow the published-questions link in your learner workspace. All signed-in
-learners can browse all instructors' current publications, newest first. Items
-show title, topic, instructor display name and publication time. Detail shows the
-problem, buggy Python code and expected behavior. Explanations, corrected
-solutions and private generation metadata stay instructor-only.
+Open **Published questions** from your learner workspace. Browse current
+questions newest first, or enter words in **Search questions** to match a title
+or topic. Search applies before pages of up to 50 results. Open a question to
+read its problem, buggy Python code and expected behavior. Use **Back to
+questions** to return to the list; your search remains in the address and is
+restored.
 
-**Get Hint** is disabled with **Coming soon** text and performs no request or
-attempt creation. Developer 1 owns future functional hints. Learner answering,
-execution, coaching, submission and grading are outside this publication flow.
+In the workspace, edit the Python 3 code and explain your reasoning. Keep both
+fields nonblank. Choose **Save draft** to store your work, then reload the page
+to confirm it is still there. Choose **Submit final** and confirm in the dialog
+to submit the current code and explanation. A successful final submission is
+read-only. If a save or submission fails, your current editor text remains so you
+can retry. Back navigation with unsaved edits asks whether to discard them.
+
+On desktop, drag the divider between the editor and output areas to resize it;
+the keyboard can also move the focused divider. On a narrow mobile screen, the
+workspace sections stack vertically. **Run** and **Get Hint** remain disabled;
+Python is not executed and no hint or coaching is delivered. Final attempts are
+saved, but no instructor submission-review screen or live deployment is provided
+by this feature.
 
 ## Development fixtures
 

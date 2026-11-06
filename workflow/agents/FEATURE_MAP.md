@@ -1,6 +1,6 @@
 # DebugClinic feature and verification map
 
-Maintained against authentication, instructor drafts and F02 publication on 2026-11-06. Update this map when routes,
+Maintained against authentication, instructor drafts, F02 publication and learner workspace on 2026-11-06. Update this map when routes,
 journeys, API boundaries, or verification prerequisites change. Read route and
 test definitions before choosing a check; this map distinguishes delivered
 foundation from intended future behavior.
@@ -20,6 +20,9 @@ foundation from intended future behavior.
 | `/api/v1/ai/hint-preview`                                       | backend app, `ai/provider.ts`, contracts                                                                      | backend `app.test.ts` / `providers.test.ts`: fake provider, transport-injected SoC adapter, safe failures. Real SoC acceptance and future usage accounting remain separate evidence                                                     |
 | `/instructor/questions/new`, `/instructor/drafts`, detail by ID | Protected instructor pages and `src/lib/instructor-drafts.ts`                                                 | Independent `f01-instructor.spec.ts` uses HTTP doubles for lifecycle/failure states; `f01-composed.spec.ts` uses real local cookies/PostgreSQL and captured email with fake AI. Human accessibility and live semantics remain separate. |
 | Instructor generation/draft API                                 | `src/exercises/instructor-drafts.ts`, app routes, shared contracts                                            | `f01-acceptance-*` covers HTTP policy/injected SoC transport; `tests/integration/f01-drafts.test.ts` covers actual PG ownership, usage, bounds, rollback and paging. No generated Python execution.                                     |
+| `/learner/questions`, `/learner/questions/:id`                  | `PublishedQuestionsPage`, `PublishedQuestionPage`; PR #9 published-question DTOs and canonical service        | `f02-learner.spec.ts`, `learner-workspace.spec.ts`; optional case-insensitive title/topic `q` applies before 50-item paging; search remains on detail/back.                                                                             |
+| Learner attempt API                                             | `apps/backend/src/exercises/learner-attempts.ts`, `apps/backend/src/app.ts`, `contracts/learner-attempts.ts`  | `learner-attempt-http.test.ts`, `learner-workspace-acceptance.test.ts`; own attempt keyed by canonical published version, revisioned save and immutable finalization.                                                                   |
+| Learner workspace and attempt persistence                       | `LearnerWorkspace`, `PublishedQuestionPage`; additive attempt migration                                       | `learner-workspace-acceptance.spec.ts` and `learner-workspace-composed.spec.ts`; independent 16-case desktop/mobile matrix, real-cookie/PG composed cases and two extracted Netlify smoke flows. Run is disabled; no Python runner.     |
 | PostgreSQL data and auth                                        | auth schema plus four additive nullable draft-version fields; auth policy and normalization rehearsal utility | Real PG auth tests preserve identity/session invariants; F01 tests cover private drafts and usage. Seed records are synthetic fixtures without passwords.                                                                               |
 | Netlify function                                                | `netlify/functions/api.ts`, backend web handler/build policy                                                  | backend web-handler/netlify-build-policy/deployment tests; test deployment package when affected; no implied deployment permission                                                                                                      |
 | Built frontend                                                  | Vite production output; `scripts/verify-built-frontend.ts`                                                    | Real browser loads emitted assets for eight public routes × desktop/mobile with a local anonymous API stub. This catches chunk initialization failures hidden by the dev server                                                         |
@@ -36,13 +39,28 @@ retaining old `/instructor/drafts[/:id]` URLs. Draft editors share six-field
 validation, review, same-draft Save, publication recovery and discard state.
 Published/Removed views are read-only; Remove archives without deleting references.
 Learner `/learner/questions[/:id]` uses a separate public renderer/strict DTOs and
-a disabled Get Hint/Coming soon placeholder. No functional hints or attempts are
-added, and hints do not gate publication.
+a disabled Get Hint placeholder. The learner list/detail reuses PR #9 routes,
+DTOs and canonical publication validation. The workspace saves the authenticated
+learner's own revisioned attempt for that published version, supports immutable
+final submission, and guards async responses against disposed pages/session
+changes. The additive migration refuses duplicate learner/version rows without
+deleting data. Run and Get Hint remain disabled; no Python runner or coaching
+service is delivered.
 
 `InstructorQuestions` supplies the corresponding role-guarded HTTP APIs. New
 contracts are separate from literal-DRAFT F01 contracts. Source server and Netlify
 function both inject the Prisma implementation. The F02 migration adds revisions,
 owner-scoped forever publication keys, archive time and trusted-topic digest.
+Learner attempt routes additionally require LEARNER session, allowed Origin and
+JSON for mutations; the service locks the parent exercise and rechecks canonical
+publication state before writing. Both long-running server and Netlify function
+compose the real attempt service. Independent final evidence is in
+`workflow/evaluations/zhenghao/ZH-LWS-01/testing.md`; it reports 516 deterministic
+tests, 198 PostgreSQL cases, 144 normal browser passes with 20 expected opt-in
+skips, 16 focused browser cases (a subset), 8 composed real-cookie/PG/captured-
+SMTP/fake-AI cases, built frontend and extracted Netlify checks. These layers
+overlap and are not a combined test count. Remote CI, deployment, live providers,
+real Python execution, and manual screen-reader/contrast checks remain unverified.
 
 | F02 check                                       | Boundary and limit                                                                                                                             |
 | ----------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |

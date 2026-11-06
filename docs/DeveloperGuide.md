@@ -168,6 +168,10 @@ F01 draft contracts retain their literal DRAFT status and fresh-per-Save creatio
 | `POST /api/v1/instructor/questions/publish`                          | Confirmed saved or preview discriminated request; published/existing authoritative response |
 | `POST /api/v1/instructor/questions/:id/remove`                       | Confirmed archive; repeated Remove returns retained archive                                 |
 | `GET /api/v1/learner/questions[/:id]`                                | LEARNER-only currently published explicit public projection                                 |
+| `GET /api/v1/learner/questions?offset=&q=`                           | Optional case-insensitive title/topic search before 50-item pagination                      |
+| `GET /api/v1/learner/questions/:id/attempt`                          | LEARNER-only current learner's attempt for the published version                            |
+| `PUT /api/v1/learner/questions/:id/attempt`                          | Save own draft using expected revision                                                      |
+| `POST /api/v1/learner/questions/:id/attempt/submit`                  | Finalize own attempt; identical retry returns the immutable final                           |
 
 All mutation guards enforce real session, role, configured Origin, JSON, strict
 schemas, ownership and current state. Parent-first conditional updates and version
@@ -196,6 +200,30 @@ Solutions, explanations, generation metadata, author email, hints and attempts
 are absent. A separate public renderer displays literal text. Get Hint is disabled
 and performs no request.
 
+The learner list/detail reuses the published-question routes, DTOs and canonical
+publication validation introduced for PR #9; it does not add a competing exercise
+read API or select versions by timestamp. Search is an optional `q` query,
+matched case-insensitively against title/topic before deterministic 50-row
+pagination. Attempt storage is keyed to the canonical published `versionId` and
+authenticated learner. The frontend requires nonblank Python code and explanation
+and preserves indentation. Writes carry an expected revision; the service locks
+the parent Exercise row, rechecks canonical publication eligibility while holding
+that lock, then creates or advances the attempt in one transaction. Finalization
+stores the submitted snapshot atomically and makes it immutable; identical retry
+is safe while a different payload conflicts. The additive attempt migration
+checks for duplicate learner/version rows before creating its uniqueness support;
+it stops on duplicates and never deletes data automatically.
+
+Learner mutations require the learner role, authenticated session, allowed
+same-origin Origin, JSON content type, strict body schema and ownership. Browser
+async responses are guarded by component lifecycle, learner identity revision and
+session epoch so disposed pages cannot replace current state or clear another
+page's unsaved-work guard. Both `apps/backend/src/server.ts` and
+`netlify/functions/api.ts` compose the real attempt service; missing composition
+fails closed. Run remains disabled and no Python execution or coaching response
+is delivered. The output panel accepts injected fixtures in tests only; Get Hint
+also remains disabled.
+
 UI routes are `/instructor/questions?status=...`, `/instructor/questions/:id`,
 `/instructor/questions/new`, `/learner/questions` and `/learner/questions/:id`.
 Legacy `/instructor/drafts[/:id]` URLs remain supported. The data-router discard
@@ -220,7 +248,7 @@ Every response carries an `x-request-id`. Error bodies contain a stable code, re
 
 ## Testing strategy
 
-F02 checks include contracts, focused HTTP policy doubles, real-cookie/PG public
+F02 and learner checks include contracts, focused HTTP policy doubles, real-cookie/PG public
 behavior, CAS races and real SQL rollback faults, PG wire faults for unavailable
 replay reads/lost COMMIT acknowledgments, intercepted desktop/mobile UI, composed
 browser cookies/PG/fake AI, and extracted Netlify publication/read/archive smoke.
@@ -228,6 +256,19 @@ The opt-in browser runtime's owned loopback transport proxy can drain one commit
 publication success then drop the downstream response via a private marker; this
 fault is outside production composition. See the F02 implementation handoff for
 actual commands/results and remaining manual/CI limitations.
+
+The independently green learner workspace verification on Node 24.22.2 includes
+516 deterministic tests, 5 output-renderer cases, 198 PostgreSQL integration
+cases, 144 normal browser passes with 20 expected opt-in skips, and 16 focused
+learner browser cases (a subset of the normal browser suite). Eight additional
+composed cases use local real cookies/PostgreSQL, captured SMTP and fake AI; they
+do not call live providers. The production/declaration build, 16 built-frontend
+route/viewport loads and two extracted Netlify package smoke flows also passed. The focused
+and normal UI suites use intercepted API responses; composed checks exercise
+local services without browser request interception. These are overlapping
+evidence layers, not one aggregate test count. Remote CI/deployment, live
+Google/SMTP/SoC, real Python execution, and manual screen-reader/contrast checks
+remain unverified. See the independent report for exact commands and boundaries.
 
 When defaults are occupied, set `E2E_APP_ORIGIN=http://127.0.0.1:5273` and
 `E2E_BACKEND_PORT=3101`; the test origin validator allows only a bare HTTP loopback
