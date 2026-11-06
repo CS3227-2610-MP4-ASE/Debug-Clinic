@@ -86,3 +86,60 @@ measurements used here.
 - [Implementation and repair handoff](../workflow/evaluations/zhenghao/ZH-LWS-01/implementation.md)
 - [Verified dispatch and delivery ledger](../workflow/evaluations/zhenghao/ZH-LWS-01/delivery.md)
 - [Fixed generated monitoring checkpoint](../workflow/evaluations/zhenghao/ZH-LWS-01/monitoring/reflection-documentation-checkpoint.json)
+
+## ZH-LWS-02 incremental checkpoint
+
+The approved IDE-01–07 scope and explicit runner trust boundaries were useful
+upfront context; implementation and test reports carried the exact repair and
+verification evidence to the next stage. Independent review exposed real output,
+Unicode bounds, cancelled-initialization recovery, description-pane and viewport
+range defects. The final round-2 component change was isolated to viewport state
+and passed the affected and production-built matrices. Keep its 26/26 and 6/6
+results distinct from the earlier full normal run (199 pass, 20 skipped, three
+harness failures); the 226-case collection was not a full passing run. This
+staged review found defects that the initial green implementation checks missed,
+but the high planning total prevents claiming that coordination was cheaper.
+
+One test lesson was to observe the runtime and build a behavior model rather than
+infer correctness from source or mocks alone: execution, output, isolation and
+timeouts were exercised in the emitted browser bundle. The round-one viewport
+probe found that the 180px editor minimum kept its computed maximum at 180 when
+the window grew from 600px to 900px. The clamp inequality was valid; React's
+same-value state bailout simply prevented a render to refresh the accessible
+maximum. Modeling viewport height as state made that transition observable. The
+final affected cases cover this resize, but not every possible viewport/runtime.
+The CI test step also needed explicit frontend workspace coverage. Separately,
+remote CI for code/test checkpoint `929d0ec` passed verification and browser jobs
+(206 passed, 20 expected skips); this is not evidence for the documentation
+commit. The [workflow run](https://github.com/CS3227-2610-MP4-ASE/Debug-Clinic/actions/runs/42240818024)
+and [independent report](../workflow/evaluations/zhenghao/ZH-LWS-02/testing.md)
+keep the revision-specific boundaries explicit.
+
+The fixed **2026-11-06 15:03:57 UTC** snapshot predates this documentation stage,
+so its documentation usage is unavailable, not zero. It reports 150,254,265
+tokens total: 149,700,255 input (including 148,358,656 cached), 554,010 output
+(including 361,551 reasoning) and 1,341,599 cache-miss tokens. The 99.10% cache
+hit ratio does not show a reduction in raw input or cost. Planning used
+80,699,163 tokens (53.71%), implementation 39,759,007 (26.46%) and testing
+29,796,095 (19.83%); documentation was unavailable at this checkpoint. Planning
+includes coordination, debugging probes and verification follow-up, not only
+initial planning. For that named stage, reasoning/output is
+138,159 / 204,287 = 67.63%; reasoning/total is 138,159 / 80,699,163 = 0.1712%.
+Cached input is already part of input; reasoning is already part of output and
+total. The report records 1,561 unsupported legacy records and 10 unknown
+schemas; their usage remains unavailable.
+
+Dispatch records Sol/high for planning and testing and Luna/medium for
+implementation and this documentation stage. Original soft estimates (1.5m,
+2m, 1.5m and 0.5m tokens respectively) were retained; overruns were recorded
+without budget increases. The stage mix and
+cache rate do not prove a quality-adjusted saving from model selection, and no
+comparable baseline or verified persisted-reasoning setting is available. These
+resource notes use the fixed pre-documentation reports; the coordinator owns the
+final rolling totals.
+
+Evidence: [approved IDE scope](../workflow/zhenghao/specs/003-browser-python-ide.md),
+[implementation handoff](../workflow/evaluations/zhenghao/ZH-LWS-02/implementation.md),
+[final independent testing report](../workflow/evaluations/zhenghao/ZH-LWS-02/testing.md),
+and the fixed [reflection metrics](../workflow/evaluations/zhenghao/ZH-LWS-02/monitoring/reflection-documentation-checkpoint.json)
+and [workflow checkpoint](../workflow/evaluations/zhenghao/ZH-LWS-02/monitoring/report-documentation-checkpoint.json).

@@ -66,6 +66,10 @@ show safe guidance and leave the controls available to retry.
 The learner workspace links to published instructor questions. Instructors can
 prepare questions and manage their own Drafts, Published and Removed views.
 
+While signed in, choose **Home** or select the DebugClinic brand to open the
+public home page without signing out. If you have unsaved learner edits, choose
+**Stay** to keep working or **Leave** to discard them and continue to Home.
+
 ## Preparing an instructor draft
 
 Choose **New question** in the instructor workspace and enter a beginner Python topic, then select
@@ -135,30 +139,43 @@ Removed newest-removed-first, with Load more for further pages.
 Open **Published questions** from your learner workspace. Browse current
 questions newest first, or enter words in **Search questions** to match a title
 or topic. Search applies before pages of up to 50 results. Open a question to
-read its problem, buggy Python code and expected behavior. Use **Back to
+read it in the white **Description** pane. On desktop, the question's actual
+title and topic stay in the header while **Problem**, **Starting code** and
+**Expected behavior** scroll separately in the body. Use **Back to
 published questions** to return to the list; your search remains in the address and is
 restored.
 
-In the workspace, edit the Python 3 code and explain your reasoning. Keep both
-fields nonblank. Choose **Save draft** to store your work, then reload the page
-to confirm it is still there. Choose **Submit final attempt** and confirm in the dialog
-to submit the current code and explanation. A successful final submission is
-read-only. If Save or Submit reports a conflict or an uncertain result, the page
-checks the latest saved attempt without sending the write again. If that check
-fails, your code and reasoning stay in the editor, Save and Submit pause, and
-**Retry attempt check** repeats only the read. Once the server confirms a draft
-or no attempt, choose Save or Submit yourself to send another write. If the server already has
-a different final submission, that submitted version is shown read-only and your
-unsent local edits are kept separately. Back navigation with unsaved edits asks
-whether to discard them.
+The Python 3 editor provides highlighting, line numbers, indentation, bracket
+matching, undo/redo and keyboard editing. A new attempt starts with the published
+buggy code; saved work stays in place. Enter your fix and explain your reasoning.
+Use **Run** to execute the code, or add your own assertions under **Scratch tests**
+and choose **Test** to run them after the code. Test requires nonblank scratch-
+test code. **Standard input** lets programs that call `input()` receive text.
+The Output panel shows actual output, errors and
+run state. Results are local feedback, not official grading. Scratch tests and
+standard input stay on this device and are never saved or submitted. Editing code,
+tests or input marks the previous output as stale. Choose **Stop** to end a run;
+the next Run or Test starts a fresh run. A successful Run or Test is not required
+to save a draft or submit a final attempt.
+
+Keep code and reasoning nonblank to save. Choose **Save draft** to store your
+work, then reload the page to confirm it is still there. Choose **Submit final
+attempt** and confirm to submit the current code and explanation. A successful
+final submission is read-only. If Save or Submit reports a conflict or uncertain
+result, the page checks the latest attempt without sending the write again. If
+that check fails, your code and reasoning stay in the editor, Save and Submit
+pause, and **Retry attempt check** repeats only the read. Once the server
+confirms a draft or no attempt, choose Save or Submit yourself to send another
+write. If the server already has a different final submission, that version is
+shown read-only while your unsent local edits are kept separately. Back
+navigation with unsaved edits asks whether to discard them.
 
 On desktop, drag the divider between the editor and output areas to resize it;
 the keyboard can also move the focused divider. On a narrow mobile screen, the
 workspace sections stack vertically. The reasoning field shows up to four lines
-at a time and scrolls longer explanations. **Run** and **Get Hint** remain disabled;
-Python is not executed and no hint or coaching is delivered. Final attempts are
-saved, but no instructor submission-review screen or live deployment is provided
-by this feature.
+at a time and scrolls longer explanations. **Get Hint** remains disabled; no
+hint or coaching is delivered. Final attempts are saved, but no instructor
+submission-review screen or live deployment is provided by this feature.
 
 ## Development fixtures
 

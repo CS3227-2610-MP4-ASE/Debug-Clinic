@@ -1,13 +1,13 @@
 # DebugClinic feature and verification map
 
-Maintained against authentication, instructor drafts, F02 publication and learner workspace on 2026-11-06. Update this map when routes,
+Maintained against authentication, instructor drafts, F02 publication and the ZH-LWS-02 browser IDE on 2026-11-06. Update this map when routes,
 journeys, API boundaries, or verification prerequisites change. Read route and
 test definitions before choosing a check; this map distinguishes delivered
 foundation from intended future behavior.
 
 | Surface                                                         | Current source / boundary                                                                                                 | Evidence route and limitation                                                                                                                                                                                                           |
 | --------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Public home `/`                                                 | `apps/frontend/src/pages/HomePage.tsx`                                                                                    | `tests/e2e/app-shell.spec.ts`: public copy and navigation; described practice loop is intended product behavior                                                                                                                         |
+| Public home `/`                                                 | `HomePage`, signed-in `AppShell`, brand link                                                                              | `app-shell.spec.ts` and `python-ide-acceptance.spec.ts`: Home/brand open public `/` without signing out; dirty-work Stay/Leave remains enforced.                                                                                        |
 | `/sign-in`, `/register`                                         | frontend pages and `src/auth/actions.ts`; Better Auth `/api/auth/*`                                                       | Explicit initial learner/instructor selection; full local captured-outbox/browser journeys in `auth-completion.spec.ts`, plus intercepted action-feedback matrices                                                                      |
 | `/verification`, `/verification/result`                         | `RecoveryPages`, auth verification/resend boundary                                                                        | Real signed verification and non-enumerating resend in isolated PG/BW; invalid/expired and delivery-failure cases remain distinct from live SMTP proof                                                                                  |
 | `/forgot-password`, `/reset-password`                           | `RecoveryPages`, Better Auth reset routes                                                                                 | Captured recovery links, password replacement/Google-first establishment, token history removal and session revocation; no public outbox endpoint                                                                                       |
@@ -22,7 +22,9 @@ foundation from intended future behavior.
 | Instructor generation/draft API                                 | `src/exercises/instructor-drafts.ts`, app routes, shared contracts                                                        | `f01-acceptance-*` covers HTTP policy/injected SoC transport; `tests/integration/f01-drafts.test.ts` covers actual PG ownership, usage, bounds, rollback and paging. No generated Python execution.                                     |
 | `/learner/questions`, `/learner/questions/:id`                  | `PublishedQuestionsPage`, `PublishedQuestionPage`; PR #9 published-question DTOs and canonical service                    | `f02-learner.spec.ts`, `learner-workspace.spec.ts`; optional case-insensitive title/topic `q` applies before 50-item paging; search remains on detail/back.                                                                             |
 | Learner attempt API                                             | `apps/backend/src/exercises/learner-attempts.ts`, `apps/backend/src/app.ts`, `packages/contracts/src/learner-attempts.ts` | `learner-attempt-http.test.ts`, `learner-workspace-acceptance.test.ts`; own attempt keyed by canonical published version, revisioned save and immutable finalization.                                                                   |
-| Learner workspace and attempt persistence                       | `LearnerWorkspace`, `PublishedQuestionPage`; additive attempt migration                                                   | `learner-workspace-acceptance.spec.ts`, `learner-workspace-recovery.spec.ts` and `learner-workspace-composed.spec.ts`; PR10 adds 24 recovery/layout browser cases, uses real-cookie/PG composed cases, and keeps Run disabled.          |
+| Learner workspace and attempt persistence                       | `LearnerWorkspace`, `PublishedQuestionPage`; additive attempt migration                                                   | `learner-workspace-acceptance.spec.ts`, `learner-workspace-recovery.spec.ts` and `learner-workspace-composed.spec.ts`; revisioned drafts/finals, PR10 reconciliation and real-cookie/PG composed cases.                                 |
+| Browser Python IDE and runner                                   | `PythonCodeEditor`, `LearnerWorkspace`, `python/sandboxed-runner.ts`, `pyodide-worker-entry.js`                           | `python-ide-acceptance.spec.ts`: local Pyodide Run/Test/Stop, scratch assertions/stdin, real outputs and failures, lifecycle, sandbox boundaries/resource limits and built-runtime execution.                                           |
+| Generated Pyodide assets                                        | `scripts/build-python-runtime.mjs`; frontend `predev`/`prebuild` hooks                                                    | `npm run build:python-runtime` and production build generate ignored `apps/frontend/public/pyodide-runtime/`; pinned assets and license are bundled locally, not downloaded from a CDN at run time.                                     |
 | Opt-in browser database guard                                   | `tests/e2e/learner-workspace-composed.spec.ts`, `apps/backend/test/pr10-browser-guard.test.ts`                            | 15 isolated setup cases; module collection creates no Prisma client, matching safe loopback `_test` URLs are required before opt-in construction, and disabled opt-ins skip cleanup.                                                    |
 | PostgreSQL data and auth                                        | auth schema plus four additive nullable draft-version fields; auth policy and normalization rehearsal utility             | Real PG auth tests preserve identity/session invariants; F01 tests cover private drafts and usage. Seed records are synthetic fixtures without passwords.                                                                               |
 | Netlify function                                                | `netlify/functions/api.ts`, backend web handler/build policy                                                              | backend web-handler/netlify-build-policy/deployment tests; test deployment package when affected; no implied deployment permission                                                                                                      |
@@ -45,8 +47,17 @@ DTOs and canonical publication validation. The workspace saves the authenticated
 learner's own revisioned attempt for that published version, supports immutable
 final submission, and guards async responses against disposed pages/session
 changes. The additive migration refuses duplicate learner/version rows without
-deleting data. Run and Get Hint remain disabled; no Python runner or coaching
-service is delivered.
+deleting data. PR10 handles uncertain writes through read-only attempt
+reconciliation and retains local edits when recovery fails. Get Hint and coaching
+remain unavailable.
+
+The browser IDE uses CodeMirror 6 and local Pyodide. Run executes learner Python;
+Test runs the learner code and scratch assertions with optional stdin. The runner
+uses an opaque-origin iframe and dedicated worker with fixed same-origin runtime
+assets. Scratch tests/input are not persisted, and execution output is local
+feedback rather than grading. `build-python-runtime.mjs` creates ignored runtime
+assets; frontend `predev` and `prebuild` run that generator. See Developer Guide
+for version, limits, experimental factory-hook and security-test boundaries.
 
 PR10 attempt recovery handles unknown mutation outcomes and HTTP 409 with a
 read-only current-attempt GET. A failed recovery keeps local edits and the dirty
@@ -80,8 +91,22 @@ deterministic tests (including 15 setup guards), 24 recovery/layout browser
 cases, 168 normal browser passes with 20 expected skips, 8 composed local
 cookie/PG/captured-SMTP/fake-AI cases, and build/built-frontend checks. These
 layers overlap and are not a combined count. The local checks do not establish
-remote CI/deployment, live-provider, real Python runner or manual
-screen-reader/contrast behavior.
+remote CI/deployment, live-provider behavior, hard browser resource quotas,
+physical-touch support or manual screen-reader/contrast behavior.
+
+ZH-LWS-02 has an independent **pass within the approved tested scope** at
+`2470a3b`: 26/26 final affected browser cases and 6/6 production-built Python
+integration cases passed; final collection listed 226 cases in 16 files. Do not
+label the full suite green: the prior normal run was 199 pass / 20 skip / 3
+harness failures, with only the corrected affected subset passing 4/4. Round-one
+root 531/531, production runner/isolation 20/20, composed 8/8 and 16 built-route
+loads refer to source `36df16b`, not the final viewport repair. The final local
+checks do not establish remote CI or deployment. CI commit `1d6581c` adds the
+frontend workspace unit-test command after root tests. Separately, remote CI for
+code/test checkpoint `929d0ec` passed verification and browser jobs (206 passed,
+20 expected skips); it does not verify this documentation commit. See the
+[workflow run](https://github.com/CS3227-2610-MP4-ASE/Debug-Clinic/actions/runs/42240818024)
+and [independent report](../evaluations/zhenghao/ZH-LWS-02/testing.md).
 
 | F02 check                                       | Boundary and limit                                                                                                                             |
 | ----------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |

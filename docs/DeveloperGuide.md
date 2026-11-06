@@ -117,7 +117,9 @@ protect the boundary. String limits explicitly use JavaScript UTF-16 length.
 Provider token counts outside PostgreSQL's nonnegative Int32 range become null.
 No topic, code or provider content enters usage records or feature error logs.
 The fake adapter is explicitly configured and never an automatic fallback.
-All generated/edited/saved content remains unverified; Python is never executed.
+Instructor-generated, edited and saved question content remains unverified;
+instructor authoring never executes Python. Learner code runs locally in the
+browser IDE described below and its results are not official grading.
 
 ## Environment separation
 
@@ -220,12 +222,48 @@ async responses are guarded by component lifecycle, learner identity revision an
 session epoch so disposed pages cannot replace current state or clear another
 page's unsaved-work guard. Both `apps/backend/src/server.ts` and
 `netlify/functions/api.ts` compose the real attempt service; missing composition
-fails closed. Run remains disabled and no Python execution or coaching response
-is delivered. The output panel accepts injected fixtures in tests only; Get Hint
-also remains disabled.
+fails closed. Get Hint remains disabled; no coaching response is delivered.
 
-UI routes are `/instructor/questions?status=...`, `/instructor/questions/:id`,
+### Browser Python IDE
+
+The learner workspace uses CodeMirror 6 with Python syntax highlighting, line
+numbers, indentation, bracket matching, undo/redo and keyboard editing. New
+attempts start from the published buggy code; saved drafts and final attempts
+remain authoritative. Source is limited to 20,000 UTF-16 code units. Learners
+can Run Python or Test it with their own scratch assertions and optional
+standard input. Test requires nonblank scratch-test code. The page displays actual
+stdout, stderr, errors and run state; results are local feedback, not grading or
+submission. Scratch tests (10,000 code units) and stdin (8,000 code units) are
+temporary and never enter attempt API payloads. Editing code, tests or stdin
+marks the previous output stale. Run results do not change saved or final state.
+
+Each run creates a fresh `sandbox="allow-scripts"` opaque-origin iframe and
+dedicated classic worker. There is no same-origin fallback. The exercised
+browser boundary denies application storage, cookies, API/external network,
+parent DOM and host-file access. The parent fetches only fixed same-origin
+runtime assets with credentials omitted; no CDN, server-side Python execution
+or provider call is involved. The pinned `pyodide@314.0.7` runtime executed
+CPython 3.14.2 in the tested browsers. Combined output is capped at 64 KiB of
+UTF-8 with Unicode-scalar-safe truncation; error text is separately bounded at
+8,000 bytes. Stop tears down the run, execution has a five-second limit after
+the Running state, and initialization uses a separate 30-second phase timer.
+Loading messages may restart that timer, so it is not a strict total wall-clock
+bound. Browser memory/process quotas, IPC-flood resistance, physical-touch
+behavior and screen-reader certification were not established by these tests.
+
+`npm run build:python-runtime` bundles the worker and copies the pinned runtime
+assets, standard library and license notice into the ignored generated
+`apps/frontend/public/pyodide-runtime/` directory. The frontend workspace's
+`predev` and `prebuild` scripts run this generator before Vite development or
+production builds. The worker uses Pyodide's experimental `createPyodideModule`
+factory hook; the version remains pinned, and upgrades require renewed real
+execution and isolation checks. Build success does not mean a deployment has
+occurred.
+
+UI routes are `/`, `/instructor/questions?status=...`, `/instructor/questions/:id`,
 `/instructor/questions/new`, `/learner/questions` and `/learner/questions/:id`.
+Signed-in **Home** navigation and the brand link open public `/` without signing
+out; the dirty-work guard still confirms leaving an edited learner attempt.
 Legacy `/instructor/drafts[/:id]` URLs remain supported. The data-router discard
 boundary covers Link/POP/New/reload/sign-out; beforeunload uses the browser warning.
 An admitted editor stays mounted with mutations disabled after expiry. Identity
@@ -284,10 +322,28 @@ use real local cookies/PostgreSQL, captured SMTP and fake AI without browser
 interception or live providers. Lint, typecheck, formatting, production build
 and 16 synthetic built-frontend loads passed. Focused recovery browsers use HTTP
 test doubles. These layers overlap and are not one aggregate test count. These
-local checks do not establish remote CI/deployment or live-provider behavior.
-Real Python execution and manual screen-reader/contrast checks also remain
-unverified. See the [PR10 independent report](../workflow/evaluations/zhenghao/ZH-LWS-01/pr10-testing.md)
-for commands and boundaries.
+The PR10 checks were local and do not establish remote CI/deployment or
+live-provider behavior. No Python runner was provided at that earlier checkpoint;
+the later ZH-LWS-02 section documents browser-local execution. Manual
+screen-reader/contrast checks remain unverified. See the [PR10 independent
+report](../workflow/evaluations/zhenghao/ZH-LWS-01/pr10-testing.md) for its
+revision-specific commands and boundaries.
+
+The independent ZH-LWS-02 review passed within the approved tested scope at
+`2470a3b`. On that final product revision, the affected browser matrix passed
+26/26 and production-built Python integration passed 6/6; collection found 226
+cases in 16 files. The earlier full normal browser run remains 199 pass / 20
+expected skips / 3 harness failures; its corrected affected subset passed 4/4.
+No complete 226-case green local run is claimed. Round-one root 531/531, production
+runner/isolation 20/20, composed 8/8 and 16 built-route loads refer to earlier
+source `36df16b`; round two changed only viewport-range state and reverified the
+affected and built matrices. These local checks do not establish remote CI,
+deployment or live-provider behavior. Separately, remote CI for code/test
+checkpoint `929d0ec` passed both verification and browser jobs (206 passed, 20
+expected skips). That run does not verify this documentation commit; see the
+[workflow run](https://github.com/CS3227-2610-MP4-ASE/Debug-Clinic/actions/runs/42240818024)
+and [ZH-LWS-02 independent report](../workflow/evaluations/zhenghao/ZH-LWS-02/testing.md)
+for revision-specific evidence and limits.
 
 When defaults are occupied, set `E2E_APP_ORIGIN=http://127.0.0.1:5273` and
 `E2E_BACKEND_PORT=3101`; the test origin validator allows only a bare HTTP loopback
@@ -403,7 +459,7 @@ References: [Netlify deploy flags](https://cli.netlify.com/commands/deploy/),
 
 ## Security notes
 
-- Arbitrary Python execution is intentionally absent. It requires a separately specified sandbox with CPU, memory, time, filesystem, process, and network isolation.
+- Learner Python executes only in the browser-local sandbox described above; the backend does not execute it and output is not official grading. The exercised isolation checks do not establish hard browser memory/process quotas or IPC-flood resistance.
 - Rate limiting is process-local in this milestone; production should use a shared backend or platform control to remain effective across function instances.
 - Authentication audit tables exist, but Better Auth event hooks still need to be wired after email and OAuth flows are verified.
 - Provider usage tables exist, but live SoC usage writes await the official contract.
