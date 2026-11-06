@@ -41,6 +41,9 @@ evaluation record.
   fail if the URL is missing. Stop command sequences on the first failure.
 - Before declaring a local tool unavailable, check installed application bundles
   as well as PATH. Use the configured Node major for verification.
+  App-bundled Node can reject native modules under library validation; verify
+  with a standalone runtime of the same major before changing dependencies.
+  Inspect a diagnostic result before sending another agent a success claim.
 - Keep generated TypeScript build-info files ignored. When changing visible
   wording, update affected browser assertions before running the suite.
   Do not pass `.env` files to Prettier; it has no parser for them.
@@ -48,8 +51,10 @@ evaluation record.
   from the accessible name. Prefer semantic role/name queries for browser tests.
 - Load every declared non-system font and verify design documentation against
   resolved MUI values, including numeric radius multipliers.
-- Build OAuth test fixtures from the installed provider types: provider identity
-  belongs in the raw profile/account subject, not mutable local-user fields.
+- Validate hand-built response fixtures against strict wire schemas before
+  attributing an acceptance failure to product code. Build OAuth fixtures from
+  installed provider types: identity belongs in the raw profile/account subject,
+  not mutable local-user fields.
 - Verify declaration-emitting builds after adding typed auth plugins; successful
   no-emit typechecks do not catch non-portable inferred export types.
 - Smoke-test the packaged Netlify Function, not just Vite/TypeScript builds;
@@ -83,6 +88,12 @@ evaluation record.
   templates, or another developer's paths without explicit cross-developer approval.
 - For Python CLIs that import sibling scripts, verify both direct execution and
   import-based test discovery; register or resolve the sibling module explicitly.
+- Bound the combined output of parallel reads; oversized instruction/source
+  batches caused truncation and repeated reads. Load only the required reference
+  sections and give stage agents concise file pointers rather than transcripts.
+- Map monitor requirement IDs to their verification owner. For cross-stage
+  repairs, log the receiving task's linked finding before its retry event;
+  preserve the independent failure and stable retry-group IDs.
 
 # Skill evaluation
 
