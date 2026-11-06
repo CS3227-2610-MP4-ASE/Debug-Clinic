@@ -93,7 +93,14 @@ evaluation record.
   sections and give stage agents concise file pointers rather than transcripts.
 - Map monitor requirement IDs to their verification owner. For cross-stage
   repairs, log the receiving task's linked finding before its retry event;
-  preserve the independent failure and stable retry-group IDs.
+  preserve the independent failure and stable retry-group IDs. Retry events
+  require the check, retry group and attempt number together.
+- Playwright skip declarations do not prevent module evaluation. Initialize
+  opt-in database clients only inside guarded hooks and verify normal test
+  collection with database variables unset.
+- A failed mutation reply can follow a committed write. Reconcile authoritative
+  revisions before another write while retaining local edits and session guards;
+  test lost replies, failed recovery reads and multiline editor overflow.
 
 # Skill evaluation
 
