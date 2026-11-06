@@ -1,4 +1,15 @@
 import { z } from "zod";
+import { DraftIdSchema, RevisionSchema } from "./primitives.js";
+import { storageMessage, storageText } from "./storage-text.js";
+export { DraftIdSchema, RevisionSchema } from "./primitives.js";
+export {
+  LearnerAttemptResponseSchema,
+  LearnerAttemptSchema,
+  LearnerAttemptWriteSchema,
+  type LearnerAttempt,
+  type LearnerAttemptResponse,
+  type LearnerAttemptWrite,
+} from "./learner-attempts.js";
 
 export const RoleSchema = z.enum(["LEARNER", "INSTRUCTOR"]);
 export type Role = z.infer<typeof RoleSchema>;
@@ -75,18 +86,6 @@ export const HealthResponseSchema = z.object({
 });
 
 // F01 wire contracts. Code is kept verbatim; prose is normalized at the boundary.
-const storageText = (value: string): boolean => {
-  for (let index = 0; index < value.length; index++) {
-    const unit = value.charCodeAt(index);
-    if (unit === 0) return false;
-    if (unit >= 0xd800 && unit <= 0xdbff) {
-      const next = value.charCodeAt(++index);
-      if (!(next >= 0xdc00 && next <= 0xdfff)) return false;
-    } else if (unit >= 0xdc00 && unit <= 0xdfff) return false;
-  }
-  return true;
-};
-const storageMessage = "Must contain valid Unicode without null characters";
 const prose = (maximum: number) =>
   z
     .string()
@@ -106,12 +105,6 @@ const code = (maximum: number) =>
     .refine((value) => value.trim().length > 0, {
       message: "Required content must not be blank",
     });
-export const DraftIdSchema = z
-  .string()
-  .min(1)
-  .refine((value) => value.length <= 128, {
-    message: "Must contain at most 128 characters",
-  });
 export const QuestionTopicSchema = prose(300);
 export const QuestionFieldsSchema = z
   .object({
@@ -247,7 +240,6 @@ export const DraftListResponseSchema = z
 export type DraftListResponse = z.infer<typeof DraftListResponseSchema>;
 
 // F02 keeps the literal-DRAFT F01 surface unchanged.
-export const RevisionSchema = z.number().int().min(0).max(2_147_483_647);
 export const PreviewPublicationKeySchema = z
   .string()
   .regex(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/);
@@ -353,7 +345,15 @@ export const OwnerQuestionListResponseSchema = z
 export type OwnerQuestionListResponse = z.infer<
   typeof OwnerQuestionListResponseSchema
 >;
-export const PublishedQuestionListQuerySchema = DraftListQuerySchema;
+export const PublishedQuestionListQuerySchema = DraftListQuerySchema.extend({
+  q: z
+    .string()
+    .refine(storageText, { message: storageMessage })
+    .refine((value) => value.length <= 200, {
+      message: "Must contain at most 200 characters",
+    })
+    .optional(),
+}).strict();
 export type PublishedQuestionListQuery = z.infer<
   typeof PublishedQuestionListQuerySchema
 >;

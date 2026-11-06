@@ -5,6 +5,8 @@ import {
   PublishQuestionResponseSchema,
   PublishedQuestionResponseSchema,
   PublishedQuestionListResponseSchema,
+  LearnerAttemptResponseSchema,
+  type LearnerAttemptWrite,
   type OwnerQuestionListQuery,
   type PublishQuestionRequest,
   type SaveQuestionChangesRequest,
@@ -111,9 +113,9 @@ export const removeQuestion = (id: string) =>
     "POST",
     { confirmed: true },
   );
-export const listPublishedQuestions = (offset = 0) =>
+export const listPublishedQuestions = (offset = 0, q?: string) =>
   request(
-    `learner/questions?offset=${offset}`,
+    `learner/questions?offset=${offset}${q ? `&q=${encodeURIComponent(q)}` : ""}`,
     PublishedQuestionListResponseSchema,
   );
 export const getPublishedQuestion = (id: string) =>
@@ -125,3 +127,23 @@ export const questionFailure = (error: unknown) =>
   error instanceof QuestionError
     ? error.message
     : "The request could not be completed. Please try again.";
+
+export const getLearnerAttempt = (id: string) =>
+  request(
+    `learner/questions/${encodeURIComponent(id)}/attempt`,
+    LearnerAttemptResponseSchema,
+  );
+export const saveLearnerAttempt = (id: string, input: LearnerAttemptWrite) =>
+  request(
+    `learner/questions/${encodeURIComponent(id)}/attempt`,
+    LearnerAttemptResponseSchema,
+    "PUT",
+    input,
+  );
+export const submitLearnerAttempt = (id: string, input: LearnerAttemptWrite) =>
+  request(
+    `learner/questions/${encodeURIComponent(id)}/attempt/submit`,
+    LearnerAttemptResponseSchema,
+    "POST",
+    input,
+  );

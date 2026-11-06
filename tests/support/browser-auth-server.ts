@@ -10,6 +10,7 @@ import { readEnv } from "../../apps/backend/src/config/env.js";
 import { createPrismaClient } from "../../apps/backend/src/db/client.js";
 import { createInstructorDrafts } from "../../apps/backend/src/exercises/instructor-drafts.js";
 import { createInstructorQuestions } from "../../apps/backend/src/exercises/instructor-questions.js";
+import { createLearnerAttempts } from "../../apps/backend/src/exercises/learner-attempts.js";
 import { createLogger } from "../../apps/backend/src/lib/logger.js";
 import { testRuntimeDatabaseTarget } from "./database-target.js";
 import { browserTestOrigin } from "./browser-target.js";
@@ -94,6 +95,7 @@ const app = createApp({
     logger,
   }),
   instructorQuestions: createInstructorQuestions({ prisma, logger }),
+  learnerAttempts: createLearnerAttempts(prisma),
   logger,
   profileUpdater: async (id, name) =>
     prisma.user.update({

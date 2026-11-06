@@ -5,6 +5,7 @@ import { readEnv } from "./config/env.js";
 import { createPrismaClient } from "./db/client.js";
 import { createInstructorDrafts } from "./exercises/instructor-drafts.js";
 import { createInstructorQuestions } from "./exercises/instructor-questions.js";
+import { createLearnerAttempts } from "./exercises/learner-attempts.js";
 import { createLogger } from "./lib/logger.js";
 
 const config = readEnv();
@@ -19,6 +20,7 @@ const app = createApp({
   auth,
   aiProvider,
   instructorQuestions: createInstructorQuestions({ prisma, logger }),
+  learnerAttempts: createLearnerAttempts(prisma),
   instructorDrafts: createInstructorDrafts({
     prisma,
     provider: aiProvider,

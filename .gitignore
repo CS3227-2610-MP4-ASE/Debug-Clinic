@@ -11,8 +11,10 @@ test-results/
 .DS_Store
 generated/prisma/
 generated/deployment.json
+apps/frontend/public/pyodide-runtime/
 *.tsbuildinfo
 .impeccable/review/
+docs/reflection-requirement.md
 
 # Live agent telemetry stays local; commit only derived milestone evidence.
 .workflow-state/

@@ -117,7 +117,9 @@ protect the boundary. String limits explicitly use JavaScript UTF-16 length.
 Provider token counts outside PostgreSQL's nonnegative Int32 range become null.
 No topic, code or provider content enters usage records or feature error logs.
 The fake adapter is explicitly configured and never an automatic fallback.
-All generated/edited/saved content remains unverified; Python is never executed.
+Instructor-generated, edited and saved question content remains unverified;
+instructor authoring never executes Python. Learner code runs locally in the
+browser IDE described below and its results are not official grading.
 
 ## Environment separation
 
@@ -168,6 +170,10 @@ F01 draft contracts retain their literal DRAFT status and fresh-per-Save creatio
 | `POST /api/v1/instructor/questions/publish`                          | Confirmed saved or preview discriminated request; published/existing authoritative response |
 | `POST /api/v1/instructor/questions/:id/remove`                       | Confirmed archive; repeated Remove returns retained archive                                 |
 | `GET /api/v1/learner/questions[/:id]`                                | LEARNER-only currently published explicit public projection                                 |
+| `GET /api/v1/learner/questions?offset=&q=`                           | Optional case-insensitive title/topic search before 50-item pagination                      |
+| `GET /api/v1/learner/questions/:id/attempt`                          | LEARNER-only current learner's attempt for the published version                            |
+| `PUT /api/v1/learner/questions/:id/attempt`                          | Save own draft using expected revision                                                      |
+| `POST /api/v1/learner/questions/:id/attempt/submit`                  | Finalize own attempt; identical retry returns the immutable final                           |
 
 All mutation guards enforce real session, role, configured Origin, JSON, strict
 schemas, ownership and current state. Parent-first conditional updates and version
@@ -196,8 +202,68 @@ Solutions, explanations, generation metadata, author email, hints and attempts
 are absent. A separate public renderer displays literal text. Get Hint is disabled
 and performs no request.
 
-UI routes are `/instructor/questions?status=...`, `/instructor/questions/:id`,
+The learner list/detail reuses the published-question routes, DTOs and canonical
+publication validation introduced for PR #9; it does not add a competing exercise
+read API or select versions by timestamp. Search is an optional `q` query,
+matched case-insensitively against title/topic before deterministic 50-row
+pagination. Attempt storage is keyed to the canonical published `versionId` and
+authenticated learner. The frontend requires nonblank Python code and explanation
+and preserves indentation. Writes carry an expected revision; the service locks
+the parent Exercise row, rechecks canonical publication eligibility while holding
+that lock, then creates or advances the attempt in one transaction. Finalization
+stores the submitted snapshot atomically and makes it immutable; identical retry
+is safe while a different payload conflicts. The additive attempt migration
+checks for duplicate learner/version rows before creating its uniqueness support;
+it stops on duplicates and never deletes data automatically.
+
+Learner mutations require the learner role, authenticated session, allowed
+same-origin Origin, JSON content type, strict body schema and ownership. Browser
+async responses are guarded by component lifecycle, learner identity revision and
+session epoch so disposed pages cannot replace current state or clear another
+page's unsaved-work guard. Both `apps/backend/src/server.ts` and
+`netlify/functions/api.ts` compose the real attempt service; missing composition
+fails closed. Get Hint remains disabled; no coaching response is delivered.
+
+### Browser Python IDE
+
+The learner workspace uses CodeMirror 6 with Python syntax highlighting, line
+numbers, indentation, bracket matching, undo/redo and keyboard editing. New
+attempts start from the published buggy code; saved drafts and final attempts
+remain authoritative. Source is limited to 20,000 UTF-16 code units. Learners
+can Run Python or Test it with their own scratch assertions and optional
+standard input. Test requires nonblank scratch-test code. The page displays actual
+stdout, stderr, errors and run state; results are local feedback, not grading or
+submission. Scratch tests (10,000 code units) and stdin (8,000 code units) are
+temporary and never enter attempt API payloads. Editing code, tests or stdin
+marks the previous output stale. Run results do not change saved or final state.
+
+Each run creates a fresh `sandbox="allow-scripts"` opaque-origin iframe and
+dedicated classic worker. There is no same-origin fallback. The exercised
+browser boundary denies application storage, cookies, API/external network,
+parent DOM and host-file access. The parent fetches only fixed same-origin
+runtime assets with credentials omitted; no CDN, server-side Python execution
+or provider call is involved. The pinned `pyodide@314.0.7` runtime executed
+CPython 3.14.2 in the tested browsers. Combined output is capped at 64 KiB of
+UTF-8 with Unicode-scalar-safe truncation; error text is separately bounded at
+8,000 bytes. Stop tears down the run, execution has a five-second limit after
+the Running state, and initialization uses a separate 30-second phase timer.
+Loading messages may restart that timer, so it is not a strict total wall-clock
+bound. Browser memory/process quotas, IPC-flood resistance, physical-touch
+behavior and screen-reader certification were not established by these tests.
+
+`npm run build:python-runtime` bundles the worker and copies the pinned runtime
+assets, standard library and license notice into the ignored generated
+`apps/frontend/public/pyodide-runtime/` directory. The frontend workspace's
+`predev` and `prebuild` scripts run this generator before Vite development or
+production builds. The worker uses Pyodide's experimental `createPyodideModule`
+factory hook; the version remains pinned, and upgrades require renewed real
+execution and isolation checks. Build success does not mean a deployment has
+occurred.
+
+UI routes are `/`, `/instructor/questions?status=...`, `/instructor/questions/:id`,
 `/instructor/questions/new`, `/learner/questions` and `/learner/questions/:id`.
+Signed-in **Home** navigation and the brand link open public `/` without signing
+out; the dirty-work guard still confirms leaving an edited learner attempt.
 Legacy `/instructor/drafts[/:id]` URLs remain supported. The data-router discard
 boundary covers Link/POP/New/reload/sign-out; beforeunload uses the browser warning.
 An admitted editor stays mounted with mutations disabled after expiry. Identity
@@ -210,6 +276,18 @@ and explicit refresh still use blocking loading. A confirmed identity change
 remounts the protected page by user ID; a confirmed expired session removes
 ordinary protected pages while retaining the admitted disabled editor behavior.
 
+Learner attempt writes with an unknown outcome or HTTP 409 trigger a read-only
+GET of the current attempt; the client never retries the mutation automatically.
+A confirmed draft updates the expected revision. Matching local text is marked
+saved; differing local text remains visible and dirty for a later learner-
+initiated Save. If no attempt exists, local text remains and the next Save uses a
+null expected revision. If the read also fails, code and reasoning remain intact,
+Save/Submit stay disabled, and **Retry attempt check** performs another GET only.
+A confirmed final submission is authoritative and read-only; when it differs
+from unsent local edits, the submitted snapshot is shown separately from the
+retained local code/reasoning. The reasoning field accepts up to 5,000 UTF-16
+code units, shows at most four rows at once and scrolls longer text internally.
+
 Apply the additive F02 migration before new code rollout; migration/function
 deployment is not atomic. Its archive preflight stops existing undated archived
 rows for owner reconciliation rather than inventing dates. Rollback disables new
@@ -220,7 +298,7 @@ Every response carries an `x-request-id`. Error bodies contain a stable code, re
 
 ## Testing strategy
 
-F02 checks include contracts, focused HTTP policy doubles, real-cookie/PG public
+F02 and learner checks include contracts, focused HTTP policy doubles, real-cookie/PG public
 behavior, CAS races and real SQL rollback faults, PG wire faults for unavailable
 replay reads/lost COMMIT acknowledgments, intercepted desktop/mobile UI, composed
 browser cookies/PG/fake AI, and extracted Netlify publication/read/archive smoke.
@@ -228,6 +306,44 @@ The opt-in browser runtime's owned loopback transport proxy can drain one commit
 publication success then drop the downstream response via a private marker; this
 fault is outside production composition. See the F02 implementation handoff for
 actual commands/results and remaining manual/CI limitations.
+
+Earlier learner-workspace verification passed 516 deterministic tests, 198
+PostgreSQL integration cases, 144 normal browser passes with 20 expected opt-in
+skips, 16 focused learner browser cases, built-frontend route/viewport loads and
+two extracted Netlify smoke flows. Those database/Netlify results are prior
+evidence; PR10 did not rerun business-logic integration or package smoke.
+
+PR10 independently verified 531 deterministic tests (including 15 isolated
+opt-in database-guard cases), 24 focused recovery/layout browser cases, and 168
+normal browser passes with 20 expected opt-in skips. The normal collection and
+suite passed with all four database URL variables and both auth opt-ins unset;
+ordinary browser runs need no database URL. The eight opt-in composed journeys
+use real local cookies/PostgreSQL, captured SMTP and fake AI without browser
+interception or live providers. Lint, typecheck, formatting, production build
+and 16 synthetic built-frontend loads passed. Focused recovery browsers use HTTP
+test doubles. These layers overlap and are not one aggregate test count. These
+The PR10 checks were local and do not establish remote CI/deployment or
+live-provider behavior. No Python runner was provided at that earlier checkpoint;
+the later ZH-LWS-02 section documents browser-local execution. Manual
+screen-reader/contrast checks remain unverified. See the [PR10 independent
+report](../workflow/evaluations/zhenghao/ZH-LWS-01/pr10-testing.md) for its
+revision-specific commands and boundaries.
+
+The independent ZH-LWS-02 review passed within the approved tested scope at
+`2470a3b`. On that final product revision, the affected browser matrix passed
+26/26 and production-built Python integration passed 6/6; collection found 226
+cases in 16 files. The earlier full normal browser run remains 199 pass / 20
+expected skips / 3 harness failures; its corrected affected subset passed 4/4.
+No complete 226-case green local run is claimed. Round-one root 531/531, production
+runner/isolation 20/20, composed 8/8 and 16 built-route loads refer to earlier
+source `36df16b`; round two changed only viewport-range state and reverified the
+affected and built matrices. These local checks do not establish remote CI,
+deployment or live-provider behavior. Separately, remote CI for code/test
+checkpoint `929d0ec` passed both verification and browser jobs (206 passed, 20
+expected skips). That run does not verify this documentation commit; see the
+[workflow run](https://github.com/CS3227-2610-MP4-ASE/Debug-Clinic/actions/runs/42240818024)
+and [ZH-LWS-02 independent report](../workflow/evaluations/zhenghao/ZH-LWS-02/testing.md)
+for revision-specific evidence and limits.
 
 When defaults are occupied, set `E2E_APP_ORIGIN=http://127.0.0.1:5273` and
 `E2E_BACKEND_PORT=3101`; the test origin validator allows only a bare HTTP loopback
@@ -239,12 +355,17 @@ database with matching direct/pooled/test/E2E URLs for composed checks.
 - Vitest covers configuration parsing and AI response validation.
 - Supertest covers probes, safe errors, unauthenticated access, revoked sessions, role checks, role-escalation rejection, deterministic AI output, and provider failures.
 - Playwright covers the public page, authentication entry points, responsive rendering, and unauthenticated role-route behavior. Its opt-in `auth-real.spec.ts` additionally checks real local PostgreSQL password registration, session restoration, denied login, retry, and logout on desktop/mobile without response interception. Set `E2E_REAL_AUTH=1` and an owned migrated loopback `_test` target through `E2E_TEST_DATABASE_URL`; the default target is port 5433. Both browser/auth origins are 5173, and the harness awaits backend and proxied API health. SMTP/Google are disabled in this synthetic runtime; live-provider and production acceptance remain separate.
+- The ordinary `npm run test:e2e` suite uses a synthetic runtime and does not need a database URL. For no-database collection and suite checks, unset `DATABASE_URL`, `DATABASE_URL_POOLED`, `TEST_DATABASE_URL`, `E2E_TEST_DATABASE_URL`, `E2E_AUTH_COMPLETION`, and `E2E_REAL_AUTH`.
 - CI runs PostgreSQL 17, applies committed migrations, seeds fixtures, and performs all deterministic checks before deployment.
 
 Tests must not call Google, the NUS SoC LLM, Netlify, or production services.
 
 `E2E_AUTH_COMPLETION=1` selects the private captured-outbox browser runtime.
-Use an explicit owned `E2E_TEST_DATABASE_URL` and run
+For opt-in composed browser journeys, set all four database URL variables
+(`DATABASE_URL`, `DATABASE_URL_POOLED`, `TEST_DATABASE_URL`, and
+`E2E_TEST_DATABASE_URL`) to the same explicit owned, safe loopback PostgreSQL
+URL ending in `_test`. The test hook validates the matching targets before
+constructing Prisma; module loading alone does not create a client. Then run
 `npm run test:e2e -- tests/e2e/auth-completion.spec.ts --workers=1`; leave the
 separate no-SMTP `E2E_REAL_AUTH` flag unset. Both role journeys use real local
 HTTP, cookies and PostgreSQL without browser interception. Google authorization
@@ -338,7 +459,7 @@ References: [Netlify deploy flags](https://cli.netlify.com/commands/deploy/),
 
 ## Security notes
 
-- Arbitrary Python execution is intentionally absent. It requires a separately specified sandbox with CPU, memory, time, filesystem, process, and network isolation.
+- Learner Python executes only in the browser-local sandbox described above; the backend does not execute it and output is not official grading. The exercised isolation checks do not establish hard browser memory/process quotas or IPC-flood resistance.
 - Rate limiting is process-local in this milestone; production should use a shared backend or platform control to remain effective across function instances.
 - Authentication audit tables exist, but Better Auth event hooks still need to be wired after email and OAuth flows are verified.
 - Provider usage tables exist, but live SoC usage writes await the official contract.

@@ -12,10 +12,12 @@ export function RoleRoute({ role }: { role: Role }) {
     null,
   );
   const editor =
-    role === "INSTRUCTOR" &&
-    /^\/instructor\/(?:questions\/(?:new|[^/]+)|drafts\/[^/]+)$/.test(
-      location.pathname,
-    );
+    (role === "INSTRUCTOR" &&
+      /^\/instructor\/(?:questions\/(?:new|[^/]+)|drafts\/[^/]+)$/.test(
+        location.pathname,
+      )) ||
+    (role === "LEARNER" &&
+      /^\/learner\/questions\/[^/]+$/.test(location.pathname));
   if (user?.role === role && !isLoading)
     admitted.current = {
       id: user.id,

@@ -1,0 +1,106 @@
+{
+  "contributor": "zhenghao",
+  "diagnostics": {
+    "legacy_cumulative_tokens_unsupported_v1": 554,
+    "unknown_record_schema": 6
+  },
+  "feature": "ZH-LWS-01",
+  "generated_at": "2026-11-06T08:51:10.487449+00:00",
+  "highest_token_task": {
+    "id": "planning",
+    "total_token_ratio": 0.586857224778549,
+    "total_tokens": 63752494
+  },
+  "limitations": [
+    "cached input is included in input and reasoning output is included in output and total",
+    "cache reuse alone does not prove a reduction in raw token usage",
+    "before/after reduction claims require comparable quality-qualified task runs",
+    "missing measurements remain unavailable"
+  ],
+  "measurement_policy": "derived from canonical workflow_monitor response_usage_v1 totals",
+  "overall": {
+    "cache_hit_ratio": 0.9899678484184363,
+    "cache_miss_ratio": 0.01003215158156367,
+    "cache_miss_tokens": 1086764,
+    "observed_responses": 554,
+    "reasoning_output_ratio": 0.40349442135915975,
+    "reasoning_total_ratio": 0.001135190616381073,
+    "tokens": {
+      "cache_write": 0,
+      "cached_input": 107241344,
+      "input": 108328108,
+      "output": 305630,
+      "reasoning_output": 123320,
+      "total": 108633738
+    },
+    "total_token_ratio": null,
+    "wall_seconds": 8621.351449251175
+  },
+  "schema_version": 1,
+  "tasks": {
+    "documentation": {
+      "cache_hit_ratio": 0.9640871937722003,
+      "cache_miss_ratio": 0.035912806227799736,
+      "cache_miss_tokens": 94179,
+      "reasoning_output_ratio": 0.2601700060716454,
+      "reasoning_total_ratio": 0.0016237795600826858,
+      "tokens": {
+        "cache_write": 0,
+        "cached_input": 2528256,
+        "input": 2622435,
+        "output": 16470,
+        "reasoning_output": 4285,
+        "total": 2638905
+      },
+      "total_token_ratio": 0.024291762840748424
+    },
+    "implementation": {
+      "cache_hit_ratio": 0.9885358791554816,
+      "cache_miss_ratio": 0.01146412084451847,
+      "cache_miss_tokens": 379186,
+      "reasoning_output_ratio": 0.441715528726375,
+      "reasoning_total_ratio": 0.0017671549004845018,
+      "tokens": {
+        "cache_write": 0,
+        "cached_input": 32696704,
+        "input": 33075890,
+        "output": 132857,
+        "reasoning_output": 58685,
+        "total": 33208747
+      },
+      "total_token_ratio": 0.30569459922294123
+    },
+    "planning": {
+      "cache_hit_ratio": 0.9927412773822752,
+      "cache_miss_ratio": 0.007258722617724794,
+      "cache_miss_tokens": 461997,
+      "reasoning_output_ratio": 0.4523612890977265,
+      "reasoning_total_ratio": 0.0007474844827247072,
+      "tokens": {
+        "cache_write": 0,
+        "cached_input": 63185152,
+        "input": 63647149,
+        "output": 105345,
+        "reasoning_output": 47654,
+        "total": 63752494
+      },
+      "total_token_ratio": 0.586857224778549
+    },
+    "testing": {
+      "cache_hit_ratio": 0.9831450329602653,
+      "cache_miss_ratio": 0.01685496703973467,
+      "cache_miss_tokens": 151402,
+      "reasoning_output_ratio": 0.24914635582244202,
+      "reasoning_total_ratio": 0.001405421010822716,
+      "tokens": {
+        "cache_write": 0,
+        "cached_input": 8831232,
+        "input": 8982634,
+        "output": 50958,
+        "reasoning_output": 12696,
+        "total": 9033592
+      },
+      "total_token_ratio": 0.08315641315776136
+    }
+  }
+}

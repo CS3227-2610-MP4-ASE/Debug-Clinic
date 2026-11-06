@@ -4,12 +4,15 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "predev": "npm run build:python-runtime --prefix ../..",
     "dev": "vite",
+    "prebuild": "npm run build:python-runtime --prefix ../..",
     "build": "tsc -b && vite build",
     "typecheck": "tsc -b --pretty false",
-    "test": "vitest run"
+    "test": "vitest run --config vitest.config.ts"
   },
   "dependencies": {
+    "@codemirror/lang-python": "6.2.1",
     "@debugclinic/contracts": "*",
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.1",
@@ -17,6 +20,7 @@
     "@mui/icons-material": "^7.3.5",
     "@mui/material": "^7.3.5",
     "better-auth": "^1.7.14",
+    "codemirror": "6.0.2",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
     "react-router-dom": "^7.9.6"

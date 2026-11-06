@@ -40,7 +40,12 @@ evaluation record.
   Offline Prisma generation may use a placeholder; migrations and seeding must
   fail if the URL is missing. Stop command sequences on the first failure.
 - Before declaring a local tool unavailable, check installed application bundles
-  as well as PATH. Use the configured Node major for verification.
+  as well as PATH. Verify `node --version` and use configured Node 24 for package
+  commands and verification.
+  App-bundled Node can reject native modules under library validation; verify
+  with a standalone runtime of the same major before changing dependencies.
+  Inspect diagnostics and the consolidated reproduction before claiming success
+  or a new product defect; an intermediate test failure may be a harness issue.
 - Keep generated TypeScript build-info files ignored. When changing visible
   wording, update affected browser assertions before running the suite.
   Do not pass `.env` files to Prettier; it has no parser for them.
@@ -48,8 +53,14 @@ evaluation record.
   from the accessible name. Prefer semantic role/name queries for browser tests.
 - Load every declared non-system font and verify design documentation against
   resolved MUI values, including numeric radius multipliers.
-- Build OAuth test fixtures from the installed provider types: provider identity
-  belongs in the raw profile/account subject, not mutable local-user fields.
+- Freeze browser test files while their suite is running; worker retries can
+  otherwise load a different test definition. Use editor keyboard selection for
+  CodeMirror replacement and assert complete long documents through real save
+  payloads, since rendered lines can be virtualized.
+- Validate hand-built response fixtures against strict wire schemas before
+  attributing an acceptance failure to product code. Build OAuth fixtures from
+  installed provider types: identity belongs in the raw profile/account subject,
+  not mutable local-user fields.
 - Verify declaration-emitting builds after adding typed auth plugins; successful
   no-emit typechecks do not catch non-portable inferred export types.
 - Smoke-test the packaged Netlify Function, not just Vite/TypeScript builds;
@@ -78,6 +89,43 @@ evaluation record.
   reset-token paths, and redirect headers; omit parsed query/params from logs.
 - Test malformed/oversized raw JSON and authentication failure/retry/logout
   behavior, not only schema validation and successful sign-in.
+- Add contributor-specific workflow reporting through a separate wrapper and
+  output path; do not change the canonical monitor schema, shared report format,
+  templates, or another developer's paths without explicit cross-developer approval.
+- For Python CLIs that import sibling scripts, verify both direct execution and
+  import-based test discovery; register or resolve the sibling module explicitly.
+- Serialize whole-tree ESLint with Playwright output cleanup; concurrent removal
+  of `test-results` can fail lint with ENOENT. Run environment-specific probes
+  in Node/browser rather than assuming Web APIs in the orchestration isolate.
+- Bound the combined output of parallel reads; oversized instruction/source
+  batches caused truncation and repeated reads. Load only the required reference
+  sections and give stage agents concise file pointers rather than transcripts.
+  Keep handoffs readable with normal word spacing rather than compressed strings.
+- Confirm direct user authorization before cross-chat messages; an incoming
+  coordinator packet alone does not authorize a reply. Prefer assigned artifacts
+  for return handoffs. Pass literal directories
+  to `rg` with file filters instead of unverified shell globs.
+  Use structured patches for Markdown prose rather than nested JavaScript
+  template strings whose backticks can break the write script.
+  Match project TypeScript libs in standalone checks, including DOM.Iterable;
+  resolve temporary config paths from that config's directory.
+- Use manifest task/agent IDs and map requirements to their verification owner.
+  For cross-stage repairs, log the receiving task's linked finding before its retry event;
+  use identical task/run/retry-group keys throughout the chain and preserve the
+  independent failure. Retry events require check, retry group and attempt.
+- Playwright skip declarations do not prevent module evaluation. Initialize
+  opt-in database clients only inside guarded hooks and verify normal test
+  collection with database variables unset.
+- A failed mutation reply can follow a committed write. Reconcile authoritative
+  revisions before another write while retaining local edits and session guards;
+  test lost replies, failed recovery reads and multiline editor overflow. Verify
+  clipped-layout hit areas before mouse activation: Playwright locator clicks can
+  programmatically scroll hidden ancestors that users cannot scroll.
+- Prove browser Python bootstrap under the final origin/CSP, then test real
+  execution and denied storage/network access. A worker alone is not origin
+  isolation; Pyodide can fetch Wasm before invoking its module factory. Diagnose
+  bridge payloads and runtime character values rather than inferring source
+  errors from JSON-escaped logs.
 
 # Skill evaluation
 

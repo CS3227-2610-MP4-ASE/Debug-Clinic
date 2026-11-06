@@ -31,8 +31,12 @@ export function AppShell({ children }: PropsWithChildren) {
   const { confirmDiscard } = useUnsavedWork();
   const navigate = useNavigate();
   const location = useLocation();
+  const learnerWorkspace = /^\/learner\/questions\/[^/]+$/.test(
+    location.pathname,
+  );
   const links = user
     ? [
+        { label: "Home", to: "/" },
         {
           label:
             user.role === "INSTRUCTOR"
@@ -173,14 +177,30 @@ export function AppShell({ children }: PropsWithChildren) {
       </Drawer>
       <Container
         component="main"
-        maxWidth="lg"
-        sx={{ flexGrow: 1, py: { xs: 5, md: 8 } }}
+        maxWidth={learnerWorkspace ? false : "lg"}
+        sx={
+          learnerWorkspace
+            ? {
+                height: { xs: "auto", md: "calc(100vh - 72px)" },
+                minHeight: { xs: "calc(100vh - 72px)", md: 0 },
+                flexGrow: 1,
+                py: 2,
+                px: { xs: 1.5, md: 3 },
+                overflow: { xs: "visible", md: "hidden" },
+              }
+            : { flexGrow: 1, py: { xs: 5, md: 8 } }
+        }
       >
         {children}
       </Container>
       <Box
         component="footer"
-        sx={{ borderTop: 1, borderColor: "divider", py: 3 }}
+        sx={{
+          display: learnerWorkspace ? "none" : undefined,
+          borderTop: 1,
+          borderColor: "divider",
+          py: 3,
+        }}
       >
         <Container maxWidth="lg">
           <Typography variant="body2" color="text.secondary">

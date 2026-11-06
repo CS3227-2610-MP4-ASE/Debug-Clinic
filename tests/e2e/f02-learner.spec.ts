@@ -20,27 +20,33 @@ test.beforeEach(async ({ page }) => {
   );
 });
 
-test("B28/B31 public detail is literal, has disabled Coming soon hint and no private content or requests", async ({
+test("B28/B31 public detail is literal, has no functional hint and no private content or requests", async ({
   page,
 }) => {
   const calls: string[] = [];
   await page.route("**/api/v1/learner/**", (route) => {
-    calls.push(
-      `${route.request().method()} ${new URL(route.request().url()).pathname}`,
-    );
-    return route.fulfill({ json: { question: published } });
+    const pathname = new URL(route.request().url()).pathname;
+    calls.push(`${route.request().method()} ${pathname}`);
+    return route.fulfill({
+      json: pathname.endsWith("/attempt")
+        ? { attempt: null }
+        : { question: published },
+    });
   });
   await page.goto(`/learner/questions/${published.id}`);
   await expect(page.getByRole("heading", { level: 1 })).toHaveText(
     published.title,
   );
   await expect(
-    page.getByText(published.buggyCode, { exact: true }),
+    page
+      .getByRole("article", { name: "Question details" })
+      .getByText(published.buggyCode, { exact: true }),
   ).toBeVisible();
   const hint = page.getByRole("button", { name: "Get Hint", exact: true });
-  await expect(hint).toBeDisabled();
-  await expect(hint).toHaveAccessibleDescription("Coming soon");
-  await expect(page.getByText("Coming soon", { exact: true })).toBeVisible();
+  await expect(hint).toHaveCount(0);
+  await expect(
+    page.getByText(/Results are local feedback, not official grading/),
+  ).toBeVisible();
   await expect(page.locator("main")).not.toContainText(
     /F02_PRIVATE|Bug explanation|Corrected solution|generationId|author@example/,
   );
@@ -52,7 +58,10 @@ test("B28/B31 public detail is literal, has disabled Coming soon hint and no pri
   // React StrictMode may repeat initial GET effects in the development server.
   expect(calls.length).toBeGreaterThan(0);
   expect(new Set(calls)).toEqual(
-    new Set([`GET /api/v1/learner/questions/${published.id}`]),
+    new Set([
+      `GET /api/v1/learner/questions/${published.id}`,
+      `GET /api/v1/learner/questions/${published.id}/attempt`,
+    ]),
   );
   expect(
     await page.evaluate(() => document.documentElement.scrollWidth),

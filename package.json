@@ -12,10 +12,11 @@
     "packages/*"
   ],
   "overrides": {
-    "esbuild": "^0.28.1",
+    "esbuild": "0.28.2",
     "minimatch": "^11.0.3"
   },
   "scripts": {
+    "build:python-runtime": "node scripts/build-python-runtime.mjs",
     "dev": "concurrently -k -n frontend,backend -c cyan,magenta \"npm run dev -w @debugclinic/frontend\" \"npm run dev -w @debugclinic/backend\"",
     "config:check": "tsx scripts/check-config.ts",
     "email:verify": "tsx scripts/verify-email.ts",
@@ -53,11 +54,13 @@
     "@types/node": "^24.10.0",
     "concurrently": "^9.2.1",
     "dotenv": "^17.2.3",
+    "esbuild": "0.28.2",
     "eslint": "^10.14.0",
     "eslint-config-prettier": "^10.1.8",
     "globals": "^16.5.0",
     "prettier": "^3.6.2",
     "prisma": "^7.0.0",
+    "pyodide": "314.0.7",
     "tsx": "^4.20.6",
     "typescript": "^5.9.3",
     "typescript-eslint": "^8.72.1",

@@ -1,28 +1,34 @@
 # DebugClinic feature and verification map
 
-Maintained against authentication, instructor drafts and F02 publication on 2026-11-06. Update this map when routes,
+Maintained against authentication, instructor drafts, F02 publication and the ZH-LWS-02 browser IDE on 2026-11-06. Update this map when routes,
 journeys, API boundaries, or verification prerequisites change. Read route and
 test definitions before choosing a check; this map distinguishes delivered
 foundation from intended future behavior.
 
-| Surface                                                         | Current source / boundary                                                                                     | Evidence route and limitation                                                                                                                                                                                                           |
-| --------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Public home `/`                                                 | `apps/frontend/src/pages/HomePage.tsx`                                                                        | `tests/e2e/app-shell.spec.ts`: public copy and navigation; described practice loop is intended product behavior                                                                                                                         |
-| `/sign-in`, `/register`                                         | frontend pages and `src/auth/actions.ts`; Better Auth `/api/auth/*`                                           | Explicit initial learner/instructor selection; full local captured-outbox/browser journeys in `auth-completion.spec.ts`, plus intercepted action-feedback matrices                                                                      |
-| `/verification`, `/verification/result`                         | `RecoveryPages`, auth verification/resend boundary                                                            | Real signed verification and non-enumerating resend in isolated PG/BW; invalid/expired and delivery-failure cases remain distinct from live SMTP proof                                                                                  |
-| `/forgot-password`, `/reset-password`                           | `RecoveryPages`, Better Auth reset routes                                                                     | Captured recovery links, password replacement/Google-first establishment, token history removal and session revocation; no public outbox endpoint                                                                                       |
-| `/auth/complete`, `/auth/error`                                 | session refresh/completion and safe result pages                                                              | Google transport doubles with real local state/cookies/PG; controller substitutes external authorization hop. UI failure tests are separately intercepted                                                                               |
-| Session restore / sign-out                                      | frontend `AuthProvider`, `AppShell`, `lib/api`; backend session resolver                                      | `tests/e2e/auth-feedback.spec.ts` covers delayed/failing sign-out and route protection with mocked session endpoints; integration covers real sessions/revocation                                                                       |
-| `/learner`, `/instructor`                                       | role routes and dashboard pages                                                                               | Dashboards link to learner publication browsing and instructor question management. `app-shell.spec.ts` preserves unauthenticated learner redirect; F01/F02 specs cover authoring and publication.                                      |
-| `/forbidden`, unknown routes                                    | frontend ForbiddenPage / NotFoundPage                                                                         | Inspect route and role guard; add targeted assertions when affected                                                                                                                                                                     |
-| `/api/health`, `/api/ready`                                     | `apps/backend/src/app.ts`                                                                                     | backend `app.test.ts`; readiness uses injected DB probe in unit/API tests                                                                                                                                                               |
-| `/api/v1/me`, `/api/v1/profile`, instructor ping                | backend app, Better Auth, shared contracts                                                                    | backend `app.test.ts` and `tests/integration/auth-database.test.ts`: role enforcement, profile validation, DB-backed sessions                                                                                                           |
-| `/api/v1/ai/hint-preview`                                       | backend app, `ai/provider.ts`, contracts                                                                      | backend `app.test.ts` / `providers.test.ts`: fake provider, transport-injected SoC adapter, safe failures. Real SoC acceptance and future usage accounting remain separate evidence                                                     |
-| `/instructor/questions/new`, `/instructor/drafts`, detail by ID | Protected instructor pages and `src/lib/instructor-drafts.ts`                                                 | Independent `f01-instructor.spec.ts` uses HTTP doubles for lifecycle/failure states; `f01-composed.spec.ts` uses real local cookies/PostgreSQL and captured email with fake AI. Human accessibility and live semantics remain separate. |
-| Instructor generation/draft API                                 | `src/exercises/instructor-drafts.ts`, app routes, shared contracts                                            | `f01-acceptance-*` covers HTTP policy/injected SoC transport; `tests/integration/f01-drafts.test.ts` covers actual PG ownership, usage, bounds, rollback and paging. No generated Python execution.                                     |
-| PostgreSQL data and auth                                        | auth schema plus four additive nullable draft-version fields; auth policy and normalization rehearsal utility | Real PG auth tests preserve identity/session invariants; F01 tests cover private drafts and usage. Seed records are synthetic fixtures without passwords.                                                                               |
-| Netlify function                                                | `netlify/functions/api.ts`, backend web handler/build policy                                                  | backend web-handler/netlify-build-policy/deployment tests; test deployment package when affected; no implied deployment permission                                                                                                      |
-| Built frontend                                                  | Vite production output; `scripts/verify-built-frontend.ts`                                                    | Real browser loads emitted assets for eight public routes × desktop/mobile with a local anonymous API stub. This catches chunk initialization failures hidden by the dev server                                                         |
+| Surface                                                         | Current source / boundary                                                                                                 | Evidence route and limitation                                                                                                                                                                                                           |
+| --------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Public home `/`                                                 | `HomePage`, signed-in `AppShell`, brand link                                                                              | `app-shell.spec.ts` and `python-ide-acceptance.spec.ts`: Home/brand open public `/` without signing out; dirty-work Stay/Leave remains enforced.                                                                                        |
+| `/sign-in`, `/register`                                         | frontend pages and `src/auth/actions.ts`; Better Auth `/api/auth/*`                                                       | Explicit initial learner/instructor selection; full local captured-outbox/browser journeys in `auth-completion.spec.ts`, plus intercepted action-feedback matrices                                                                      |
+| `/verification`, `/verification/result`                         | `RecoveryPages`, auth verification/resend boundary                                                                        | Real signed verification and non-enumerating resend in isolated PG/BW; invalid/expired and delivery-failure cases remain distinct from live SMTP proof                                                                                  |
+| `/forgot-password`, `/reset-password`                           | `RecoveryPages`, Better Auth reset routes                                                                                 | Captured recovery links, password replacement/Google-first establishment, token history removal and session revocation; no public outbox endpoint                                                                                       |
+| `/auth/complete`, `/auth/error`                                 | session refresh/completion and safe result pages                                                                          | Google transport doubles with real local state/cookies/PG; controller substitutes external authorization hop. UI failure tests are separately intercepted                                                                               |
+| Session restore / sign-out                                      | frontend `AuthProvider`, `AppShell`, `lib/api`; backend session resolver                                                  | `tests/e2e/auth-feedback.spec.ts` covers delayed/failing sign-out and route protection with mocked session endpoints; integration covers real sessions/revocation                                                                       |
+| `/learner`, `/instructor`                                       | role routes and dashboard pages                                                                                           | Dashboards link to learner publication browsing and instructor question management. `app-shell.spec.ts` preserves unauthenticated learner redirect; F01/F02 specs cover authoring and publication.                                      |
+| `/forbidden`, unknown routes                                    | frontend ForbiddenPage / NotFoundPage                                                                                     | Inspect route and role guard; add targeted assertions when affected                                                                                                                                                                     |
+| `/api/health`, `/api/ready`                                     | `apps/backend/src/app.ts`                                                                                                 | backend `app.test.ts`; readiness uses injected DB probe in unit/API tests                                                                                                                                                               |
+| `/api/v1/me`, `/api/v1/profile`, instructor ping                | backend app, Better Auth, shared contracts                                                                                | backend `app.test.ts` and `tests/integration/auth-database.test.ts`: role enforcement, profile validation, DB-backed sessions                                                                                                           |
+| `/api/v1/ai/hint-preview`                                       | backend app, `ai/provider.ts`, contracts                                                                                  | backend `app.test.ts` / `providers.test.ts`: fake provider, transport-injected SoC adapter, safe failures. Real SoC acceptance and future usage accounting remain separate evidence                                                     |
+| `/instructor/questions/new`, `/instructor/drafts`, detail by ID | Protected instructor pages and `src/lib/instructor-drafts.ts`                                                             | Independent `f01-instructor.spec.ts` uses HTTP doubles for lifecycle/failure states; `f01-composed.spec.ts` uses real local cookies/PostgreSQL and captured email with fake AI. Human accessibility and live semantics remain separate. |
+| Instructor generation/draft API                                 | `src/exercises/instructor-drafts.ts`, app routes, shared contracts                                                        | `f01-acceptance-*` covers HTTP policy/injected SoC transport; `tests/integration/f01-drafts.test.ts` covers actual PG ownership, usage, bounds, rollback and paging. No generated Python execution.                                     |
+| `/learner/questions`, `/learner/questions/:id`                  | `PublishedQuestionsPage`, `PublishedQuestionPage`; PR #9 published-question DTOs and canonical service                    | `f02-learner.spec.ts`, `learner-workspace.spec.ts`; optional case-insensitive title/topic `q` applies before 50-item paging; search remains on detail/back.                                                                             |
+| Learner attempt API                                             | `apps/backend/src/exercises/learner-attempts.ts`, `apps/backend/src/app.ts`, `packages/contracts/src/learner-attempts.ts` | `learner-attempt-http.test.ts`, `learner-workspace-acceptance.test.ts`; own attempt keyed by canonical published version, revisioned save and immutable finalization.                                                                   |
+| Learner workspace and attempt persistence                       | `LearnerWorkspace`, `PublishedQuestionPage`; additive attempt migration                                                   | `learner-workspace-acceptance.spec.ts`, `learner-workspace-recovery.spec.ts` and `learner-workspace-composed.spec.ts`; revisioned drafts/finals, PR10 reconciliation and real-cookie/PG composed cases.                                 |
+| Browser Python IDE and runner                                   | `PythonCodeEditor`, `LearnerWorkspace`, `python/sandboxed-runner.ts`, `pyodide-worker-entry.js`                           | `python-ide-acceptance.spec.ts`: local Pyodide Run/Test/Stop, scratch assertions/stdin, real outputs and failures, lifecycle, sandbox boundaries/resource limits and built-runtime execution.                                           |
+| Generated Pyodide assets                                        | `scripts/build-python-runtime.mjs`; frontend `predev`/`prebuild` hooks                                                    | `npm run build:python-runtime` and production build generate ignored `apps/frontend/public/pyodide-runtime/`; pinned assets and license are bundled locally, not downloaded from a CDN at run time.                                     |
+| Opt-in browser database guard                                   | `tests/e2e/learner-workspace-composed.spec.ts`, `apps/backend/test/pr10-browser-guard.test.ts`                            | 15 isolated setup cases; module collection creates no Prisma client, matching safe loopback `_test` URLs are required before opt-in construction, and disabled opt-ins skip cleanup.                                                    |
+| PostgreSQL data and auth                                        | auth schema plus four additive nullable draft-version fields; auth policy and normalization rehearsal utility             | Real PG auth tests preserve identity/session invariants; F01 tests cover private drafts and usage. Seed records are synthetic fixtures without passwords.                                                                               |
+| Netlify function                                                | `netlify/functions/api.ts`, backend web handler/build policy                                                              | backend web-handler/netlify-build-policy/deployment tests; test deployment package when affected; no implied deployment permission                                                                                                      |
+| Built frontend                                                  | Vite production output; `scripts/verify-built-frontend.ts`                                                                | Real browser loads emitted assets for eight public routes × desktop/mobile with a local anonymous API stub. This catches chunk initialization failures hidden by the dev server                                                         |
 
 ## Existing check routes
 
@@ -36,13 +42,71 @@ retaining old `/instructor/drafts[/:id]` URLs. Draft editors share six-field
 validation, review, same-draft Save, publication recovery and discard state.
 Published/Removed views are read-only; Remove archives without deleting references.
 Learner `/learner/questions[/:id]` uses a separate public renderer/strict DTOs and
-a disabled Get Hint/Coming soon placeholder. No functional hints or attempts are
-added, and hints do not gate publication.
+a disabled Get Hint placeholder. The learner list/detail reuses PR #9 routes,
+DTOs and canonical publication validation. The workspace saves the authenticated
+learner's own revisioned attempt for that published version, supports immutable
+final submission, and guards async responses against disposed pages/session
+changes. The additive migration refuses duplicate learner/version rows without
+deleting data. PR10 handles uncertain writes through read-only attempt
+reconciliation and retains local edits when recovery fails. Get Hint and coaching
+remain unavailable.
+
+The browser IDE uses CodeMirror 6 and local Pyodide. Run executes learner Python;
+Test runs the learner code and scratch assertions with optional stdin. The runner
+uses an opaque-origin iframe and dedicated worker with fixed same-origin runtime
+assets. Scratch tests/input are not persisted, and execution output is local
+feedback rather than grading. `build-python-runtime.mjs` creates ignored runtime
+assets; frontend `predev` and `prebuild` run that generator. See Developer Guide
+for version, limits, experimental factory-hook and security-test boundaries.
+
+PR10 attempt recovery handles unknown mutation outcomes and HTTP 409 with a
+read-only current-attempt GET. A failed recovery keeps local edits and the dirty
+guard, gates Save/Submit, and offers a GET-only **Retry attempt check**; it never
+resends a mutation automatically. A different server final is shown as the
+read-only submitted snapshot, while unsent local text remains separately
+preserved. `learner-workspace-recovery.spec.ts` covers recovery, account/session
+disposal and actual pointer reachability for long reasoning at desktop/mobile
+viewports. Its original-source overlay reproduced the prior recovery and desktop
+layout defects without changing product files.
+
+The normal browser collection/suite requires no database URL and was verified
+with all four URL variables plus `E2E_AUTH_COMPLETION` and `E2E_REAL_AUTH` unset.
+Opt-in composed browser cases require all four database URL variables to match an
+explicit safe loopback `_test` target; setup validates them before Prisma is
+constructed. The 15-case guard suite checks that module evaluation and disabled
+opt-ins do not create or clean up a database client. These checks prevent
+environment-specific setup from hiding CI collection failures.
 
 `InstructorQuestions` supplies the corresponding role-guarded HTTP APIs. New
 contracts are separate from literal-DRAFT F01 contracts. Source server and Netlify
 function both inject the Prisma implementation. The F02 migration adds revisions,
 owner-scoped forever publication keys, archive time and trusted-topic digest.
+Learner attempt routes additionally require LEARNER session, allowed Origin and
+JSON for mutations; the service locks the parent exercise and rechecks canonical
+publication state before writing. Both long-running server and Netlify function
+compose the real attempt service. Earlier delivery evidence remains in
+`workflow/evaluations/zhenghao/ZH-LWS-01/testing.md`. The PR10 local checkpoint
+in `workflow/evaluations/zhenghao/ZH-LWS-01/pr10-testing.md` reports 531
+deterministic tests (including 15 setup guards), 24 recovery/layout browser
+cases, 168 normal browser passes with 20 expected skips, 8 composed local
+cookie/PG/captured-SMTP/fake-AI cases, and build/built-frontend checks. These
+layers overlap and are not a combined count. The local checks do not establish
+remote CI/deployment, live-provider behavior, hard browser resource quotas,
+physical-touch support or manual screen-reader/contrast behavior.
+
+ZH-LWS-02 has an independent **pass within the approved tested scope** at
+`2470a3b`: 26/26 final affected browser cases and 6/6 production-built Python
+integration cases passed; final collection listed 226 cases in 16 files. Do not
+label the full suite green: the prior normal run was 199 pass / 20 skip / 3
+harness failures, with only the corrected affected subset passing 4/4. Round-one
+root 531/531, production runner/isolation 20/20, composed 8/8 and 16 built-route
+loads refer to source `36df16b`, not the final viewport repair. The final local
+checks do not establish remote CI or deployment. CI commit `1d6581c` adds the
+frontend workspace unit-test command after root tests. Separately, remote CI for
+code/test checkpoint `929d0ec` passed verification and browser jobs (206 passed,
+20 expected skips); it does not verify this documentation commit. See the
+[workflow run](https://github.com/CS3227-2610-MP4-ASE/Debug-Clinic/actions/runs/42240818024)
+and [independent report](../evaluations/zhenghao/ZH-LWS-02/testing.md).
 
 | F02 check                                       | Boundary and limit                                                                                                                             |
 | ----------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |

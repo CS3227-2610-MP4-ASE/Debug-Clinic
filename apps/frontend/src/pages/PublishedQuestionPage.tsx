@@ -1,38 +1,125 @@
-import { Alert, Box, Button, Stack, Typography } from "@mui/material";
-import type { PublishedQuestion } from "@debugclinic/contracts";
-import { useEffect, useState } from "react";
-import { Link as RouterLink, useParams } from "react-router-dom";
-import { useAuth } from "../auth/AuthProvider.js";
+import CheckOutlined from "@mui/icons-material/CheckOutlined";
 import {
+  Alert,
+  AlertTitle,
+  Box,
+  Button,
+  Stack,
+  Typography,
+} from "@mui/material";
+import type {
+  LearnerAttempt,
+  LearnerAttemptWrite,
+  PublishedQuestion,
+} from "@debugclinic/contracts";
+import { useCallback, useEffect, useId, useRef, useState } from "react";
+import { Link as RouterLink, useLocation, useParams } from "react-router-dom";
+import { useAuth } from "../auth/AuthProvider.js";
+import { QuestionError } from "../lib/instructor-questions.js";
+import { useUnsavedWork } from "../components/UnsavedWork.js";
+import { LearnerWorkspace } from "../components/LearnerWorkspace.js";
+import {
+  getLearnerAttempt,
   getPublishedQuestion,
-  QuestionError,
   questionFailure,
+  saveLearnerAttempt,
+  submitLearnerAttempt,
 } from "../lib/instructor-questions.js";
 
 export function PublishedQuestionPage() {
   const { id = "" } = useParams();
+  const location = useLocation();
+  const { sessionEpoch, sessionExpired, user } = useAuth();
+  const { setDirty } = useUnsavedWork();
   const [question, setQuestion] = useState<PublishedQuestion | null>(null);
+  const [attempt, setAttempt] = useState<LearnerAttempt | null>(null);
+  const [code, setCode] = useState("");
+  const [reasoning, setReasoning] = useState("");
   const [pending, setPending] = useState(true);
+  const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [recoveryNotice, setRecoveryNotice] = useState<{
+    message: string;
+    severity: "info" | "success" | "warning";
+  } | null>(null);
+  const [reconciliationRequired, setReconciliationRequired] = useState(false);
+  const [recoveredLocal, setRecoveredLocal] = useState<{
+    code: string;
+    reasoning: string;
+  } | null>(null);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [unavailable, setUnavailable] = useState(false);
-  const [revision, setRevision] = useState(0);
-  const { sessionExpired, user } = useAuth();
+  const [loadRevision, setLoadRevision] = useState(0);
+  const dirty = useRef(false);
+  const lifecycle = useRef(0);
+  const currentUserId = user?.id ?? null;
+  const identity = useRef({ userId: currentUserId, revision: 0 });
+  if (identity.current.userId !== currentUserId) {
+    identity.current = {
+      userId: currentUserId,
+      revision: identity.current.revision + 1,
+    };
+  }
+  const session = useRef({
+    userId: currentUserId,
+    sessionEpoch,
+    sessionExpired,
+    identityRevision: identity.current.revision,
+  });
+  session.current = {
+    userId: currentUserId,
+    sessionEpoch,
+    sessionExpired,
+    identityRevision: identity.current.revision,
+  };
+  const ownerId = useId();
+  const retryingAttemptLoad = useRef(false);
+  const back = `/learner/questions${location.search}`;
+  const updateDirty = useCallback(
+    (value: boolean) => {
+      dirty.current = value;
+      setDirty(value, ownerId);
+    },
+    [ownerId, setDirty],
+  );
   useEffect(() => {
     let active = true;
-    setQuestion(null);
+    const generation = ++lifecycle.current;
+    const retry = retryingAttemptLoad.current;
+    retryingAttemptLoad.current = false;
+    if (!retry) {
+      updateDirty(false);
+      setQuestion(null);
+      setAttempt(null);
+      setCode("");
+      setReasoning("");
+      setRecoveredLocal(null);
+      setReconciliationRequired(false);
+      setRecoveryNotice(null);
+    }
     setPending(true);
-    setError(null);
+    setLoadError(null);
     setUnavailable(false);
+    setError(null);
     void getPublishedQuestion(id)
-      .then((result) => {
-        if (active) setQuestion(result.question);
+      .then(async ({ question: found }) => {
+        if (!active) return;
+        setQuestion(found);
+        setCode(found.buggyCode);
+        const { attempt: saved } = await getLearnerAttempt(id);
+        if (!active) return;
+        if (!dirty.current) {
+          setAttempt(saved);
+          setCode(saved?.code ?? found.buggyCode);
+          setReasoning(saved?.reasoning ?? "");
+        }
       })
       .catch((failed: unknown) => {
         if (active) {
           setUnavailable(
             failed instanceof QuestionError && failed.status === 404,
           );
-          setError(questionFailure(failed));
+          setLoadError(questionFailure(failed));
         }
       })
       .finally(() => {
@@ -40,79 +127,417 @@ export function PublishedQuestionPage() {
       });
     return () => {
       active = false;
+      if (lifecycle.current === generation) {
+        lifecycle.current += 1;
+        updateDirty(false);
+      }
     };
-  }, [id, revision]);
+  }, [id, loadRevision, sessionEpoch, updateDirty]);
+  useEffect(() => {
+    if (sessionExpired || !user) setSaving(false);
+  }, [sessionExpired, user]);
+  function editCode(value: string) {
+    setCode(value);
+    const baselineCode = attempt?.code ?? question?.buggyCode ?? "";
+    updateDirty(
+      value !== baselineCode || reasoning !== (attempt?.reasoning ?? ""),
+    );
+  }
+  function editReasoning(value: string) {
+    setReasoning(value);
+    const baselineCode = attempt?.code ?? question?.buggyCode ?? "";
+    updateDirty(code !== baselineCode || value !== (attempt?.reasoning ?? ""));
+  }
+  function captureCurrentSession() {
+    const generation = lifecycle.current;
+    const learnerId = user?.id ?? null;
+    const requestSessionEpoch = sessionEpoch;
+    const requestIdentityRevision = identity.current.revision;
+    return () =>
+      lifecycle.current === generation &&
+      session.current.userId === learnerId &&
+      session.current.sessionEpoch === requestSessionEpoch &&
+      session.current.identityRevision === requestIdentityRevision &&
+      !session.current.sessionExpired;
+  }
+  async function reconcileAttempt(
+    local: { code: string; reasoning: string },
+    isCurrent: () => boolean,
+  ) {
+    if (!isCurrent()) return;
+    setReconciliationRequired(true);
+    setSaving(true);
+    try {
+      const { attempt: serverAttempt } = await getLearnerAttempt(id);
+      if (!isCurrent()) return;
+      const localMatchesServer =
+        serverAttempt?.code === local.code &&
+        serverAttempt.reasoning === local.reasoning;
+      setAttempt(serverAttempt);
+      setError(null);
+      setReconciliationRequired(false);
+      if (serverAttempt?.status === "FINAL_SUBMITTED") {
+        setCode(serverAttempt.code);
+        setReasoning(serverAttempt.reasoning);
+        if (localMatchesServer) {
+          setRecoveredLocal(null);
+          updateDirty(false);
+          setRecoveryNotice({
+            severity: "success",
+            message: "The final submission is confirmed and read-only.",
+          });
+        } else {
+          setRecoveredLocal(local);
+          updateDirty(true);
+          setRecoveryNotice({
+            severity: "warning",
+            message:
+              "A final submission is already on the server. The editor shows that submitted version; your different local edits are preserved below and were not submitted.",
+          });
+        }
+      } else if (!serverAttempt) {
+        setRecoveredLocal(null);
+        updateDirty(true);
+        setRecoveryNotice({
+          severity: "info",
+          message:
+            "No draft exists on the server. Your local edits are preserved; Save draft can create the attempt.",
+        });
+      } else if (localMatchesServer) {
+        setCode(serverAttempt.code);
+        setReasoning(serverAttempt.reasoning);
+        setRecoveredLocal(null);
+        updateDirty(false);
+        setRecoveryNotice({
+          severity: "success",
+          message: "The server confirms that this draft was saved.",
+        });
+      } else {
+        setRecoveredLocal(null);
+        updateDirty(true);
+        setRecoveryNotice({
+          severity: "warning",
+          message:
+            "A newer draft revision was found. Your local edits are preserved; Save draft will use the current server revision.",
+        });
+      }
+    } catch (failed) {
+      if (isCurrent()) {
+        setRecoveryNotice(null);
+        setReconciliationRequired(true);
+        setError(
+          `Could not confirm the current attempt. ${questionFailure(failed)}`,
+        );
+      }
+    } finally {
+      if (isCurrent()) setSaving(false);
+    }
+  }
+  async function persist(submit: boolean) {
+    const isCurrent = captureCurrentSession();
+    const local = { code, reasoning };
+    const input: LearnerAttemptWrite = {
+      ...local,
+      expectedRevision: attempt?.revision ?? null,
+    };
+    setSaving(true);
+    setError(null);
+    setRecoveryNotice(null);
+    try {
+      const result = submit
+        ? await submitLearnerAttempt(id, input)
+        : await saveLearnerAttempt(id, input);
+      if (!isCurrent()) return;
+      setAttempt(result.attempt);
+      setReconciliationRequired(false);
+      setRecoveredLocal(null);
+      if (submit && result.attempt) {
+        setCode(result.attempt.code);
+        setReasoning(result.attempt.reasoning);
+      }
+      updateDirty(false);
+    } catch (failed) {
+      if (isCurrent()) {
+        setError(questionFailure(failed));
+        const outcomeIsUncertain =
+          !(failed instanceof QuestionError) ||
+          failed.outcome === "UNKNOWN" ||
+          failed.status === 409;
+        if (outcomeIsUncertain) await reconcileAttempt(local, isCurrent);
+      }
+    } finally {
+      if (isCurrent()) setSaving(false);
+    }
+  }
+  const submitted = attempt?.status === "FINAL_SUBMITTED";
   return (
-    <Stack gap={3} maxWidth={850} minWidth={0}>
-      <Typography component="h1" variant="h3" sx={{ overflowWrap: "anywhere" }}>
-        {question?.title ?? "Question"}
-      </Typography>
-      <Button
-        component={RouterLink}
-        to="/learner/questions"
-        sx={{ alignSelf: "flex-start" }}
+    <Box
+      sx={{
+        height: { xs: "auto", md: "100%" },
+        minHeight: { xs: "calc(100vh - 104px)", md: 0 },
+        display: "flex",
+        flexDirection: "column",
+        gap: 1.5,
+      }}
+    >
+      <Stack
+        direction={{ xs: "column", sm: "row" }}
+        alignItems={{ xs: "flex-start", sm: "center" }}
+        justifyContent="space-between"
+        gap={1}
       >
-        Back to published questions
-      </Button>
-      {pending && <Typography role="status">Loading question…</Typography>}
-      {error && (
+        <Typography
+          component="h1"
+          variant="h5"
+          sx={{ overflowWrap: "anywhere" }}
+        >
+          {question?.title ?? (pending ? "Loading question…" : "Question")}
+        </Typography>
+        <Button
+          component={RouterLink}
+          to={back}
+          sx={{ minHeight: 44, flexShrink: 0 }}
+        >
+          Back to published questions
+        </Button>
+      </Stack>
+      {pending && (
+        <Typography role="status">
+          Loading question and saved attempt…
+        </Typography>
+      )}
+      {loadError && (
         <Alert severity={unavailable ? "info" : "error"}>
-          {unavailable ? "This question is unavailable." : error}
+          {unavailable ? "This question is unavailable." : loadError}
         </Alert>
       )}
-      {error && !unavailable && (
+      {loadError && !unavailable && (
         <Button
-          disabled={pending || sessionExpired || !user}
-          onClick={() => setRevision((value) => value + 1)}
+          onClick={() => {
+            retryingAttemptLoad.current = true;
+            setLoadRevision((value) => value + 1);
+          }}
+          disabled={sessionExpired || !user}
+          sx={{ minHeight: 44 }}
         >
           Retry
         </Button>
       )}
-      {question && (
+      {error && <Alert severity="error">{error}</Alert>}
+      {recoveryNotice && (
+        <Alert severity={recoveryNotice.severity}>
+          {recoveryNotice.message}
+        </Alert>
+      )}
+      {reconciliationRequired && saving && (
+        <Typography role="status">
+          Checking the latest saved attempt…
+        </Typography>
+      )}
+      {reconciliationRequired && !saving && (
         <>
-          <Typography sx={{ overflowWrap: "anywhere" }}>
-            Topic: {question.topic}
-          </Typography>
-          <Typography sx={{ overflowWrap: "anywhere" }}>
-            Instructor: {question.instructorName}
-          </Typography>
-          <Typography>
-            Published {new Date(question.publishedAt).toLocaleString()}
-          </Typography>
-          <Typography component="h2" variant="h6">
-            Problem statement
-          </Typography>
-          <Typography sx={{ whiteSpace: "pre-wrap", overflowWrap: "anywhere" }}>
-            {question.problemStatement}
-          </Typography>
-          <Typography component="h2" variant="h6">
-            Buggy Python code
-          </Typography>
-          <Box
-            component="pre"
-            sx={{
-              m: 0,
-              p: 2,
-              whiteSpace: "pre-wrap",
-              overflowWrap: "anywhere",
-              maxWidth: "100%",
-              bgcolor: "background.paper",
-            }}
+          <Alert severity="warning">
+            Save and submit are paused until the server attempt is confirmed.
+            Your local edits are retained.
+          </Alert>
+          <Button
+            onClick={() =>
+              void reconcileAttempt(
+                { code, reasoning },
+                captureCurrentSession(),
+              )
+            }
+            disabled={sessionExpired || !user}
+            sx={{ minHeight: 44, alignSelf: "flex-start" }}
           >
-            {question.buggyCode}
-          </Box>
-          <Typography component="h2" variant="h6">
-            Expected behavior
-          </Typography>
-          <Typography sx={{ whiteSpace: "pre-wrap", overflowWrap: "anywhere" }}>
-            {question.expectedBehavior}
-          </Typography>
-          <Button disabled aria-describedby="hint-placeholder">
-            Get Hint
+            Retry attempt check
           </Button>
-          <Typography id="hint-placeholder">Coming soon</Typography>
         </>
       )}
-    </Stack>
+      {recoveredLocal && (
+        <Alert severity="warning">
+          <AlertTitle>These local edits were not submitted</AlertTitle>
+          <Typography variant="body2">Local code</Typography>
+          <Box
+            component="pre"
+            sx={{ whiteSpace: "pre-wrap", overflowWrap: "anywhere", m: 0 }}
+          >
+            {recoveredLocal.code}
+          </Box>
+          <Typography variant="body2" sx={{ mt: 1 }}>
+            Local reasoning: {recoveredLocal.reasoning}
+          </Typography>
+        </Alert>
+      )}
+      {submitted && (
+        <Alert severity="success" icon={<CheckOutlined />}>
+          Final submission received. This attempt is read-only.
+        </Alert>
+      )}
+      {question && (
+        <Box
+          sx={{
+            minHeight: 0,
+            flex: 1,
+            display: "grid",
+            gridTemplateColumns: {
+              xs: "minmax(0, 1fr)",
+              md: "minmax(0, 2fr) minmax(0, 3fr)",
+            },
+            gridTemplateRows: { xs: "auto auto", md: "minmax(0, 1fr)" },
+            gap: 2,
+            overflow: { xs: "visible", md: "hidden" },
+          }}
+        >
+          <Box
+            component="article"
+            aria-label="Question details"
+            sx={{
+              minWidth: 0,
+              minHeight: 0,
+              display: "flex",
+              flexDirection: "column",
+              bgcolor: "background.paper",
+              border: 1,
+              borderColor: "divider",
+              borderRadius: 1.5,
+              overflow: "hidden",
+            }}
+          >
+            <Stack
+              component="header"
+              gap={0.5}
+              sx={{
+                flexShrink: 0,
+                px: 2,
+                py: 1.5,
+                borderBottom: 1,
+                borderColor: "divider",
+              }}
+            >
+              <Typography component="h2" variant="h6">
+                Description
+              </Typography>
+              <Typography
+                component="h3"
+                variant="subtitle1"
+                sx={{ overflowWrap: "anywhere" }}
+              >
+                {question.title}
+              </Typography>
+              <Typography color="text.secondary">
+                Topic: {question.topic}
+              </Typography>
+            </Stack>
+            <Stack
+              component="section"
+              aria-label="Question description"
+              gap={1.25}
+              sx={{
+                minWidth: 0,
+                minHeight: 0,
+                flex: 1,
+                overflow: "auto",
+                p: 2,
+              }}
+            >
+              <Box
+                component="section"
+                aria-labelledby="question-problem-heading"
+              >
+                <Typography
+                  id="question-problem-heading"
+                  component="h2"
+                  variant="h6"
+                >
+                  Problem
+                </Typography>
+                <Typography
+                  sx={{
+                    maxWidth: "72ch",
+                    whiteSpace: "pre-wrap",
+                    overflowWrap: "anywhere",
+                  }}
+                >
+                  {question.problemStatement}
+                </Typography>
+              </Box>
+              <Box
+                component="section"
+                aria-labelledby="question-starting-code-heading"
+              >
+                <Typography
+                  id="question-starting-code-heading"
+                  component="h2"
+                  variant="h6"
+                >
+                  Starting code
+                </Typography>
+                <Box
+                  component="pre"
+                  sx={{
+                    m: 0,
+                    maxWidth: "72ch",
+                    p: 1.5,
+                    bgcolor: "background.default",
+                    whiteSpace: "pre-wrap",
+                    overflowWrap: "anywhere",
+                    fontFamily: "monospace",
+                  }}
+                >
+                  {question.buggyCode}
+                </Box>
+              </Box>
+              <Box
+                component="section"
+                aria-labelledby="question-expected-behavior-heading"
+              >
+                <Typography
+                  id="question-expected-behavior-heading"
+                  component="h2"
+                  variant="h6"
+                >
+                  Expected behavior
+                </Typography>
+                <Typography
+                  sx={{
+                    maxWidth: "72ch",
+                    whiteSpace: "pre-wrap",
+                    overflowWrap: "anywhere",
+                  }}
+                >
+                  {question.expectedBehavior}
+                </Typography>
+              </Box>
+            </Stack>
+          </Box>
+          <LearnerWorkspace
+            code={code}
+            reasoning={reasoning}
+            disabled={
+              pending ||
+              saving ||
+              reconciliationRequired ||
+              Boolean(loadError) ||
+              submitted ||
+              sessionExpired ||
+              !user
+            }
+            saving={saving}
+            onCodeChange={editCode}
+            onReasoningChange={editReasoning}
+            onSave={() => void persist(false)}
+            onSubmit={() => {
+              if (
+                window.confirm(
+                  "Submit this final attempt? You cannot edit it afterward.",
+                )
+              )
+                void persist(true);
+            }}
+          />
+        </Box>
+      )}
+    </Box>
   );
 }

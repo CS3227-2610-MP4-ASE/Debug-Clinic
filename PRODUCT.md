@@ -33,7 +33,7 @@ Instructors prepare exercises before learners can access them. Learners work thr
 - The intended coaching workflow has three approved, ordered hint stages. Under the approved MP4-D2-F02 exception, publication and learner browsing require no hint records or approval. F02 exposes only a disabled Get Hint placeholder with Coming soon; Developer 1 owns functional hints and their future contract.
 - The NUS SoC LLM is accessed only through a backend adapter with validation, limits, retries, and usage accounting.
 - Development, deploy-preview, and production environments remain separate.
-- Arbitrary learner Python is not executed until a separately reviewed sandbox exists.
+- The learner browser IDE runs Python in a local sandbox; instructor authoring and generated previews do not execute Python.
 - External credentials, provider contracts, and live deployments remain human-owned.
 
 ## Brand Commitments

@@ -10,6 +10,7 @@ export default tseslint.config(
       "**/generated/**",
       "**/coverage/**",
       "playwright-report/**",
+      "apps/frontend/public/pyodide-runtime/**",
     ],
   },
   eslint.configs.recommended,
