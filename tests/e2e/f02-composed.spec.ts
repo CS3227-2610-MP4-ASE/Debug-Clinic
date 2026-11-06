@@ -95,15 +95,20 @@ async function register(page: Page, role: "Instructor" | "Learner") {
   await page.getByLabel(/^Password/).fill(password);
   await page.getByRole("button", { name: "Sign in", exact: true }).click();
   await expect(page).toHaveURL(new RegExp(`/${role.toLowerCase()}$`));
+  return { email, password };
 }
 
 async function generate(page: Page) {
   await page.goto("/instructor/questions/new");
   await page.getByRole("textbox", { name: /Python topic/ }).fill(f01Topic);
+  const generated = page.waitForResponse(
+    "**/api/v1/instructor/questions/generate",
+  );
   await page.getByRole("button", { name: "Generate", exact: true }).click();
   await expect(page.getByRole("textbox", { name: /^Title/ })).not.toHaveValue(
     "",
   );
+  return (await (await generated).json()) as { generation: { id: string } };
 }
 
 test("B04/B07/B09/B11/B25/B28 real saved and direct publication, learner privacy and removal", async ({
@@ -249,5 +254,159 @@ test("B04/B07/B09/B11/B25/B28 real saved and direct publication, learner privacy
         throw error;
     });
     await learnerContext.close();
+  }
+});
+
+test("B40/B37 real legacy preview fallback retains edits and fresh sessions reopen publication and Removed record", async ({
+  page,
+  browser,
+}) => {
+  const credentials = await register(page, "Instructor");
+  const generated = await generate(page);
+  const current = (await (await page.request.get("/api/v1/me")).json()) as {
+    user: { id: string; email: string };
+  };
+  expect(current.user.email).toBe(credentials.email);
+  // Structural fixture setup only: recreate a pre-F02 unbound generation for
+  // this returned generation ID and this test's own authenticated instructor.
+  // All behavior assertions below use public HTTP/UI rather than database reads.
+  const prisma = new PrismaClient({
+    adapter: new PrismaPg({ connectionString: f01DatabaseUrl() }),
+  });
+  try {
+    const changed = await prisma.aiUsageEvent.updateMany({
+      where: {
+        id: generated.generation.id,
+        userId: current.user.id,
+        operation: "generate-question",
+        status: "SUCCEEDED",
+      },
+      data: { generationTopicDigest: null },
+    });
+    expect(changed.count).toBe(1);
+  } finally {
+    await prisma.$disconnect();
+  }
+  await page
+    .getByRole("textbox", { name: /^Title/ })
+    .fill("F02 legacy reviewed question");
+  const fieldNames = [
+    /^Title/,
+    /^Problem statement/,
+    /^Buggy Python code/,
+    /^Expected behavior/,
+    /^Bug explanation/,
+    /^Corrected solution/,
+  ];
+  const retained = await Promise.all(
+    fieldNames.map((name) => page.getByRole("textbox", { name }).inputValue()),
+  );
+  await page.getByRole("checkbox", { name: review }).check();
+  const denied = page.waitForResponse("**/api/v1/instructor/questions/publish");
+  await page.getByRole("button", { name: "Publish", exact: true }).click();
+  const denial = await denied;
+  expect(denial.status()).toBe(400);
+  const guidance =
+    "This older preview cannot be published directly. Save draft and reopen it to publish, or generate a new question.";
+  expect(await denial.json()).toMatchObject({
+    error: {
+      code: "BAD_REQUEST",
+      mutationOutcome: "NOT_APPLIED",
+      message: guidance,
+    },
+  });
+  await expect(
+    page.getByRole("alert").filter({ hasText: guidance }),
+  ).toBeVisible();
+  for (let i = 0; i < fieldNames.length; i++)
+    await expect(
+      page.getByRole("textbox", { name: fieldNames[i] }),
+    ).toHaveValue(retained[i]!);
+  for (const status of ["DRAFT", "PUBLISHED"])
+    expect(
+      await (
+        await page.request.get(`/api/v1/instructor/questions?status=${status}`)
+      ).json(),
+    ).toEqual({ questions: [], nextOffset: null });
+  const creation = page.waitForResponse(
+    (response) =>
+      response.url().endsWith("/api/v1/instructor/drafts") &&
+      response.request().method() === "POST",
+  );
+  await page.getByRole("button", { name: "Save draft", exact: true }).click();
+  const created = await creation;
+  expect(created.status()).toBe(201);
+  const saved = (await created.json()).draft as { id: string };
+  await expect(page).toHaveURL(new RegExp(`/instructor/drafts/${saved.id}$`));
+  await expect(page.getByRole("textbox", { name: /^Title/ })).toHaveValue(
+    retained[0]!,
+  );
+  await expect(page.getByRole("checkbox", { name: review })).not.toBeChecked();
+  await page.getByRole("checkbox", { name: review }).check();
+  const publication = page.waitForResponse(
+    "**/api/v1/instructor/questions/publish",
+  );
+  await page.getByRole("button", { name: "Publish", exact: true }).click();
+  const published = await publication;
+  expect(published.status()).toBe(200);
+  expect((await published.json()).question).toMatchObject({
+    id: saved.id,
+    status: "PUBLISHED",
+    title: retained[0],
+  });
+  await expect(
+    page.getByText("Published. Question content is read-only.", {
+      exact: true,
+    }),
+  ).toBeVisible();
+  for (const state of ["PUBLISHED", "ARCHIVED"]) {
+    if (state === "ARCHIVED") {
+      await page.getByRole("button", { name: "Remove", exact: true }).click();
+      await page
+        .getByRole("dialog")
+        .getByRole("button", { name: "Remove", exact: true })
+        .click();
+      await expect(
+        page.getByText("Removed. Your read-only record is retained.", {
+          exact: true,
+        }),
+      ).toBeVisible();
+    }
+    const freshContext = await browser.newContext({ baseURL: f01Origin });
+    try {
+      const fresh = await freshContext.newPage();
+      await fresh.goto("/sign-in");
+      await fresh
+        .getByRole("textbox", { name: /^Email/ })
+        .fill(credentials.email);
+      await fresh.getByLabel(/^Password/).fill(credentials.password);
+      await fresh.getByRole("button", { name: "Sign in", exact: true }).click();
+      await expect(fresh).toHaveURL(/\/instructor$/);
+      await fresh.goto(`/instructor/questions/${saved.id}`);
+      await expect(
+        fresh.getByText(
+          state === "PUBLISHED"
+            ? "Published. Question content is read-only."
+            : "Removed. Your read-only record is retained.",
+          { exact: true },
+        ),
+      ).toBeVisible();
+      await expect(
+        fresh.getByText(retained[0]!, { exact: true }),
+      ).toBeVisible();
+      await expect(fresh.getByRole("textbox", { name: /^Title/ })).toHaveCount(
+        0,
+      );
+      const owner = await fresh.request.get(
+        `/api/v1/instructor/questions/${saved.id}`,
+      );
+      expect((await owner.json()).question).toMatchObject({
+        id: saved.id,
+        status: state,
+        title: retained[0],
+      });
+    } finally {
+      await freshContext.close();
+    }
   }
 });
