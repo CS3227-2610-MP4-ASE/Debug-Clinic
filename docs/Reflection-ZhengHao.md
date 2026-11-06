@@ -26,6 +26,24 @@ requiring raw transcripts. The measured planning stage also includes coordinator
 approval, environment/integration work and wait orchestration, so it is not a
 measure of pure design effort.
 
+## PR10 learning checkpoint
+
+Earlier explicit test database setup did not exercise collection with database
+variables absent, which let a CI-only collection failure go unnoticed. The repair
+puts Prisma construction inside the opt-in setup hook, validates all four
+matching safe test URLs before construction, and verifies ordinary browser
+collection with those URLs and auth opt-ins unset. `test.skip` alone does not
+prevent module evaluation, so imports must also avoid setup side effects.
+
+The first layout probe used Playwright locator clicks; automatic scrolling could
+make a clipped action appear reachable. The independent test was strengthened to
+check clipping ancestors and activate actions with real pointer input. A
+temporary original-source overlay reproduced recovery and desktop reachability
+failures while product-file hashes stayed unchanged. This supports the test's
+ability to detect the old behavior, not remote CI or assistive-technology claims.
+This checkpoint adds no token or cost comparison; the earlier fixed telemetry
+snapshot remains as recorded below.
+
 ## Resource checkpoint
 
 The fixed generated snapshot is **2026-11-06 08:09:15 UTC** (16:09 Singapore).

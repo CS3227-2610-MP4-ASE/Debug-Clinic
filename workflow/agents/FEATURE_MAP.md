@@ -22,7 +22,8 @@ foundation from intended future behavior.
 | Instructor generation/draft API                                 | `src/exercises/instructor-drafts.ts`, app routes, shared contracts                                                        | `f01-acceptance-*` covers HTTP policy/injected SoC transport; `tests/integration/f01-drafts.test.ts` covers actual PG ownership, usage, bounds, rollback and paging. No generated Python execution.                                     |
 | `/learner/questions`, `/learner/questions/:id`                  | `PublishedQuestionsPage`, `PublishedQuestionPage`; PR #9 published-question DTOs and canonical service                    | `f02-learner.spec.ts`, `learner-workspace.spec.ts`; optional case-insensitive title/topic `q` applies before 50-item paging; search remains on detail/back.                                                                             |
 | Learner attempt API                                             | `apps/backend/src/exercises/learner-attempts.ts`, `apps/backend/src/app.ts`, `packages/contracts/src/learner-attempts.ts` | `learner-attempt-http.test.ts`, `learner-workspace-acceptance.test.ts`; own attempt keyed by canonical published version, revisioned save and immutable finalization.                                                                   |
-| Learner workspace and attempt persistence                       | `LearnerWorkspace`, `PublishedQuestionPage`; additive attempt migration                                                   | `learner-workspace-acceptance.spec.ts` and `learner-workspace-composed.spec.ts`; independent 16-case desktop/mobile matrix, real-cookie/PG composed cases and two extracted Netlify smoke flows. Run is disabled; no Python runner.     |
+| Learner workspace and attempt persistence                       | `LearnerWorkspace`, `PublishedQuestionPage`; additive attempt migration                                                   | `learner-workspace-acceptance.spec.ts`, `learner-workspace-recovery.spec.ts` and `learner-workspace-composed.spec.ts`; PR10 adds 24 recovery/layout browser cases, uses real-cookie/PG composed cases, and keeps Run disabled.          |
+| Opt-in browser database guard                                   | `tests/e2e/learner-workspace-composed.spec.ts`, `apps/backend/test/pr10-browser-guard.test.ts`                            | 15 isolated setup cases; module collection creates no Prisma client, matching safe loopback `_test` URLs are required before opt-in construction, and disabled opt-ins skip cleanup.                                                    |
 | PostgreSQL data and auth                                        | auth schema plus four additive nullable draft-version fields; auth policy and normalization rehearsal utility             | Real PG auth tests preserve identity/session invariants; F01 tests cover private drafts and usage. Seed records are synthetic fixtures without passwords.                                                                               |
 | Netlify function                                                | `netlify/functions/api.ts`, backend web handler/build policy                                                              | backend web-handler/netlify-build-policy/deployment tests; test deployment package when affected; no implied deployment permission                                                                                                      |
 | Built frontend                                                  | Vite production output; `scripts/verify-built-frontend.ts`                                                                | Real browser loads emitted assets for eight public routes × desktop/mobile with a local anonymous API stub. This catches chunk initialization failures hidden by the dev server                                                         |
@@ -47,6 +48,24 @@ changes. The additive migration refuses duplicate learner/version rows without
 deleting data. Run and Get Hint remain disabled; no Python runner or coaching
 service is delivered.
 
+PR10 attempt recovery handles unknown mutation outcomes and HTTP 409 with a
+read-only current-attempt GET. A failed recovery keeps local edits and the dirty
+guard, gates Save/Submit, and offers a GET-only **Retry attempt check**; it never
+resends a mutation automatically. A different server final is shown as the
+read-only submitted snapshot, while unsent local text remains separately
+preserved. `learner-workspace-recovery.spec.ts` covers recovery, account/session
+disposal and actual pointer reachability for long reasoning at desktop/mobile
+viewports. Its original-source overlay reproduced the prior recovery and desktop
+layout defects without changing product files.
+
+The normal browser collection/suite requires no database URL and was verified
+with all four URL variables plus `E2E_AUTH_COMPLETION` and `E2E_REAL_AUTH` unset.
+Opt-in composed browser cases require all four database URL variables to match an
+explicit safe loopback `_test` target; setup validates them before Prisma is
+constructed. The 15-case guard suite checks that module evaluation and disabled
+opt-ins do not create or clean up a database client. These checks prevent
+environment-specific setup from hiding CI collection failures.
+
 `InstructorQuestions` supplies the corresponding role-guarded HTTP APIs. New
 contracts are separate from literal-DRAFT F01 contracts. Source server and Netlify
 function both inject the Prisma implementation. The F02 migration adds revisions,
@@ -54,13 +73,15 @@ owner-scoped forever publication keys, archive time and trusted-topic digest.
 Learner attempt routes additionally require LEARNER session, allowed Origin and
 JSON for mutations; the service locks the parent exercise and rechecks canonical
 publication state before writing. Both long-running server and Netlify function
-compose the real attempt service. Independent final evidence is in
-`workflow/evaluations/zhenghao/ZH-LWS-01/testing.md`; it reports 516 deterministic
-tests, 198 PostgreSQL cases, 144 normal browser passes with 20 expected opt-in
-skips, 16 focused browser cases (a subset), 8 composed real-cookie/PG/captured-
-SMTP/fake-AI cases, built frontend and extracted Netlify checks. These layers
-overlap and are not a combined test count. Remote CI, deployment, live providers,
-real Python execution, and manual screen-reader/contrast checks remain unverified.
+compose the real attempt service. Earlier delivery evidence remains in
+`workflow/evaluations/zhenghao/ZH-LWS-01/testing.md`. The PR10 local checkpoint
+in `workflow/evaluations/zhenghao/ZH-LWS-01/pr10-testing.md` reports 531
+deterministic tests (including 15 setup guards), 24 recovery/layout browser
+cases, 168 normal browser passes with 20 expected skips, 8 composed local
+cookie/PG/captured-SMTP/fake-AI cases, and build/built-frontend checks. These
+layers overlap and are not a combined count. The local checks do not establish
+remote CI/deployment, live-provider, real Python runner or manual
+screen-reader/contrast behavior.
 
 | F02 check                                       | Boundary and limit                                                                                                                             |
 | ----------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |

@@ -238,6 +238,18 @@ and explicit refresh still use blocking loading. A confirmed identity change
 remounts the protected page by user ID; a confirmed expired session removes
 ordinary protected pages while retaining the admitted disabled editor behavior.
 
+Learner attempt writes with an unknown outcome or HTTP 409 trigger a read-only
+GET of the current attempt; the client never retries the mutation automatically.
+A confirmed draft updates the expected revision. Matching local text is marked
+saved; differing local text remains visible and dirty for a later learner-
+initiated Save. If no attempt exists, local text remains and the next Save uses a
+null expected revision. If the read also fails, code and reasoning remain intact,
+Save/Submit stay disabled, and **Retry attempt check** performs another GET only.
+A confirmed final submission is authoritative and read-only; when it differs
+from unsent local edits, the submitted snapshot is shown separately from the
+retained local code/reasoning. The reasoning field accepts up to 5,000 UTF-16
+code units, shows at most four rows at once and scrolls longer text internally.
+
 Apply the additive F02 migration before new code rollout; migration/function
 deployment is not atomic. Its archive preflight stops existing undated archived
 rows for owner reconciliation rather than inventing dates. Rollback disables new
@@ -257,18 +269,25 @@ publication success then drop the downstream response via a private marker; this
 fault is outside production composition. See the F02 implementation handoff for
 actual commands/results and remaining manual/CI limitations.
 
-The independently green learner workspace verification on Node 24.22.2 includes
-516 deterministic tests, 5 output-renderer cases, 198 PostgreSQL integration
-cases, 144 normal browser passes with 20 expected opt-in skips, and 16 focused
-learner browser cases (a subset of the normal browser suite). Eight additional
-composed cases use local real cookies/PostgreSQL, captured SMTP and fake AI; they
-do not call live providers. The production/declaration build, 16 built-frontend
-route/viewport loads and two extracted Netlify package smoke flows also passed. The focused
-and normal UI suites use intercepted API responses; composed checks exercise
-local services without browser request interception. These are overlapping
-evidence layers, not one aggregate test count. Remote CI/deployment, live
-Google/SMTP/SoC, real Python execution, and manual screen-reader/contrast checks
-remain unverified. See the independent report for exact commands and boundaries.
+Earlier learner-workspace verification passed 516 deterministic tests, 198
+PostgreSQL integration cases, 144 normal browser passes with 20 expected opt-in
+skips, 16 focused learner browser cases, built-frontend route/viewport loads and
+two extracted Netlify smoke flows. Those database/Netlify results are prior
+evidence; PR10 did not rerun business-logic integration or package smoke.
+
+PR10 independently verified 531 deterministic tests (including 15 isolated
+opt-in database-guard cases), 24 focused recovery/layout browser cases, and 168
+normal browser passes with 20 expected opt-in skips. The normal collection and
+suite passed with all four database URL variables and both auth opt-ins unset;
+ordinary browser runs need no database URL. The eight opt-in composed journeys
+use real local cookies/PostgreSQL, captured SMTP and fake AI without browser
+interception or live providers. Lint, typecheck, formatting, production build
+and 16 synthetic built-frontend loads passed. Focused recovery browsers use HTTP
+test doubles. These layers overlap and are not one aggregate test count. These
+local checks do not establish remote CI/deployment or live-provider behavior.
+Real Python execution and manual screen-reader/contrast checks also remain
+unverified. See the [PR10 independent report](../workflow/evaluations/zhenghao/ZH-LWS-01/pr10-testing.md)
+for commands and boundaries.
 
 When defaults are occupied, set `E2E_APP_ORIGIN=http://127.0.0.1:5273` and
 `E2E_BACKEND_PORT=3101`; the test origin validator allows only a bare HTTP loopback
@@ -280,12 +299,17 @@ database with matching direct/pooled/test/E2E URLs for composed checks.
 - Vitest covers configuration parsing and AI response validation.
 - Supertest covers probes, safe errors, unauthenticated access, revoked sessions, role checks, role-escalation rejection, deterministic AI output, and provider failures.
 - Playwright covers the public page, authentication entry points, responsive rendering, and unauthenticated role-route behavior. Its opt-in `auth-real.spec.ts` additionally checks real local PostgreSQL password registration, session restoration, denied login, retry, and logout on desktop/mobile without response interception. Set `E2E_REAL_AUTH=1` and an owned migrated loopback `_test` target through `E2E_TEST_DATABASE_URL`; the default target is port 5433. Both browser/auth origins are 5173, and the harness awaits backend and proxied API health. SMTP/Google are disabled in this synthetic runtime; live-provider and production acceptance remain separate.
+- The ordinary `npm run test:e2e` suite uses a synthetic runtime and does not need a database URL. For no-database collection and suite checks, unset `DATABASE_URL`, `DATABASE_URL_POOLED`, `TEST_DATABASE_URL`, `E2E_TEST_DATABASE_URL`, `E2E_AUTH_COMPLETION`, and `E2E_REAL_AUTH`.
 - CI runs PostgreSQL 17, applies committed migrations, seeds fixtures, and performs all deterministic checks before deployment.
 
 Tests must not call Google, the NUS SoC LLM, Netlify, or production services.
 
 `E2E_AUTH_COMPLETION=1` selects the private captured-outbox browser runtime.
-Use an explicit owned `E2E_TEST_DATABASE_URL` and run
+For opt-in composed browser journeys, set all four database URL variables
+(`DATABASE_URL`, `DATABASE_URL_POOLED`, `TEST_DATABASE_URL`, and
+`E2E_TEST_DATABASE_URL`) to the same explicit owned, safe loopback PostgreSQL
+URL ending in `_test`. The test hook validates the matching targets before
+constructing Prisma; module loading alone does not create a client. Then run
 `npm run test:e2e -- tests/e2e/auth-completion.spec.ts --workers=1`; leave the
 separate no-SMTP `E2E_REAL_AUTH` flag unset. Both role journeys use real local
 HTTP, cookies and PostgreSQL without browser interception. Google authorization

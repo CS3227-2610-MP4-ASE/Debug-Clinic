@@ -143,12 +143,19 @@ In the workspace, edit the Python 3 code and explain your reasoning. Keep both
 fields nonblank. Choose **Save draft** to store your work, then reload the page
 to confirm it is still there. Choose **Submit final attempt** and confirm in the dialog
 to submit the current code and explanation. A successful final submission is
-read-only. If a save or submission fails, your current editor text remains so you
-can retry. Back navigation with unsaved edits asks whether to discard them.
+read-only. If Save or Submit reports a conflict or an uncertain result, the page
+checks the latest saved attempt without sending the write again. If that check
+fails, your code and reasoning stay in the editor, Save and Submit pause, and
+**Retry attempt check** repeats only the read. Once the server confirms a draft
+or no attempt, choose Save or Submit yourself to send another write. If the server already has
+a different final submission, that submitted version is shown read-only and your
+unsent local edits are kept separately. Back navigation with unsaved edits asks
+whether to discard them.
 
 On desktop, drag the divider between the editor and output areas to resize it;
 the keyboard can also move the focused divider. On a narrow mobile screen, the
-workspace sections stack vertically. **Run** and **Get Hint** remain disabled;
+workspace sections stack vertically. The reasoning field shows up to four lines
+at a time and scrolls longer explanations. **Run** and **Get Hint** remain disabled;
 Python is not executed and no hint or coaching is delivered. Final attempts are
 saved, but no instructor submission-review screen or live deployment is provided
 by this feature.
