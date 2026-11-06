@@ -53,6 +53,8 @@ jobs:
       - run: npm run db:deploy
       - run: npm run db:seed
       - run: npm test
+      - name: Test frontend workspace
+        run: npm test -w @debugclinic/frontend
       - run: npm run test:integration
       - run: npm audit --audit-level=moderate
       - run: npm run build
