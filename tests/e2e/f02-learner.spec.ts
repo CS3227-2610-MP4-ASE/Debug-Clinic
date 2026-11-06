@@ -20,7 +20,7 @@ test.beforeEach(async ({ page }) => {
   );
 });
 
-test("B28/B31 public detail is literal, has disabled Coming soon hint and no private content or requests", async ({
+test("B28/B31 public detail is literal, has no functional hint and no private content or requests", async ({
   page,
 }) => {
   const calls: string[] = [];
@@ -38,12 +38,15 @@ test("B28/B31 public detail is literal, has disabled Coming soon hint and no pri
     published.title,
   );
   await expect(
-    page.getByText(published.buggyCode, { exact: true }),
+    page
+      .getByRole("article", { name: "Question details" })
+      .getByText(published.buggyCode, { exact: true }),
   ).toBeVisible();
   const hint = page.getByRole("button", { name: "Get Hint", exact: true });
-  await expect(hint).toBeDisabled();
-  await expect(hint).toHaveAccessibleDescription("Coming soon");
-  await expect(page.getByText("Coming soon", { exact: true })).toBeVisible();
+  await expect(hint).toHaveCount(0);
+  await expect(
+    page.getByText(/Results are local feedback, not official grading/),
+  ).toBeVisible();
   await expect(page.locator("main")).not.toContainText(
     /F02_PRIVATE|Bug explanation|Corrected solution|generationId|author@example/,
   );

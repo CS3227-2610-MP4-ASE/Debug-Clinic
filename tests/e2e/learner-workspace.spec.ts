@@ -1,3 +1,8 @@
+import {
+  expectPythonCode,
+  expectPythonEditable,
+  fillPythonCode,
+} from "../support/python-editor.js";
 import { expect, test } from "@playwright/test";
 import { f01Learner } from "../support/f01-fixtures.js";
 
@@ -93,16 +98,19 @@ test("search opens an attempt, saves it, confirms final submission and retains t
   ).toBeVisible();
   await expect(
     page.getByRole("button", { name: "Run", exact: true }),
-  ).toBeDisabled();
+  ).toBeEnabled();
   await expect(
     page.getByRole("button", { name: "Get Hint", exact: true }),
-  ).toBeDisabled();
+  ).toHaveCount(0);
+  await expect(
+    page.getByText(/Results are local feedback, not official grading/),
+  ).toBeVisible();
 
   const code = page.getByRole("textbox", { name: "Your Python 3 code" });
   const reasoning = page.getByRole("textbox", {
     name: "Explain your reasoning",
   });
-  await code.fill("def total(values):\n    return sum(values)\n");
+  await fillPythonCode(code, "def total(values):\n    return sum(values)\n");
   await reasoning.fill("The slice dropped the final value.");
   await page.getByRole("button", { name: "Save draft" }).click();
   await expect.poll(() => saved?.status).toBe("DRAFT");
@@ -137,14 +145,12 @@ test("search opens an attempt, saves it, confirms final submission and retains t
       Number(await separator.getAttribute("aria-valuenow")),
     ).toBeGreaterThan(pointerStart);
   }
-  await expect(code).toHaveValue(
-    "def total(values):\n    return sum(values)\n",
-  );
+  await expectPythonCode(code, "def total(values):\n    return sum(values)\n");
 
   page.on("dialog", (dialog) => dialog.accept());
   await page.getByRole("button", { name: "Submit final attempt" }).click();
   await expect(page.getByRole("alert")).toContainText("read-only");
-  await expect(code).toBeDisabled();
+  await expectPythonEditable(code, false);
   expect(saved).toMatchObject({ status: "FINAL_SUBMITTED", revision: 1 });
   expect(requests.filter((entry) => entry.method === "POST")).toHaveLength(1);
 

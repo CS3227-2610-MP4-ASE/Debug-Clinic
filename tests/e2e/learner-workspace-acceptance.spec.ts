@@ -1,3 +1,8 @@
+import {
+  expectPythonCode,
+  expectPythonEditable,
+  fillPythonCode,
+} from "../support/python-editor.js";
 // Independent LWS acceptance. HTTP doubles isolate browser lifecycle behavior.
 import { expect, test, type Page } from "@playwright/test";
 import { f01Learner } from "../support/f01-fixtures.js";
@@ -47,7 +52,7 @@ async function fixture(page: Page) {
 }
 async function open(page: Page) {
   await page.goto(`/learner/questions/${question.id}`);
-  await expect(editor(page)).toBeEnabled();
+  await expectPythonEditable(editor(page), true);
 }
 
 test("independent: edits during a successful save remain guarded and the next save uses the confirmed revision", async ({
@@ -78,23 +83,26 @@ test("independent: edits during a successful save remain guarded and the next sa
     });
   });
   await open(page);
-  await editor(page).fill("print('sent')");
+  await fillPythonCode(editor(page), "print('sent')");
   await reason(page).fill("Sent explanation");
   await page.getByRole("button", { name: "Save draft", exact: true }).click();
   await expect.poll(() => writes.length).toBe(1);
   // Blocking edits during a mutation is also valid. If editing is offered,
   // the later edit must survive and remain guarded after the reply.
-  const acceptsPendingEdits = await editor(page).isEnabled();
-  if (acceptsPendingEdits) await editor(page).fill("print('new unsaved edit')");
+  const acceptsPendingEdits =
+    (await editor(page).getAttribute("contenteditable")) === "true";
+  if (acceptsPendingEdits)
+    await fillPythonCode(editor(page), "print('new unsaved edit')");
   pending.release();
   await expect(
     page.getByRole("button", { name: "Save draft", exact: true }),
   ).toBeEnabled();
-  await expect(editor(page)).toHaveValue(
+  await expectPythonCode(
+    editor(page),
     acceptsPendingEdits ? "print('new unsaved edit')" : "print('sent')",
   );
   if (!acceptsPendingEdits)
-    await editor(page).fill("print('new unsaved edit')");
+    await fillPythonCode(editor(page), "print('new unsaved edit')");
   await page.getByRole("link", { name: "Back to published questions" }).click();
   await expect(page.getByRole("dialog")).toContainText("unsaved changes");
   await page.getByRole("button", { name: "Stay", exact: true }).click();
@@ -130,10 +138,10 @@ test("independent: failed draft read retries without losing edits and mutations 
   });
   await page.goto(`/learner/questions/${question.id}`);
   await expect(page.getByRole("alert")).toBeVisible();
-  await expect(editor(page)).toBeDisabled();
+  await expectPythonEditable(editor(page), false);
   await page.getByRole("button", { name: "Retry", exact: true }).click();
-  await expect(editor(page)).toHaveValue(attempt.code);
-  await expect(editor(page)).toBeEnabled();
+  await expectPythonCode(editor(page), attempt.code);
+  await expectPythonEditable(editor(page), true);
 });
 
 test("independent: a disposed account's save response cannot clear the new learner's unsaved guard", async ({
@@ -159,7 +167,7 @@ test("independent: a disposed account's save response cannot clear the new learn
     });
   });
   await open(page);
-  await editor(page).fill("print('old account')");
+  await fillPythonCode(editor(page), "print('old account')");
   await reason(page).fill("Old account explanation");
   await page.getByRole("button", { name: "Save draft", exact: true }).click();
   await expect.poll(() => received).toBe(true);
@@ -167,8 +175,8 @@ test("independent: a disposed account's save response cannot clear the new learn
   const changed = page.waitForResponse("**/api/v1/me");
   await page.evaluate(() => window.dispatchEvent(new Event("focus")));
   await changed;
-  await expect(editor(page)).toHaveValue("");
-  await editor(page).fill("print('new account unsaved')");
+  await expectPythonCode(editor(page), question.buggyCode);
+  await fillPythonCode(editor(page), "print('new account unsaved')");
   await reason(page).fill("New account explanation");
   const oldReply = page.waitForResponse(
     (response) =>
@@ -184,7 +192,7 @@ test("independent: a disposed account's save response cannot clear the new learn
         requestAnimationFrame(() => requestAnimationFrame(() => resolve())),
       ),
   );
-  await expect(editor(page)).toHaveValue("print('new account unsaved')");
+  await expectPythonCode(editor(page), "print('new account unsaved')");
   await page.getByRole("link", { name: "Back to published questions" }).click();
   await expect(page.getByRole("dialog")).toContainText("unsaved changes");
 });
@@ -212,15 +220,15 @@ test("independent: lost final reply retries the identical snapshot and locks aut
         });
   });
   await open(page);
-  await editor(page).fill("print('final')\n");
+  await fillPythonCode(editor(page), "print('final')\n");
   await reason(page).fill("Final reasoning");
   page.on("dialog", (dialog) => dialog.accept());
   await page.getByRole("button", { name: "Submit final attempt" }).click();
   await expect(page.getByRole("alert")).toBeVisible();
-  await expect(editor(page)).toHaveValue("print('final')\n");
-  await expect(editor(page)).toBeEnabled();
+  await expectPythonCode(editor(page), "print('final')\n");
+  await expectPythonEditable(editor(page), true);
   await page.getByRole("button", { name: "Submit final attempt" }).click();
-  await expect(editor(page)).toBeDisabled();
+  await expectPythonEditable(editor(page), false);
   await expect(
     page.getByRole("alert").filter({ hasText: "read-only" }),
   ).toBeVisible();
@@ -251,18 +259,18 @@ test("independent: a completed final shows the submitted snapshot even if editin
     });
   });
   await open(page);
-  await editor(page).fill("print('confirmed final')");
+  await fillPythonCode(editor(page), "print('confirmed final')");
   await reason(page).fill("Confirmed final explanation");
   page.once("dialog", (dialog) => dialog.accept());
   await page.getByRole("button", { name: "Submit final attempt" }).click();
   await expect.poll(() => received).toBe(true);
-  if (await editor(page).isEnabled())
-    await editor(page).fill("print('not submitted')");
+  if ((await editor(page).getAttribute("contenteditable")) === "true")
+    await fillPythonCode(editor(page), "print('not submitted')");
   pending.release();
   await expect(
     page.getByRole("alert").filter({ hasText: "read-only" }),
   ).toBeVisible();
-  await expect(editor(page)).toHaveValue("print('confirmed final')");
+  await expectPythonCode(editor(page), "print('confirmed final')");
 });
 
 test("independent: cancel final submission and unsaved navigation, deny failed save without losing code", async ({
@@ -290,18 +298,18 @@ test("independent: cancel final submission and unsaved navigation, deny failed s
         }),
   );
   await open(page);
-  await editor(page).fill("  print('keep')\n");
+  await fillPythonCode(editor(page), "  print('keep')\n");
   await reason(page).fill("Keep this explanation");
   page.once("dialog", (dialog) => dialog.dismiss());
   await page.getByRole("button", { name: "Submit final attempt" }).click();
   expect(submits).toBe(0);
   await page.getByRole("button", { name: "Save draft", exact: true }).click();
   await expect(page.getByRole("alert")).toBeVisible();
-  await expect(editor(page)).toHaveValue("  print('keep')\n");
+  await expectPythonCode(editor(page), "  print('keep')\n");
   await page.getByRole("link", { name: "Back to published questions" }).click();
   await expect(page.getByRole("dialog")).toBeVisible();
   await page.getByRole("button", { name: "Stay", exact: true }).click();
-  await expect(editor(page)).toHaveValue("  print('keep')\n");
+  await expectPythonCode(editor(page), "  print('keep')\n");
 });
 
 test("independent: learner focus refresh preserves edits, expiry disables actions, account switch disposes the old attempt", async ({
@@ -318,26 +326,26 @@ test("independent: learner focus refresh preserves edits, expiry disables action
     }),
   );
   await open(page);
-  await editor(page).fill("print('private unsaved')");
+  await fillPythonCode(editor(page), "print('private unsaved')");
   async function refresh() {
     const response = page.waitForResponse("**/api/v1/me");
     await page.evaluate(() => window.dispatchEvent(new Event("focus")));
     await response;
   }
   await refresh();
-  await expect(editor(page)).toHaveValue("print('private unsaved')");
+  await expectPythonCode(editor(page), "print('private unsaved')");
   user = null;
   await refresh();
-  await expect(editor(page)).toHaveValue("print('private unsaved')");
-  await expect(editor(page)).toBeDisabled();
+  await expectPythonCode(editor(page), "print('private unsaved')");
+  await expectPythonEditable(editor(page), false);
   user = {
     ...f01Learner,
     id: "independent-other-account",
     name: "Other learner",
   };
   await refresh();
-  await expect(editor(page)).toHaveValue("");
-  await expect(editor(page)).toBeEnabled();
+  await expectPythonCode(editor(page), question.buggyCode);
+  await expectPythonEditable(editor(page), true);
 });
 
 test("independent: malicious code stays text and synthetic workspace fits desktop and 320px", async ({
@@ -346,7 +354,7 @@ test("independent: malicious code stays text and synthetic workspace fits deskto
   await fixture(page);
   await page.setViewportSize({ width: 1440, height: 900 });
   await open(page);
-  await editor(page).fill("def total(xs):\n    return sum(xs)\n");
+  await fillPythonCode(editor(page), "def total(xs):\n    return sum(xs)\n");
   await reason(page).fill("Each list value now contributes to the result.");
   await expect(
     page.locator("script").filter({ hasText: "window.injected" }),
@@ -355,9 +363,9 @@ test("independent: malicious code stays text and synthetic workspace fits deskto
   page.on("request", (request) => calls.push(request.url()));
   await expect(
     page.getByRole("button", { name: "Run", exact: true }),
-  ).toBeDisabled();
+  ).toBeEnabled();
   await expect(page.getByRole("region", { name: "Output" })).toContainText(
-    "Run is unavailable",
+    "Run your code to see local output.",
   );
   await page.screenshot({
     path: testInfo.outputPath("workspace-desktop-1440x900.png"),

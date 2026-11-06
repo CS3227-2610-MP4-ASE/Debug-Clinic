@@ -1,6 +1,12 @@
+import {
+  expectPythonCode,
+  expectPythonEditable,
+  fillPythonCode,
+  pointerActivate,
+} from "../support/python-editor.js";
 // Independent PR10 acceptance: browser lifecycle and real pointer hit-testing;
 // learner/session HTTP responses are explicit synthetic transport doubles.
-import { expect, test, type Locator, type Page } from "@playwright/test";
+import { expect, test, type Page } from "@playwright/test";
 import type {
   LearnerAttempt,
   LearnerAttemptWrite,
@@ -127,7 +133,7 @@ async function fixture(
     return route.fulfill({ json: { attempt: state.server } });
   });
   await page.goto(`/learner/questions/${question.id}`);
-  await expect(code(page)).toBeEnabled();
+  await expectPythonEditable(code(page), true);
   return state;
 }
 function snapshot(
@@ -145,7 +151,7 @@ function snapshot(
   };
 }
 async function edit(page: Page, value = local) {
-  await code(page).fill(value.code);
+  await fillPythonCode(code(page), value.code);
   await reasoning(page).fill(value.reasoning);
 }
 async function stillGuarded(page: Page) {
@@ -157,68 +163,6 @@ async function refresh(page: Page) {
   const response = page.waitForResponse("**/api/v1/me");
   await page.evaluate(() => window.dispatchEvent(new Event("focus")));
   await response;
-}
-
-async function pointerActivate(page: Page, button: Locator) {
-  const viewport = page.viewportSize()!;
-  // Wheel the page from its outer margin, avoiding textarea scroll capture.
-  // Locator.click() alone can programmatically scroll overflow:hidden ancestors.
-  if (viewport.width < 900) {
-    await page.mouse.move(viewport.width - 2, viewport.height / 2);
-    for (let n = 0; n < 5; n++) {
-      const box = await button.boundingBox();
-      if (box && box.y >= 0 && box.y + box.height <= viewport.height) break;
-      await page.mouse.wheel(0, 800);
-      await page.evaluate(
-        () =>
-          new Promise<void>((resolve) =>
-            requestAnimationFrame(() => requestAnimationFrame(() => resolve())),
-          ),
-      );
-    }
-  }
-  const hit = await button.evaluate((element) => {
-    const bounds = element.getBoundingClientRect();
-    let left = Math.max(0, bounds.left),
-      right = Math.min(innerWidth, bounds.right);
-    let top = Math.max(0, bounds.top),
-      bottom = Math.min(innerHeight, bounds.bottom);
-    for (
-      let parent = element.parentElement;
-      parent;
-      parent = parent.parentElement
-    ) {
-      const style = getComputedStyle(parent),
-        box = parent.getBoundingClientRect();
-      if (/hidden|clip|auto|scroll/.test(style.overflowX)) {
-        left = Math.max(left, box.left);
-        right = Math.min(right, box.right);
-      }
-      if (/hidden|clip|auto|scroll/.test(style.overflowY)) {
-        top = Math.max(top, box.top);
-        bottom = Math.min(bottom, box.bottom);
-      }
-    }
-    const x = bounds.left + bounds.width / 2,
-      y = bounds.top + bounds.height / 2;
-    const target = document.elementFromPoint(x, y);
-    return {
-      x,
-      y,
-      visibleHeight: Math.max(0, bottom - top),
-      visibleWidth: Math.max(0, right - left),
-      centerInsideClips: x >= left && x <= right && y >= top && y <= bottom,
-      hit: !!target && element.contains(target),
-    };
-  });
-  expect(hit.visibleHeight).toBeGreaterThan(0);
-  expect(hit.visibleWidth).toBeGreaterThan(0);
-  expect(
-    hit.centerInsideClips,
-    "the action center must be inside every clipping ancestor",
-  ).toBe(true);
-  expect(hit.hit, "real pointer target must be the action").toBe(true);
-  await page.mouse.click(hit.x, hit.y);
 }
 
 for (const exists of [false, true]) {
@@ -238,13 +182,13 @@ for (const exists of [false, true]) {
     expect(state.writes).toHaveLength(1);
     await expect(save(page)).toBeDisabled();
     await expect(submit(page)).toBeDisabled();
-    await expect(code(page)).toHaveValue(local.code);
+    await expectPythonCode(code(page), local.code);
     await stillGuarded(page);
     pending.release();
     await expect(save(page)).toBeEnabled();
-    await expect(code(page)).toHaveValue(local.code);
+    await expectPythonCode(code(page), local.code);
     expect(state.writes).toHaveLength(1);
-    await code(page).fill(local.code + "# next intentional edit\n");
+    await fillPythonCode(code(page), local.code + "# next intentional edit\n");
     await save(page).click();
     await expect.poll(() => state.writes.length).toBe(2);
     expect(state.writes[1]!.input).toMatchObject({
@@ -278,7 +222,7 @@ test("PR10 409 newer draft preserves local text and dirty state, then uses the r
   await save(page).click();
   await expect.poll(() => state.recoveryReads).toBe(1);
   await expect(save(page)).toBeEnabled();
-  await expect(code(page)).toHaveValue(local.code);
+  await expectPythonCode(code(page), local.code);
   await expect(reasoning(page)).toHaveValue(local.reasoning);
   await stillGuarded(page);
   expect(state.writes).toHaveLength(1);
@@ -299,7 +243,7 @@ test("PR10 null recovery preserves unsaved text and the next Save creates with n
   await save(page).click();
   await expect.poll(() => state.recoveryReads).toBe(1);
   await expect(save(page)).toBeEnabled();
-  await expect(code(page)).toHaveValue(local.code);
+  await expectPythonCode(code(page), local.code);
   await stillGuarded(page);
   expect(state.writes).toHaveLength(1);
   await save(page).click();
@@ -325,7 +269,7 @@ test("PR10 failed recovery gates both mutations until explicit GET retry succeed
   await expect(retry).toBeEnabled();
   await expect(save(page)).toBeDisabled();
   await expect(submit(page)).toBeDisabled();
-  await expect(code(page)).toHaveValue(local.code);
+  await expectPythonCode(code(page), local.code);
   await expect(reasoning(page)).toHaveValue(local.reasoning);
   await stillGuarded(page);
   expect(state.writes).toHaveLength(1);
@@ -349,8 +293,8 @@ test("PR10 lost final reply confirms immutable server content without automatica
   page.once("dialog", (dialog) => dialog.accept());
   await submit(page).click();
   await expect.poll(() => state.recoveryReads).toBe(1);
-  await expect(code(page)).toBeDisabled();
-  await expect(code(page)).toHaveValue(local.code);
+  await expectPythonEditable(code(page), false);
+  await expectPythonCode(code(page), local.code);
   await expect(
     page.getByRole("alert").filter({ hasText: "read-only" }).first(),
   ).toBeVisible();
@@ -382,7 +326,7 @@ test("PR10 different immutable final is authoritative while unsent local text re
   page.once("dialog", (dialog) => dialog.accept());
   await submit(page).click();
   await expect.poll(() => state.recoveryReads).toBe(1);
-  await expect(code(page)).toHaveValue(server.code);
+  await expectPythonCode(code(page), server.code);
   await expect(reasoning(page)).toHaveValue(server.reasoning);
   await expect(submit(page)).toBeDisabled();
   const retained = page
@@ -416,8 +360,8 @@ test("PR10 late recovery from a disposed account cannot affect the current learn
     name: "Other learner",
   };
   await refresh(page);
-  await expect(code(page)).toBeEnabled();
-  await expect(code(page)).toHaveValue("");
+  await expectPythonEditable(code(page), true);
+  await expectPythonCode(code(page), question.buggyCode);
   const current = {
     code: "print('current learner')",
     reasoning: "Current learner's unsaved reasoning",
@@ -435,7 +379,7 @@ test("PR10 late recovery from a disposed account cannot affect the current learn
         requestAnimationFrame(() => requestAnimationFrame(() => resolve())),
       ),
   );
-  await expect(code(page)).toHaveValue(current.code);
+  await expectPythonCode(code(page), current.code);
   await expect(reasoning(page)).toHaveValue(current.reasoning);
   await stillGuarded(page);
   expect(state.writes).toHaveLength(1);
@@ -456,7 +400,7 @@ test("PR10 expired session retains unsent text and ignores a pending recovery un
   await expect.poll(() => state.recoveryReads).toBe(1);
   state.user = null;
   await refresh(page);
-  await expect(code(page)).toHaveValue(local.code);
+  await expectPythonCode(code(page), local.code);
   await expect(save(page)).toBeDisabled();
   const oldReply = page.waitForResponse(
     (response) =>
@@ -464,7 +408,7 @@ test("PR10 expired session retains unsent text and ignores a pending recovery un
   );
   pending.release();
   await oldReply;
-  await expect(code(page)).toHaveValue(local.code);
+  await expectPythonCode(code(page), local.code);
   await expect(save(page)).toBeDisabled();
   state.user = f01Learner;
   await refresh(page);
@@ -475,7 +419,7 @@ test("PR10 expired session retains unsent text and ignores a pending recovery un
   await expect(retry).toBeEnabled();
   await retry.click();
   await expect(save(page)).toBeEnabled();
-  await expect(code(page)).toHaveValue(local.code);
+  await expectPythonCode(code(page), local.code);
   await stillGuarded(page);
   expect(state.writes).toHaveLength(1);
 });
@@ -505,7 +449,10 @@ for (const viewport of [
     if (viewport.width >= 900) {
       await separator.focus();
       for (let i = 0; i < 20; i++) await page.keyboard.press("ArrowUp");
-      await expect(separator).toHaveAttribute("aria-valuenow", "320");
+      await expect(separator).toHaveAttribute(
+        "aria-valuenow",
+        (await separator.getAttribute("aria-valuemin"))!,
+      );
     }
     await pointerActivate(page, save(page));
     await expect.poll(() => state.writes.length).toBe(1);

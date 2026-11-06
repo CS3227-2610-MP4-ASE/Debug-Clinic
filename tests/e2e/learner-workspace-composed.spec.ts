@@ -1,3 +1,8 @@
+import {
+  expectPythonCode,
+  expectPythonEditable,
+  fillPythonCode,
+} from "../support/python-editor.js";
 // Independent composed acceptance: real cookies/PostgreSQL, captured SMTP, fake AI.
 import { createHash, randomUUID } from "node:crypto";
 import { readdir, readFile, unlink } from "node:fs/promises";
@@ -158,8 +163,8 @@ test("independent composed: no-hint publication, learner draft/final and retaine
     await register(learner, "Learner");
     await learner.goto(`/learner/questions/${question.id}`);
     const code = learner.getByRole("textbox", { name: "Your Python 3 code" });
-    await expect(code).toBeEnabled();
-    await code.fill("def total(xs):\n    return sum(xs)\n");
+    await expectPythonEditable(code, true);
+    await fillPythonCode(code, "def total(xs):\n    return sum(xs)\n");
     await learner
       .getByRole("textbox", { name: "Explain your reasoning" })
       .fill("All values should contribute.");
@@ -173,8 +178,11 @@ test("independent composed: no-hint publication, learner draft/final and retaine
       .click();
     expect((await savedResponse).status()).toBe(200);
     await learner.reload();
-    await expect(code).toHaveValue("def total(xs):\n    return sum(xs)\n");
-    await code.fill("# final snapshot\ndef total(xs):\n    return sum(xs)\n");
+    await expectPythonCode(code, "def total(xs):\n    return sum(xs)\n");
+    await fillPythonCode(
+      code,
+      "# final snapshot\ndef total(xs):\n    return sum(xs)\n",
+    );
     learner.once("dialog", (dialog) => dialog.accept());
     const finalResponse = learner.waitForResponse("**/attempt/submit");
     await learner.getByRole("button", { name: "Submit final attempt" }).click();
@@ -194,7 +202,7 @@ test("independent composed: no-hint publication, learner draft/final and retaine
       status: "FINAL_SUBMITTED",
       code: "# final snapshot\ndef total(xs):\n    return sum(xs)\n",
     });
-    await expect(code).toBeDisabled();
+    await expectPythonEditable(code, false);
     const me = (await (await page.request.get("/api/v1/me")).json()) as {
       user: { id: string };
     };
