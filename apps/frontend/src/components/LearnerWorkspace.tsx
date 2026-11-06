@@ -24,12 +24,12 @@ interface LearnerWorkspaceProps {
   onSubmit: () => void;
 }
 
-const maxEditorHeight = () =>
-  Math.max(MIN_EDITOR, Math.min(MAX_EDITOR, window.innerHeight - 420));
-const clampEditorHeight = (height: number) =>
-  Math.max(MIN_EDITOR, Math.min(maxEditorHeight(), height));
-const initialHeight = () =>
-  clampEditorHeight(Math.min(320, window.innerHeight * 0.38));
+const maxEditorHeight = (viewportHeight: number) =>
+  Math.max(MIN_EDITOR, Math.min(MAX_EDITOR, viewportHeight - 420));
+const clampEditorHeight = (height: number, viewportHeight: number) =>
+  Math.max(MIN_EDITOR, Math.min(maxEditorHeight(viewportHeight), height));
+const initialHeight = (viewportHeight: number) =>
+  clampEditorHeight(Math.min(320, viewportHeight * 0.38), viewportHeight);
 
 export function LearnerWorkspace({
   code,
@@ -41,7 +41,12 @@ export function LearnerWorkspace({
   onSave,
   onSubmit,
 }: LearnerWorkspaceProps) {
-  const [editorHeight, setEditorHeight] = useState(initialHeight);
+  const [viewportHeight, setViewportHeight] = useState(
+    () => window.innerHeight,
+  );
+  const [editorHeight, setEditorHeight] = useState(() =>
+    initialHeight(viewportHeight),
+  );
   const [scratchTests, setScratchTests] = useState("");
   const [stdin, setStdin] = useState("");
   const [runState, setRunState] = useState<PythonRunState | "idle">("idle");
@@ -58,8 +63,13 @@ export function LearnerWorkspace({
 
   useEffect(() => () => stopRun.current?.(), []);
   useEffect(() => {
-    const handleResize = () =>
-      setEditorHeight((height) => clampEditorHeight(height));
+    const handleResize = () => {
+      const nextViewportHeight = window.innerHeight;
+      setViewportHeight(nextViewportHeight);
+      setEditorHeight((height) =>
+        clampEditorHeight(height, nextViewportHeight),
+      );
+    };
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
   }, []);
@@ -102,7 +112,9 @@ export function LearnerWorkspace({
     });
   };
   const resize = (delta: number) =>
-    setEditorHeight((current) => clampEditorHeight(current + delta));
+    setEditorHeight((current) =>
+      clampEditorHeight(current + delta, viewportHeight),
+    );
 
   return (
     <Stack
@@ -180,7 +192,7 @@ export function LearnerWorkspace({
         aria-label="Resize editor and output"
         aria-orientation="horizontal"
         aria-valuemin={MIN_EDITOR}
-        aria-valuemax={maxEditorHeight()}
+        aria-valuemax={maxEditorHeight(viewportHeight)}
         aria-valuenow={editorHeight}
         tabIndex={0}
         onKeyDown={(event) => {
@@ -198,6 +210,7 @@ export function LearnerWorkspace({
             setEditorHeight(
               clampEditorHeight(
                 dragStart.current.height + event.clientY - dragStart.current.y,
+                viewportHeight,
               ),
             );
         }}
