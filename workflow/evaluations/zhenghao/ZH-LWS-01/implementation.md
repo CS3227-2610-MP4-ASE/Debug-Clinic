@@ -1,8 +1,7 @@
 # ZH-LWS-01 implementation handoff
 
-Status: implementation commit ready for the independent testing stage. The
-coordinator owns the delivery ledger and monitoring artifacts. This handoff does
-not claim independent functional, standards, or security review.
+Status: scoped repair commit created; awaiting the tester's final integrated
+verdict. The coordinator owns the delivery ledger and monitoring artifacts.
 
 ## Revision and scope
 
@@ -70,14 +69,9 @@ refresh, and full browser matrices were left to the separate testing stage, as
 coordinated. No real Google/SMTP/AI provider or live deployment behavior was
 tested. Screen-reader behavior remains a manual observation.
 
-One composition point remains outside this implementation's assigned files:
-`netlify/functions/api.ts` constructs `createApp` but does not inject
-`createLearnerAttempts`. The local `server.ts` and synthetic browser-auth server
-are wired. Consequently learner-attempt API routes return the configured 503
-dependency response through the Netlify function until that composition edit is
-authorized and verified. No Netlify source/configuration or deployment file was
-changed under the assigned “no deployment changes” boundary. This must be
-resolved before claiming learner attempts work through the deployed adapter.
+Historical handoff finding, since resolved: commit `4eb3447` injected
+`createLearnerAttempts` into the Netlify composition. The extracted ESM Web
+handler and learner save/final/retry/archive smoke checks now pass locally.
 
 Useful reflection observation: an integration fixture that reused a fixed topic
 matched a stale synthetic row after an early failure. Making its search term
@@ -86,7 +80,54 @@ deterministic. No reflection document was edited in this implementation stage.
 
 ## Next authorized stage
 
-The independent testing conversation owns the broad F01/F02 compatibility and
-functional/standards/security reviews. It should include the Netlify composition
-gap in its findings and return a consolidated repair packet to this same
-implementation conversation if a source change is authorized.
+The independent tester owns the final full compatibility matrix and separate
+functional, standards, and security verdicts. No deployment or external service
+checks are implied by this local repair evidence.
+
+## Repair round — 6 November 2026
+
+- Independent expected-red handoff: `4181ba4`. Tester-owned acceptance tests
+  and `testing.md` were not changed.
+- Repair commit: `a13af3e` (`fix(learner): guard workspace writes and canonicalize attempts`).
+- Save and final submission lock the editor while pending. Final success displays
+  the returned submitted snapshot; failures keep the learner's current content.
+  Async completions now check component lifecycle, learner identity revision, and
+  session epoch. Dirty-state updates carry a page owner so a disposed page cannot
+  clear the next learner's guard. Temporary session expiry keeps the editor's
+  unsaved text, and controls remain disabled until identity recovery.
+- Learner attempt reads and writes now use the same canonical published-question
+  query and DTO validation as the public detail route. Mutations still validate
+  eligibility inside the parent-row-lock transaction. Malformed legacy versions
+  cannot authorize attempts, and the established public-detail 503 behavior for
+  corrupt stored DTOs is preserved.
+- Learner-attempt contracts moved into `learner-attempts.ts`, with shared
+  primitives and Unicode storage validation extracted to dependency-safe modules.
+  The package root re-exports the named contracts without a circular import.
+- Learner UI adjustments are local to its fields and layout: focused textareas
+  retain a visible MUI border without the inner global focus ring, the desktop
+  resize handle has a visible grip, and the title/Back action stack at narrow
+  widths. The accepted desktop split and light theme tokens remain unchanged.
+
+Verification on Node `v24.22.2`:
+
+- `npm run typecheck` and scoped ESLint/Prettier checks passed.
+- Focused contracts and learner HTTP tests: 5 files, 143 tests passed.
+- Focused PostgreSQL learner-workspace acceptance: 7 tests passed against the
+  coordinator-owned disposable database at `127.0.0.1:51817`; all four database
+  URL variables were explicitly set to that target.
+- Independent Playwright learner matrix: 16/16 passed across desktop Chromium
+  and mobile Chromium. The session-retention case and refreshed visual case also
+  passed after their final focused adjustments. Desktop and 320px screenshots
+  were inspected for the focus ring, title stacking, and resize affordance.
+- `npm run build` passed, including contract/backend declarations and Vite.
+  Existing upstream comment and main-chunk-size advisories remain.
+- Netlify CLI 27.16.1 extracted-package smoke and the learner save/final/retry/
+  archive smoke both passed against the same disposable database. No deploy,
+  production database, live provider, or external service was used.
+- The first unprivileged unit/build attempts hit sandbox `EPERM` on local test
+  sockets/tsx IPC; reruns with local socket access passed. One initial F4 rerun
+  exposed the public-route error-status compatibility detail; the implementation
+  was adjusted to preserve 503 publicly while attempts reject the invalid row,
+  and the 7-case PostgreSQL acceptance rerun passed.
+
+The tester's broader final suite and independent verdicts remain the next gate.
