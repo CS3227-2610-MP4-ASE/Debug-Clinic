@@ -2,7 +2,7 @@
 
 ## Scope and ownership
 
-Implemented the approved browser Python workspace on branch `zh/learner-workspace`. The implementation commit is `f3696f8a2963129104cfb061aff3c02f2533b20b`, based on `9742f17e1efb1b7eb3974eeef5cc462082d96bc1`.
+Implemented the approved browser Python workspace on branch `zh/learner-workspace`. The implementation commit is `f3696f8a2963129104cfb061aff3c02f2533b20b`, followed by focused boundary-test commit `1ff3eabd6ef606e228157d0aa13e9cf892f5f6b3`. Both are based on `9742f17e1efb1b7eb3974eeef5cc462082d96bc1`.
 
 This work was implemented directly in the current Codex task by the primary implementer; no implementation subagents were dispatched. Scope followed the approved `workflow/zhenghao/specs/003-browser-python-ide.md`. The selected design keeps the compact 40/60 split and light MUI tokens. The concise surface contract is [apps-frontend-src-pages-publishedquestionpage-tsx.md](../../../apps/frontend/.impeccable/surfaces/apps-frontend-src-pages-publishedquestionpage-tsx.md).
 
@@ -20,6 +20,7 @@ This work was implemented directly in the current Codex task by the primary impl
 Commands and outcomes on configured Node `v24.22.2`:
 
 - `npm run build:python-runtime` — passed.
+- `npm run test -w @debugclinic/frontend` — passed, 5 tests. The implementer-owned boundary tests cover oversized source/tests/stdin rejection before frame creation, refusing Test without learner assertions, and accepting exactly 20,000 source units while creating an opaque CSP-limited frame and cleaning it up on Stop.
 - `npm run typecheck -w @debugclinic/frontend` — passed.
 - `npm run lint` — passed, including the generated-runtime ignore.
 - Scoped Prettier check for changed source/configuration and the surface contract — passed.
@@ -28,6 +29,7 @@ Commands and outcomes on configured Node `v24.22.2`:
 - `git diff --check` — passed.
 - A temporary, database-free browser preview exercised the actual workspace and local runner at 1440×900 and 320×800. A learner-written assertion for `total([3, 5]) == 8` completed in Pyodide. The 320px document width remained 320px. The preview and its harness files were removed after inspection.
 - The coordinator separately reported a focused Chromium probe against the implementation source: Python sum output and a learner assertion completed; the opaque-origin message bridge worked and produced zero application API requests. This is development evidence supplied by the coordinator, not an independent acceptance/security review.
+- A second coordinator-run module probe reported stdin handling, a failing-assertion traceback, Stop teardown, and the 5-second timeout against real Pyodide; it reported zero API requests and no browser errors. This remains focused development evidence, not the independent acceptance matrix.
 
 No database URL, backend, or PostgreSQL command was used. The full independent browser, storage/network-denial, Stop/timeout, session-expiry, recovery, and production-built execution matrix remains with the assigned tester/coordinator. Older textarea-specific browser assertions also need that tester's contenteditable adaptations; this implementation did not modify independent acceptance tests. No deployment or push was performed.
 
