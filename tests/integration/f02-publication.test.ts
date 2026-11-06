@@ -2,7 +2,7 @@ import { randomUUID } from "node:crypto";
 import { createServer, createConnection, type Socket } from "node:net";
 import { PrismaPg } from "@prisma/adapter-pg";
 import request from "supertest";
-import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 import { PrismaClient } from "../../generated/prisma/client.js";
 import { createInstructorQuestions } from "../../apps/backend/src/exercises/instructor-questions.js";
 import { createInstructorDrafts } from "../../apps/backend/src/exercises/instructor-drafts.js";
@@ -516,6 +516,7 @@ describe("F02 real cookie HTTP authorization and input boundaries", () => {
       ["a", "INSTRUCTOR"],
       ["b", "INSTRUCTOR"],
       ["learner", "LEARNER"],
+      ["learner2", "LEARNER"],
     ] as const) {
       const email = `f02-cookie-${name}-${suffix}@example.test`,
         password = "F02-synthetic-password-12345";
@@ -570,6 +571,26 @@ describe("F02 real cookie HTTP authorization and input boundaries", () => {
       expectedRevision: 0,
       reviewConfirmed: true,
     };
+    const privateBefore = (
+      await questions.getOwner(identities["a"]!, saved.draft.id)
+    ).question;
+    for (const identity of [undefined, "learner", "b"]) {
+      let denied = request(app).patch(path).set("origin", config.appOrigin);
+      if (identity) denied = denied.set("cookie", cookies[identity]!);
+      const result = await denied
+        .send({
+          expectedRevision: 0,
+          topic,
+          draft: { ...fields, title: "Unauthorized edit" },
+        })
+        .expect(
+          identity === undefined ? 401 : identity === "learner" ? 403 : 404,
+        );
+      expect(result.body.error.mutationOutcome).toBe("NOT_APPLIED");
+      expect(
+        (await questions.getOwner(identities["a"]!, saved.draft.id)).question,
+      ).toEqual(privateBefore);
+    }
     for (const identity of ["learner", "b"])
       await request(app)
         .post("/api/v1/instructor/questions/publish")
@@ -590,6 +611,25 @@ describe("F02 real cookie HTTP authorization and input boundaries", () => {
     expect(JSON.stringify(exposed.body)).not.toMatch(
       /F02_PRIVATE|example.test|provenance|correctedSolution|bugExplanation/,
     );
+    const publishedBefore = (
+      await questions.getOwner(identities["a"]!, saved.draft.id)
+    ).question;
+    for (const identity of [undefined, "learner", "b"]) {
+      let denied = request(app)
+        .post(`${path}/remove`)
+        .set("origin", config.appOrigin);
+      if (identity) denied = denied.set("cookie", cookies[identity]!);
+      const result = await denied
+        .send({ confirmed: true })
+        .expect(
+          identity === undefined ? 401 : identity === "learner" ? 403 : 404,
+        );
+      expect(result.body.error.mutationOutcome).toBe("NOT_APPLIED");
+      expect(
+        (await questions.getOwner(identities["a"]!, saved.draft.id)).question,
+      ).toEqual(publishedBefore);
+      await questions.getPublished(saved.draft.id);
+    }
     await prisma.session.updateMany({
       where: { userId: identities["a"]! },
       data: { expiresAt: new Date(0) },
@@ -601,6 +641,51 @@ describe("F02 real cookie HTTP authorization and input boundaries", () => {
       .send(body)
       .expect(401);
     expect(expired.body.error.mutationOutcome).toBe("NOT_APPLIED");
+  });
+  it("B28 two unrelated real-cookie learners browse both instructors without enrollment", async () => {
+    const first = (
+      await questions.listOwner(identities["a"]!, {
+        status: "PUBLISHED",
+        offset: 0,
+      })
+    ).questions[0]!;
+    const generation = await drafts.generate(identities["b"]!, topic);
+    const second = await questions.publish(identities["b"]!, {
+      source: "preview",
+      previewKey: randomUUID(),
+      generationId: generation.generation.id,
+      topic,
+      draft: { ...fields, title: "Instructor B publication" },
+      reviewConfirmed: true,
+    });
+    for (const identity of ["learner", "learner2"]) {
+      const listed = await request(app)
+        .get("/api/v1/learner/questions")
+        .set("cookie", cookies[identity]!)
+        .expect(200);
+      expect(listed.body.questions).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            id: first.id,
+            instructorName: "Instructor a",
+          }),
+          expect.objectContaining({
+            id: second.question.id,
+            instructorName: "Instructor b",
+          }),
+        ]),
+      );
+      for (const id of [first.id, second.question.id]) {
+        const detail = await request(app)
+          .get(`/api/v1/learner/questions/${id}`)
+          .set("cookie", cookies[identity]!)
+          .expect(200);
+        expect(detail.body.question.id).toBe(id);
+        expect(JSON.stringify(detail.body)).not.toMatch(
+          /F02_PRIVATE|example.test|bugExplanation|correctedSolution|provenance/,
+        );
+      }
+    }
   });
   it("B03/B33/B36 rejects raw body, origins, unknown keys and every unrepresentable field without mutation or log leakage", async () => {
     const generated = await drafts.generate(identities["b"]!, topic);
@@ -778,6 +863,22 @@ it("B41 revision overflow rejects save/initial publication with support guidance
   }
 });
 it("B21/B23 own state and learner pages filter before pagination with deterministic timestamp/id ties", async () => {
+  // Isolate the public collection using transitions on this suite's own fixtures.
+  for (const user of ownedUsers) {
+    while (true) {
+      const page = await questions.listOwner(user, {
+        status: "PUBLISHED",
+        offset: 0,
+      });
+      if (page.questions.length === 0) break;
+      for (const question of page.questions)
+        await questions.remove(user, question.id, { confirmed: true });
+    }
+  }
+  expect(await questions.listPublished({ offset: 0 })).toEqual({
+    questions: [],
+    nextOffset: null,
+  });
   const pagingOwner = `f02-pages-${suffix}`;
   ownedUsers.push(pagingOwner);
   await prisma.user.create({
@@ -854,16 +955,17 @@ it("B21/B23 own state and learner pages filter before pagination with determinis
           count > offset + 50 ? offset + 50 : null,
         );
       }
-      if (status === "PUBLISHED" && count === 101) {
-        const first = await questions.listPublished({ offset: 0 });
-        const second = await questions.listPublished({ offset: 50 });
-        expect(first.questions.map((q) => q.id)).toEqual(expected.slice(0, 50));
-        expect(second.questions.map((q) => q.id)).toEqual(
-          expected.slice(50, 100),
-        );
-        expect(first.nextOffset).toBe(50);
-        expect(second.nextOffset).toBe(100);
-        expect(JSON.stringify([first, second])).not.toContain("F02_PRIVATE");
+      if (status === "PUBLISHED") {
+        for (const offset of [0, 49, 50, 51, 101]) {
+          const result = await questions.listPublished({ offset });
+          expect(result.questions.map((q) => q.id)).toEqual(
+            expected.slice(offset, offset + 50),
+          );
+          expect(result.nextOffset).toBe(
+            count > offset + 50 ? offset + 50 : null,
+          );
+          expect(JSON.stringify(result)).not.toContain("F02_PRIVATE");
+        }
       }
       await prisma.exercise.deleteMany({ where: { authorId: pagingOwner } });
     }
@@ -1108,3 +1210,147 @@ it("B17/B44 real PostgreSQL transport faults retain UNKNOWN for unavailable rere
     await prisma.$executeRawUnsafe(`DROP FUNCTION IF EXISTS "${trigger}"()`);
   }
 }, 20000);
+
+it("B10/B25/B37 concurrent actual Remove retains referenced content and invokes no external generation or hints", async () => {
+  const learner = `f02-reference-learner-${suffix}`;
+  ownedUsers.push(learner);
+  await prisma.user.create({
+    data: {
+      id: learner,
+      name: "Reference learner",
+      email: `${learner}@example.test`,
+      role: "LEARNER",
+    },
+  });
+  const provider = new FakeAiProvider();
+  const generationCalls = vi.spyOn(provider, "generateQuestion");
+  const hintCalls = vi.spyOn(provider, "generateHint");
+  const isolatedDrafts = createInstructorDrafts({
+    prisma,
+    logger,
+    config,
+    provider,
+  });
+  const generation = await isolatedDrafts.generate(owner, topic);
+  const countsBefore = {
+    generation: generationCalls.mock.calls.length,
+    hint: hintCalls.mock.calls.length,
+  };
+  // Structural cardinality evidence around Save/Publish, before reference fixtures.
+  const sideEffectCounts = async () => ({
+    attempts: await prisma.attempt.count({
+      where: { exerciseVersion: { exercise: { authorId: owner } } },
+    }),
+    hints: await prisma.hintStage.count({
+      where: { exerciseVersion: { exercise: { authorId: owner } } },
+    }),
+    usage: await prisma.aiUsageEvent.count({ where: { userId: owner } }),
+  });
+  const sideEffectsBefore = await sideEffectCounts();
+  const saved = await isolatedDrafts.save(owner, {
+    topic,
+    draft: fields,
+    generationId: generation.generation.id,
+  });
+  const opened = (await questions.getOwner(owner, saved.draft.id)).question;
+  await questions.saveChanges(owner, opened.id, {
+    topic,
+    draft: { ...fields, title: "Referenced publication" },
+    expectedRevision: 0,
+  });
+  const published = await questions.publish(owner, {
+    source: "saved",
+    id: opened.id,
+    topic,
+    draft: { ...fields, title: "Referenced publication" },
+    expectedRevision: 1,
+    reviewConfirmed: true,
+  });
+  expect(await sideEffectCounts()).toEqual(sideEffectsBefore);
+  // Structural fixtures deliberately attach existing references before Remove.
+  const attempt = await prisma.attempt.create({
+    data: {
+      learnerId: learner,
+      exerciseVersionId: opened.versionId,
+      proposedCode: "print(1)",
+      reasoning: "Synthetic retained reference",
+    },
+  });
+  const review = await prisma.review.create({
+    data: {
+      attemptId: attempt.id,
+      instructorId: other,
+      decision: "APPROVED",
+      comment: "Synthetic retained review",
+    },
+  });
+  const hint = await prisma.hintStage.create({
+    data: {
+      exerciseVersionId: opened.versionId,
+      stage: 1,
+      title: "Existing hint",
+      content: "F02_PRIVATE_HINT",
+    },
+  });
+  const referenceCounts = async () => ({
+    attempts: await prisma.attempt.count({
+      where: { exerciseVersionId: opened.versionId },
+    }),
+    hints: await prisma.hintStage.count({
+      where: { exerciseVersionId: opened.versionId },
+    }),
+    usage: await prisma.aiUsageEvent.count({ where: { userId: owner } }),
+  });
+  const structuralBefore = await referenceCounts();
+  try {
+    const [first, second] = await Promise.all([
+      questions.remove(owner, opened.id, { confirmed: true }),
+      competitor.remove(owner, opened.id, { confirmed: true }),
+    ]);
+    expect(first).toEqual(second);
+    expect(first.question).toEqual({
+      ...published.question,
+      status: "ARCHIVED",
+      archivedAt: expect.any(String),
+    });
+    expect(await competitor.getOwner(owner, opened.id)).toEqual(first);
+    expect(
+      await questions.remove(owner, opened.id, { confirmed: true }),
+    ).toEqual(first);
+    await expect(questions.getPublished(opened.id)).rejects.toMatchObject({
+      status: 404,
+    });
+    await questions.listPublished({ offset: 0 });
+    await questions.listOwner(owner, { status: "ARCHIVED", offset: 0 });
+    expect({
+      generation: generationCalls.mock.calls.length,
+      hint: hintCalls.mock.calls.length,
+    }).toEqual(countsBefore);
+    // Structural FK/cardinality evidence, separate from public availability above.
+    expect(await referenceCounts()).toEqual(structuralBefore);
+    expect(
+      await prisma.attempt.findUnique({ where: { id: attempt.id } }),
+    ).toMatchObject({
+      exerciseVersionId: opened.versionId,
+      learnerId: learner,
+    });
+    expect(
+      await prisma.review.findUnique({ where: { id: review.id } }),
+    ).toMatchObject({ attemptId: attempt.id, instructorId: other });
+    expect(
+      await prisma.hintStage.findUnique({ where: { id: hint.id } }),
+    ).toMatchObject({
+      exerciseVersionId: opened.versionId,
+      content: "F02_PRIVATE_HINT",
+    });
+    expect(
+      await prisma.exerciseVersion.findUnique({
+        where: { id: opened.versionId },
+      }),
+    ).toMatchObject({ exerciseId: opened.id });
+  } finally {
+    await prisma.review.deleteMany({ where: { id: review.id } });
+    await prisma.attempt.deleteMany({ where: { id: attempt.id } });
+    await prisma.hintStage.deleteMany({ where: { id: hint.id } });
+  }
+});
