@@ -196,3 +196,17 @@ Functional: pass. Coding standards: pass. Security: pass for tested local scope.
 Remote CI/deployment, live Google/SMTP/SoC, a secure Python runner and manual
 assistive-technology/contrast observations are not claimed. Run and Get Hint
 remain disabled as approved. No push, remote merge, PR change or deployment.
+
+## Post-delivery origin/master synchronization
+
+User requested compatibility with the now-merged PR #9. A fresh fetch on
+6 November 2026 resolved origin/master to `036cca6`, whose tree exactly matches
+the already-integrated reviewed PR head `7ac19d5`. Conflict-free local merge
+`d493134` includes origin/master with the existing learner tree unchanged.
+The user's staged `.gitignore` content and index status were preserved; local
+master and remote refs were not modified. Fresh Node 24 typecheck and all 516
+deterministic tests pass. No product repair, new stage conversation or broader
+runtime rerun was necessary. See the post-merge checkpoint in
+`workflow/zhenghao/verification/005-pr9-compatibility.md` and the separate
+`monitoring-origin-master-sync/` sanitized telemetry snapshot. Original delivery
+and fixed reflection measurements above remain historical checkpoints.

@@ -80,3 +80,37 @@ No PR branch was fetched into or merged with this working tree, no product code
 was changed, and no combined build/database/browser suite was run in this review.
 Current result: concrete conflicts identified and removed from the plan; runtime
 compatibility remains a required gate on the eventual integrated implementation.
+
+## Post-merge upstream verification — 6 November 2026
+
+This checkpoint supersedes the original open-PR status above. GitHub metadata
+confirms PR #9 merged at 08:47:18 UTC, with merge commit
+`036cca6b3a17154293814da9ec5564b5c7a9479e`. A fresh `git fetch origin master`
+resolved `origin/master` to that commit. Its complete tree identifier equals the
+reviewed PR head `7ac19d563bf269dbb75f0ac373058385a08511a1`:
+`2876305fe2d4fdcf73cd8ee7b58e1b9558d6eca6`. No additional upstream code changed.
+Protected SDD contents were not read to establish this tree identity.
+
+`git merge-tree --write-tree HEAD origin/master` passed without conflicts and
+returned the existing learner branch tree
+`982e84b112b2a4c00349a9f7a5dc7b83311567a3`. Local merge commit
+`d49313410c3f186631b64f96bb2b998e75ad8798` records both parents with that exact
+tree. It was created from the verified merge tree without using the user's
+staged index. Index-tree, working-status and `.gitignore` content checks before
+and after confirmed preservation. `origin/master` is now an ancestor of the
+learner branch; local `master` remains untouched.
+
+Fresh verification on Node 24.22.2: `npm run typecheck` passed and
+`npm test -- --reporter=dot` passed all 516 tests in 29 files. The latter used
+permitted local socket access for HTTP tests. No application, test, migration,
+dependency or adapter file changed during synchronization. Earlier independent
+browser/database/build evidence therefore applies to the identical source tree;
+those suites were not rerun at this checkpoint. No live provider/deployment or
+remote write was performed.
+
+Coordinator-only continuation reused the existing conversation. Sanitized usage
+and events are in
+`workflow/evaluations/zhenghao/ZH-LWS-01/monitoring-origin-master-sync/`; raw state
+remains outside Git. Existing soft-budget warnings remain visible. The bounded
+tree comparison avoided redundant implementation and broad runtime reruns; no
+causal token-savings claim is made.
