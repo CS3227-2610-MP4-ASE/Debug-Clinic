@@ -26,6 +26,11 @@ foundation from intended future behavior.
 
 ## Existing check routes
 
+`f02-session-refresh.spec.ts` gates an intercepted session check while each role
+has loaded multiple pages. It verifies pending/same-identity focus refresh retains
+items and the next offset, and a changed identity or expired session clears the
+appropriate page. This is browser state evidence, not real-cookie auth proof.
+
 F02 adds owner `/instructor/questions?status=DRAFT|PUBLISHED|ARCHIVED` and detail,
 retaining old `/instructor/drafts[/:id]` URLs. Draft editors share six-field
 validation, review, same-draft Save, publication recovery and discard state.

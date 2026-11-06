@@ -204,6 +204,12 @@ An admitted editor stays mounted with mutations disabled after expiry. Identity
 keys dispose prior editor memory before another identity receives an authorized
 fresh read. No autosave or cross-reload recovery is implemented.
 
+Window focus checks the session in the background so an unchanged identity keeps
+mounted pages, loaded list items and pagination offsets. Initial authentication
+and explicit refresh still use blocking loading. A confirmed identity change
+remounts the protected page by user ID; a confirmed expired session removes
+ordinary protected pages while retaining the admitted disabled editor behavior.
+
 Apply the additive F02 migration before new code rollout; migration/function
 deployment is not atomic. Its archive preflight stops existing undated archived
 rows for owner reconciliation rather than inventing dates. Rollback disables new

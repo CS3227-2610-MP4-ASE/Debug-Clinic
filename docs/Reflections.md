@@ -2,6 +2,16 @@
 
 ## 6 November 2026 — F02 publication delivery
 
+A subsequent owner review caught an auth lifecycle regression: a successful
+focus-triggered session check briefly set global loading, unmounted ordinary
+protected pages and lost their loaded pagination. Gating the actual browser
+session response reproduced it for both roles. The fix separates background
+focus checks from initial/manual loading, with identity-keyed disposal to keep
+account changes from inheriting old list data. Tests now cover pending checks,
+page-three continuation, identity replacement and expiry on desktop/mobile.
+This illustrates a gap in the earlier green review: authentication success alone
+does not establish preservation of already-mounted application state.
+
 The approved package gave two builders stable contracts and disjoint backend/UI
 ownership. Contract exports landed first, then coherent implementation and test
 commits integrated locally. No blind independent acceptance author was assigned;

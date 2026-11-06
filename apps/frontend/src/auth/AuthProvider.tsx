@@ -36,27 +36,34 @@ export function AuthProvider({ children }: PropsWithChildren) {
   const [sessionEpoch, setSessionEpoch] = useState(0);
   const requestVersion = useRef(0);
 
-  const refresh = useCallback(async (): Promise<SessionRefreshResult> => {
-    const version = ++requestVersion.current;
-    setIsLoading(true);
-    setError(null);
-    try {
-      const currentUser = await getCurrentUser();
-      if (version !== requestVersion.current) return { ok: false };
-      setUser(currentUser);
-      setSessionExpired(!currentUser);
-      return { ok: true, user: currentUser };
-    } catch {
-      if (version !== requestVersion.current) return { ok: false };
-      setUser(null);
-      setError(
-        "We could not restore your session. Check the API connection and try again.",
-      );
-      return { ok: false };
-    } finally {
-      if (version === requestVersion.current) setIsLoading(false);
-    }
-  }, []);
+  const refreshSession = useCallback(
+    async ({
+      background = false,
+    }: { background?: boolean } = {}): Promise<SessionRefreshResult> => {
+      const version = ++requestVersion.current;
+      // Focus checks must not unmount already-authorized pages and their state.
+      if (!background) setIsLoading(true);
+      setError(null);
+      try {
+        const currentUser = await getCurrentUser();
+        if (version !== requestVersion.current) return { ok: false };
+        setUser(currentUser);
+        setSessionExpired(!currentUser);
+        return { ok: true, user: currentUser };
+      } catch {
+        if (version !== requestVersion.current) return { ok: false };
+        setUser(null);
+        setError(
+          "We could not restore your session. Check the API connection and try again.",
+        );
+        return { ok: false };
+      } finally {
+        if (version === requestVersion.current) setIsLoading(false);
+      }
+    },
+    [],
+  );
+  const refresh = useCallback(() => refreshSession(), [refreshSession]);
 
   const signOut = useCallback(async () => {
     const result = await authClient.signOut();
@@ -77,7 +84,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
   useEffect(() => {
     const expire = () => setSessionExpired(true);
     const restore = () => {
-      void refresh();
+      void refreshSession({ background: true });
     };
     window.addEventListener("debugclinic:session-expired", expire);
     window.addEventListener("focus", restore);
@@ -85,7 +92,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
       window.removeEventListener("debugclinic:session-expired", expire);
       window.removeEventListener("focus", restore);
     };
-  }, [refresh]);
+  }, [refreshSession]);
 
   useEffect(() => {
     const version = ++requestVersion.current;

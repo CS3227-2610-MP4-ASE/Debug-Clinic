@@ -59,5 +59,7 @@ export function RoleRoute({ role }: { role: Role }) {
       <Navigate to="/sign-in" replace state={{ from: location.pathname }} />
     );
   if (user.role !== role) return <Navigate to="/forbidden" replace />;
-  return <Outlet />;
+  // A background check keeps a stable identity mounted, but a different account
+  // must start with fresh authorized page data rather than inherit list state.
+  return <Outlet key={user.id} />;
 }
