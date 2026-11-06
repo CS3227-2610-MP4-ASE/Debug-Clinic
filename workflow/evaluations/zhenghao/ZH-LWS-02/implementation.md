@@ -4,7 +4,7 @@
 
 Implemented the approved browser Python workspace on branch `zh/learner-workspace`. The implementation commit is `f3696f8a2963129104cfb061aff3c02f2533b20b`, followed by focused boundary-test commit `1ff3eabd6ef606e228157d0aa13e9cf892f5f6b3`. Both are based on `9742f17e1efb1b7eb3974eeef5cc462082d96bc1`.
 
-This work was implemented directly in the current Codex task by the primary implementer; no implementation subagents were dispatched. Scope followed the approved `workflow/zhenghao/specs/003-browser-python-ide.md`. The selected design keeps the compact 40/60 split and light MUI tokens. The concise surface contract is [apps-frontend-src-pages-publishedquestionpage-tsx.md](../../../apps/frontend/.impeccable/surfaces/apps-frontend-src-pages-publishedquestionpage-tsx.md).
+This work was implemented directly in the current Codex task by the primary implementer; no implementation subagents were dispatched. Scope followed the approved `workflow/zhenghao/specs/003-browser-python-ide.md`. The selected design keeps the compact 40/60 split and light MUI tokens. The concise surface contract is [apps-frontend-src-pages-publishedquestionpage-tsx.md](../../../../apps/frontend/.impeccable/surfaces/apps-frontend-src-pages-publishedquestionpage-tsx.md).
 
 ## Changes
 

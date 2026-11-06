@@ -40,7 +40,8 @@ evaluation record.
   Offline Prisma generation may use a placeholder; migrations and seeding must
   fail if the URL is missing. Stop command sequences on the first failure.
 - Before declaring a local tool unavailable, check installed application bundles
-  as well as PATH. Use the configured Node major for verification.
+  as well as PATH. Verify `node --version` and use configured Node 24 for package
+  commands and verification.
   App-bundled Node can reject native modules under library validation; verify
   with a standalone runtime of the same major before changing dependencies.
   Inspect diagnostics and the consolidated reproduction before claiming success
@@ -104,6 +105,11 @@ evaluation record.
   test lost replies, failed recovery reads and multiline editor overflow. Verify
   clipped-layout hit areas before mouse activation: Playwright locator clicks can
   programmatically scroll hidden ancestors that users cannot scroll.
+- Prove browser Python bootstrap under the final origin/CSP, then test real
+  execution and denied storage/network access. A worker alone is not origin
+  isolation; Pyodide can fetch Wasm before invoking its module factory. Diagnose
+  bridge payloads and runtime character values rather than inferring source
+  errors from JSON-escaped logs.
 
 # Skill evaluation
 
