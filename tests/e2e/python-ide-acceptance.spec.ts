@@ -765,3 +765,31 @@ test("IDE separator range follows viewport changes while editor remains at minim
   await expect(separator).toHaveAttribute("aria-valuemax", "180");
   await expect(separator).toHaveAttribute("aria-valuenow", "180");
 });
+
+test("IDE real pointer resizing respects bounds and leaves keyboard resizing usable", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 1280, height: 900 });
+  await fixture(page);
+  const separator = page.getByRole("separator", {
+    name: "Resize editor and output",
+  });
+  await pointerActivate(page, separator);
+  const drag = async (delta: number) => {
+    const box = await separator.boundingBox();
+    if (!box) throw new Error("Resize separator has no layout");
+    const x = box.x + box.width / 2;
+    const y = box.y + box.height / 2;
+    await page.mouse.move(x, y);
+    await page.mouse.down();
+    await page.mouse.move(x, y + delta, { steps: 8 });
+    await page.mouse.up();
+  };
+  await drag(240);
+  await expect(separator).toHaveAttribute("aria-valuenow", "480");
+  await drag(-480);
+  await expect(separator).toHaveAttribute("aria-valuenow", "180");
+  await separator.focus();
+  await page.keyboard.press("ArrowDown");
+  await expect(separator).toHaveAttribute("aria-valuenow", "204");
+});

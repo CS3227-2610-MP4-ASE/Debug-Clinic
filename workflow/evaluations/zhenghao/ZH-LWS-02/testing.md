@@ -1,8 +1,8 @@
 # ZH-LWS-02 independent acceptance and verification
 
-Current review: **repair round 1 still requires F5 correction** on product source
-`36df16b7a3942a978f24bbe0450093da2bffcbef`. See the final repair-round section;
-round-0 findings/results below remain historical evidence.
+Current review: **pass within the approved tested scope** after repair round 2 on
+`2470a3b2e3f4a6ddc4e63dd1fa894fd4de45761e`. See the final repair-round section;
+round-0 and round-1 findings/results below remain historical evidence.
 
 ## Frozen acceptance before implementation diff
 
@@ -505,7 +505,88 @@ the 1.5m initial estimate; Sol high stayed selected and repeated output/reads we
 narrowed. That checkpoint is not a final token total or a cost-savings claim.
 Raw telemetry is owned by the coordinator.
 
-Next: return F1–F5 in one packet to the existing builder, preserving these tests.
+Historical next action at round 0: return F1–F5 in one packet to the existing builder, preserving these tests.
 After its bounded source repair, reverify affected cases and production runtime,
 then run the required full no-DB normal desktop/mobile suite and composed/static
 matrix before declaring green. No residual blocking risk is accepted here.
+
+## Repair round 2 — final targeted review
+
+Frozen product source: `2470a3b2e3f4a6ddc4e63dd1fa894fd4de45761e`.
+Read the complete repair-round2 handoff and reviewed its single component diff.
+Compared with `36df16b`, only `apps/frontend/src/components/LearnerWorkspace.tsx`
+changes among product source paths. Runtime, API, authentication, database,
+sandbox/security policy and description-pane implementation are unchanged.
+Independent tests remain those in `d8d7a0c`, with an additional real pointer-drag
+case in this round. The original F5 viewport regression was not weakened.
+
+The component now holds viewport height as state, and uses that measured height
+for initialization, resize, pointer, keyboard and `aria-valuemax`. The window
+listener updates viewport state even when clamped editor height stays unchanged;
+cleanup still removes the listener. This addresses the observed stale range
+without changing code, reasoning, scratch/stdin or output state ownership.
+
+### Final-source evidence
+
+- Affected browser matrix: **26/26 pass**, desktop/mobile, 42.7 seconds.
+  Includes the frozen F5 180→480 maximum on viewport growth, unchanged minimum
+  value, keyboard increment to 204 and shrink-back clamp; the description and
+  expanded scratch/stdin/reasoning three-viewport journey; saved/final UTF-16
+  authority and keyboard editing; active-run disposal/account expiry; immutable
+  finals; search/save/final workflow; edits during pending save; focus/session
+  refresh; and real Save/Submit pointer reachability at 1440×900, 1280×600 and
+  320×800. Actual Python execution/stdout/stderr/stdin/assertions is included.
+- New pointer regression uses real mouse down/move/up to drag to the maximum
+  480, then minimum 180, followed by keyboard increment to 204. Both projects
+  pass. No hidden editor mirror or synthetic pointer event is used.
+- Strict E2E typecheck extends the repository's actual TypeScript base config;
+  it passes. Initial temporary config used one extra parent segment; fixing the
+  config-relative paths corrected that invocation without product/test changes.
+- Scoped source/test formatting passes. Builder separately reports frontend
+  **9/9**, frontend typecheck, repository lint, scoped formatting/diff checks and
+  full production build passing for this repair. These are builder-observed
+  checks, distinguished from the independent browser results above.
+
+- Production-BUILT integration: **6/6 pass**, 14.5 seconds, desktop/mobile.
+  Vite preview serves the final emitted bundle, not development modules. Actual
+  pinned Python executes stdout/stderr/stdin/assertions, and both viewport-range
+  and pointer/keyboard cases pass against those emitted assets. This establishes
+  final component integration without repeating the unchanged security matrix.
+
+### Final review verdicts and retained coverage
+
+| Review           | Verdict                               | Basis                                                                                                                                                                                  |
+| ---------------- | ------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Functional       | **Pass within approved tested scope** | All F1–F5 are resolved; final-source affected matrix and actual built integration pass.                                                                                                |
+| Coding standards | **Pass**                              | Component keeps viewport/clamp authority explicit, removes its listener on cleanup, retains state ownership and accessible range consistency; no actionable standards departure found. |
+| Security         | **Pass within exercised scope**       | Only viewport/layout state changed after the round-1 real isolation/resource checks. No new trust boundary, execution/network capability, persistence or authority change.             |
+
+Evidence is revision-specific. Round-1 source `36df16b` has root/API 531/531,
+frontend 9/9, production runtime/isolation 20/20, composed real-cookie/PG 8/8,
+built public smoke 16/16 and static/build checks. The original full normal matrix
+remains **199 pass / 20 skip / 3 harness fail**, followed by **4/4** corrected
+affected cases. F5 viewport remained **2 expected failures** before the final
+source repair. These historical runs are preserved rather than relabelled as a
+single successful full run on `2470a3b`. Final-source evidence is the **26/26**
+affected matrix, **6/6** built integration and scoped checks. The added real
+pointer case adds two project cases; collection is checked at handoff. No full
+224/226-case green command is claimed. Reusing unchanged-path evidence follows
+the coordinator's bounded final-review packet; no new concern justified a full
+13-minute replay. All prior provider/resource/manual limitations still apply.
+
+No further source repair or UI polish is requested. Current next action: coordinator
+may integrate the reviewed source and documentation, keeping external push,
+deployment and any live-provider verification under their existing authorization.
+This replaces the historical round-0 next action above. Tester does not push,
+deploy or clean up the coordinator-owned database.
+
+Independent final checks pass: sequential whole-tree lint, scoped source/test/report
+Prettier, strict targeted TypeScript and `git diff --check`. Collection is
+**226 cases / 16 files**. Final-source browser commands explicitly unset database
+and auth-completion variables; they use owned ports 51821/51822. All owned workers
+and servers are stopped, verified by no listener on either port. Logs, generated
+screenshots and local check config are preserved outside Git under
+`.workflow-state/ide-testing/round2/`. The existing coordinator-owned database and
+unrelated processes remain untouched. AGENTS changes remain unstaged for its
+owner. Only the independent pointer case and this report enter the final tester
+commit; no product-source edits were made by tester.
