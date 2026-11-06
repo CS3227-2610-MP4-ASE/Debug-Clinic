@@ -17,31 +17,47 @@ const recipients: string[] = [];
 const channel = resolve(".workflow-state/browser-auth");
 const review =
   "I have reviewed this question and understand that published content cannot be edited.";
-const prisma = new PrismaClient({
-  adapter: new PrismaPg({ connectionString: f01DatabaseUrl() }),
-});
+let prisma: PrismaClient | null = null;
+function requirePrisma() {
+  if (!prisma)
+    throw new Error("The opt-in isolated browser database was not initialized");
+  return prisma;
+}
 test.beforeAll(() => {
+  if (process.env["E2E_AUTH_COMPLETION"] !== "1") return;
+  const url = f01DatabaseUrl();
   if (
-    process.env["E2E_AUTH_COMPLETION"] === "1" &&
-    ["DATABASE_URL", "DATABASE_URL_POOLED", "E2E_TEST_DATABASE_URL"].some(
-      (key) => process.env[key] !== f01DatabaseUrl(),
-    )
+    [
+      "DATABASE_URL",
+      "DATABASE_URL_POOLED",
+      "TEST_DATABASE_URL",
+      "E2E_TEST_DATABASE_URL",
+    ].some((key) => process.env[key] !== url)
   )
     throw new Error("Explicit matching synthetic targets required");
+  prisma = new PrismaClient({
+    adapter: new PrismaPg({ connectionString: url }),
+  });
 });
 test.afterAll(async () => {
+  const database = prisma;
+  if (!database) return;
   try {
-    const users = await prisma.user.findMany({
-      where: { email: { in: recipients } },
-      select: { id: true },
-    });
-    const ids = users.map((user) => user.id);
-    await prisma.review.deleteMany({ where: { instructorId: { in: ids } } });
-    await prisma.attempt.deleteMany({ where: { learnerId: { in: ids } } });
-    await prisma.exercise.deleteMany({ where: { authorId: { in: ids } } });
-    await prisma.aiUsageEvent.deleteMany({ where: { userId: { in: ids } } });
-    await prisma.user.deleteMany({ where: { id: { in: ids } } });
     if (recipients.length) {
+      const users = await database.user.findMany({
+        where: { email: { in: recipients } },
+        select: { id: true },
+      });
+      const ids = users.map((user) => user.id);
+      await database.review.deleteMany({
+        where: { instructorId: { in: ids } },
+      });
+      await database.attempt.deleteMany({ where: { learnerId: { in: ids } } });
+      await database.exercise.deleteMany({ where: { authorId: { in: ids } } });
+      await database.aiUsageEvent.deleteMany({
+        where: { userId: { in: ids } },
+      });
+      await database.user.deleteMany({ where: { id: { in: ids } } });
       const prefixes = recipients.map(
         (email) => `mail-${createHash("sha256").update(email).digest("hex")}-`,
       );
@@ -50,7 +66,8 @@ test.afterAll(async () => {
           await unlink(resolve(channel, file));
     }
   } finally {
-    await prisma.$disconnect();
+    await database.$disconnect();
+    prisma = null;
   }
 });
 async function register(page: Page, role: "Instructor" | "Learner") {
@@ -114,6 +131,7 @@ test("independent composed: no-hint publication, learner draft/final and retaine
   page,
   browser,
 }) => {
+  const database = requirePrisma();
   await register(page, "Instructor");
   await generate(page);
   const title = `LWS composed ${randomUUID()}`;
@@ -129,7 +147,7 @@ test("independent composed: no-hint publication, learner draft/final and retaine
     question: { id: string; versionId: string };
   };
   expect(
-    await prisma.hintStage.count({
+    await database.hintStage.count({
       where: { exerciseVersionId: question.versionId },
     }),
   ).toBe(0);
@@ -180,7 +198,7 @@ test("independent composed: no-hint publication, learner draft/final and retaine
     const me = (await (await page.request.get("/api/v1/me")).json()) as {
       user: { id: string };
     };
-    const reviewRow = await prisma.review.create({
+    const reviewRow = await database.review.create({
       data: {
         attemptId: finalBody.attempt.id,
         instructorId: me.user.id,
@@ -194,7 +212,7 @@ test("independent composed: no-hint publication, learner draft/final and retaine
     expect(await (await fresh.request.get(attemptPath)).json()).toEqual({
       attempt: null,
     });
-    const before = await prisma.attempt.findUniqueOrThrow({
+    const before = await database.attempt.findUniqueOrThrow({
       where: { id: finalBody.attempt.id },
     });
     await page.getByRole("button", { name: "Remove", exact: true }).click();
@@ -237,15 +255,17 @@ test("independent composed: no-hint publication, learner draft/final and retaine
       ).toBe(404);
     }
     expect(
-      await prisma.attempt.findUniqueOrThrow({
+      await database.attempt.findUniqueOrThrow({
         where: { id: finalBody.attempt.id },
       }),
     ).toEqual(before);
     expect(
-      await prisma.exerciseVersion.count({ where: { id: question.versionId } }),
+      await database.exerciseVersion.count({
+        where: { id: question.versionId },
+      }),
     ).toBe(1);
     expect(
-      await prisma.review.findUnique({ where: { id: reviewRow.id } }),
+      await database.review.findUnique({ where: { id: reviewRow.id } }),
     ).toMatchObject({ attemptId: finalBody.attempt.id });
   } finally {
     await learnerContext.close();

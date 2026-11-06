@@ -1,5 +1,12 @@
 import CheckOutlined from "@mui/icons-material/CheckOutlined";
-import { Alert, Box, Button, Stack, Typography } from "@mui/material";
+import {
+  Alert,
+  AlertTitle,
+  Box,
+  Button,
+  Stack,
+  Typography,
+} from "@mui/material";
 import type {
   LearnerAttempt,
   LearnerAttemptWrite,
@@ -31,6 +38,15 @@ export function PublishedQuestionPage() {
   const [pending, setPending] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [recoveryNotice, setRecoveryNotice] = useState<{
+    message: string;
+    severity: "info" | "success" | "warning";
+  } | null>(null);
+  const [reconciliationRequired, setReconciliationRequired] = useState(false);
+  const [recoveredLocal, setRecoveredLocal] = useState<{
+    code: string;
+    reasoning: string;
+  } | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [unavailable, setUnavailable] = useState(false);
   const [loadRevision, setLoadRevision] = useState(0);
@@ -77,6 +93,9 @@ export function PublishedQuestionPage() {
       setAttempt(null);
       setCode("");
       setReasoning("");
+      setRecoveredLocal(null);
+      setReconciliationRequired(false);
+      setRecoveryNotice(null);
     }
     setPending(true);
     setLoadError(null);
@@ -129,37 +148,123 @@ export function PublishedQuestionPage() {
       code !== (attempt?.code ?? "") || value !== (attempt?.reasoning ?? ""),
     );
   }
-  async function persist(submit: boolean) {
+  function captureCurrentSession() {
     const generation = lifecycle.current;
     const learnerId = user?.id ?? null;
     const requestSessionEpoch = sessionEpoch;
     const requestIdentityRevision = identity.current.revision;
-    const isCurrent = () =>
+    return () =>
       lifecycle.current === generation &&
       session.current.userId === learnerId &&
       session.current.sessionEpoch === requestSessionEpoch &&
       session.current.identityRevision === requestIdentityRevision &&
       !session.current.sessionExpired;
+  }
+  async function reconcileAttempt(
+    local: { code: string; reasoning: string },
+    isCurrent: () => boolean,
+  ) {
+    if (!isCurrent()) return;
+    setReconciliationRequired(true);
+    setSaving(true);
+    try {
+      const { attempt: serverAttempt } = await getLearnerAttempt(id);
+      if (!isCurrent()) return;
+      const localMatchesServer =
+        serverAttempt?.code === local.code &&
+        serverAttempt.reasoning === local.reasoning;
+      setAttempt(serverAttempt);
+      setError(null);
+      setReconciliationRequired(false);
+      if (serverAttempt?.status === "FINAL_SUBMITTED") {
+        setCode(serverAttempt.code);
+        setReasoning(serverAttempt.reasoning);
+        if (localMatchesServer) {
+          setRecoveredLocal(null);
+          updateDirty(false);
+          setRecoveryNotice({
+            severity: "success",
+            message: "The final submission is confirmed and read-only.",
+          });
+        } else {
+          setRecoveredLocal(local);
+          updateDirty(true);
+          setRecoveryNotice({
+            severity: "warning",
+            message:
+              "A final submission is already on the server. The editor shows that submitted version; your different local edits are preserved below and were not submitted.",
+          });
+        }
+      } else if (!serverAttempt) {
+        setRecoveredLocal(null);
+        updateDirty(true);
+        setRecoveryNotice({
+          severity: "info",
+          message:
+            "No draft exists on the server. Your local edits are preserved; Save draft can create the attempt.",
+        });
+      } else if (localMatchesServer) {
+        setCode(serverAttempt.code);
+        setReasoning(serverAttempt.reasoning);
+        setRecoveredLocal(null);
+        updateDirty(false);
+        setRecoveryNotice({
+          severity: "success",
+          message: "The server confirms that this draft was saved.",
+        });
+      } else {
+        setRecoveredLocal(null);
+        updateDirty(true);
+        setRecoveryNotice({
+          severity: "warning",
+          message:
+            "A newer draft revision was found. Your local edits are preserved; Save draft will use the current server revision.",
+        });
+      }
+    } catch (failed) {
+      if (isCurrent()) {
+        setRecoveryNotice(null);
+        setReconciliationRequired(true);
+        setError(
+          `Could not confirm the current attempt. ${questionFailure(failed)}`,
+        );
+      }
+    } finally {
+      if (isCurrent()) setSaving(false);
+    }
+  }
+  async function persist(submit: boolean) {
+    const isCurrent = captureCurrentSession();
+    const local = { code, reasoning };
     const input: LearnerAttemptWrite = {
-      code,
-      reasoning,
+      ...local,
       expectedRevision: attempt?.revision ?? null,
     };
     setSaving(true);
     setError(null);
+    setRecoveryNotice(null);
     try {
       const result = submit
         ? await submitLearnerAttempt(id, input)
         : await saveLearnerAttempt(id, input);
       if (!isCurrent()) return;
       setAttempt(result.attempt);
+      setReconciliationRequired(false);
+      setRecoveredLocal(null);
       if (submit && result.attempt) {
         setCode(result.attempt.code);
         setReasoning(result.attempt.reasoning);
       }
       updateDirty(false);
     } catch (failed) {
-      if (isCurrent()) setError(questionFailure(failed));
+      if (isCurrent()) {
+        setError(questionFailure(failed));
+        const outcomeIsUncertain =
+          !(failed instanceof QuestionError) ||
+          failed.outcome === "UNKNOWN" ||
+          failed.status === 409;
+        if (outcomeIsUncertain) await reconcileAttempt(local, isCurrent);
+      }
     } finally {
       if (isCurrent()) setSaving(false);
     }
@@ -219,6 +324,51 @@ export function PublishedQuestionPage() {
         </Button>
       )}
       {error && <Alert severity="error">{error}</Alert>}
+      {recoveryNotice && (
+        <Alert severity={recoveryNotice.severity}>
+          {recoveryNotice.message}
+        </Alert>
+      )}
+      {reconciliationRequired && saving && (
+        <Typography role="status">
+          Checking the latest saved attempt…
+        </Typography>
+      )}
+      {reconciliationRequired && !saving && (
+        <>
+          <Alert severity="warning">
+            Save and submit are paused until the server attempt is confirmed.
+            Your local edits are retained.
+          </Alert>
+          <Button
+            onClick={() =>
+              void reconcileAttempt(
+                { code, reasoning },
+                captureCurrentSession(),
+              )
+            }
+            disabled={sessionExpired || !user}
+            sx={{ minHeight: 44, alignSelf: "flex-start" }}
+          >
+            Retry attempt check
+          </Button>
+        </>
+      )}
+      {recoveredLocal && (
+        <Alert severity="warning">
+          <AlertTitle>These local edits were not submitted</AlertTitle>
+          <Typography variant="body2">Local code</Typography>
+          <Box
+            component="pre"
+            sx={{ whiteSpace: "pre-wrap", overflowWrap: "anywhere", m: 0 }}
+          >
+            {recoveredLocal.code}
+          </Box>
+          <Typography variant="body2" sx={{ mt: 1 }}>
+            Local reasoning: {recoveredLocal.reasoning}
+          </Typography>
+        </Alert>
+      )}
       {submitted && (
         <Alert severity="success" icon={<CheckOutlined />}>
           Final submission received. This attempt is read-only.
@@ -295,6 +445,7 @@ export function PublishedQuestionPage() {
             disabled={
               pending ||
               saving ||
+              reconciliationRequired ||
               Boolean(loadError) ||
               submitted ||
               sessionExpired ||

@@ -134,6 +134,7 @@ export function LearnerWorkspace({
           label="Explain your reasoning"
           multiline
           minRows={3}
+          maxRows={4}
           value={reasoning}
           onChange={(event) => onReasoningChange(event.target.value)}
           inputProps={{ maxLength: 5_000 }}
