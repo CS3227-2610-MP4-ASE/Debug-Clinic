@@ -353,7 +353,15 @@ export const OwnerQuestionListResponseSchema = z
 export type OwnerQuestionListResponse = z.infer<
   typeof OwnerQuestionListResponseSchema
 >;
-export const PublishedQuestionListQuerySchema = DraftListQuerySchema;
+export const PublishedQuestionListQuerySchema = DraftListQuerySchema.extend({
+  q: z
+    .string()
+    .refine(storageText, { message: storageMessage })
+    .refine((value) => value.length <= 200, {
+      message: "Must contain at most 200 characters",
+    })
+    .optional(),
+}).strict();
 export type PublishedQuestionListQuery = z.infer<
   typeof PublishedQuestionListQuerySchema
 >;
@@ -390,4 +398,43 @@ export const PublishedQuestionResponseSchema = z
   .strict();
 export type PublishedQuestionResponse = z.infer<
   typeof PublishedQuestionResponseSchema
+>;
+
+const learnerText = (maximum: number) =>
+  z
+    .string()
+    .refine(storageText, { message: storageMessage })
+    .refine((value) => value.length <= maximum, {
+      message: `Must contain at most ${maximum} characters`,
+    });
+const learnerRequiredText = (maximum: number) =>
+  learnerText(maximum).refine((value) => value.trim().length > 0, {
+    message: "Required content must not be blank",
+  });
+export const LearnerAttemptWriteSchema = z
+  .object({
+    code: learnerRequiredText(20_000),
+    reasoning: learnerRequiredText(5_000),
+    expectedRevision: RevisionSchema.nullable(),
+  })
+  .strict();
+export type LearnerAttemptWrite = z.infer<typeof LearnerAttemptWriteSchema>;
+export const LearnerAttemptSchema = z
+  .object({
+    id: DraftIdSchema,
+    code: learnerText(20_000),
+    reasoning: learnerText(5_000),
+    status: z.enum(["DRAFT", "FINAL_SUBMITTED"]),
+    revision: RevisionSchema,
+    submittedAt: z.string().datetime().nullable(),
+  })
+  .strict();
+export type LearnerAttempt = z.infer<typeof LearnerAttemptSchema>;
+export const LearnerAttemptResponseSchema = z
+  .object({
+    attempt: LearnerAttemptSchema.nullable(),
+  })
+  .strict();
+export type LearnerAttemptResponse = z.infer<
+  typeof LearnerAttemptResponseSchema
 >;

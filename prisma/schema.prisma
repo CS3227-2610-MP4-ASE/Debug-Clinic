@@ -118,22 +118,22 @@ model Verification {
 }
 
 model Exercise {
-  id          String            @id @default(cuid())
-  title       String
-  description String
-  status      ExerciseStatus    @default(DRAFT)
-  authorId    String
-  author      User              @relation("ExerciseAuthor", fields: [authorId], references: [id], onDelete: Restrict)
-  versions    ExerciseVersion[]
-  createdAt   DateTime          @default(now())
-  updatedAt   DateTime          @updatedAt
-  publishedAt DateTime?
-  editRevision Int @default(0)
+  id                    String            @id @default(cuid())
+  title                 String
+  description           String
+  status                ExerciseStatus    @default(DRAFT)
+  authorId              String
+  author                User              @relation("ExerciseAuthor", fields: [authorId], references: [id], onDelete: Restrict)
+  versions              ExerciseVersion[]
+  createdAt             DateTime          @default(now())
+  updatedAt             DateTime          @updatedAt
+  publishedAt           DateTime?
+  editRevision          Int               @default(0)
   previewPublicationKey String?
-  archivedAt DateTime?
+  archivedAt            DateTime?
 
-  @@index([authorId, status])
   @@unique([authorId, previewPublicationKey])
+  @@index([authorId, status])
   @@index([authorId, status, archivedAt])
   @@index([status, publishedAt])
 }
@@ -188,7 +188,9 @@ model Attempt {
   createdAt         DateTime        @default(now())
   updatedAt         DateTime        @updatedAt
   finalSubmittedAt  DateTime?
+  revision          Int             @default(0)
 
+  @@unique([learnerId, exerciseVersionId])
   @@index([learnerId, status])
   @@index([exerciseVersionId, createdAt])
 }
@@ -227,23 +229,23 @@ model Review {
 }
 
 model AiUsageEvent {
-  id            String        @id @default(cuid())
-  requestId     String        @unique
-  userId        String?
-  attemptId     String?
-  operation     String
-  provider      String
-  model         String?
-  promptVersion String
-  status        AiUsageStatus
-  inputTokens   Int?
-  outputTokens  Int?
-  latencyMs     Int?
-  errorCode     String?
+  id                    String        @id @default(cuid())
+  requestId             String        @unique
+  userId                String?
+  attemptId             String?
+  operation             String
+  provider              String
+  model                 String?
+  promptVersion         String
+  status                AiUsageStatus
+  inputTokens           Int?
+  outputTokens          Int?
+  latencyMs             Int?
+  errorCode             String?
   generationTopicDigest String?
-  user          User?         @relation(fields: [userId], references: [id], onDelete: SetNull)
-  attempt       Attempt?      @relation(fields: [attemptId], references: [id], onDelete: SetNull)
-  createdAt     DateTime      @default(now())
+  user                  User?         @relation(fields: [userId], references: [id], onDelete: SetNull)
+  attempt               Attempt?      @relation(fields: [attemptId], references: [id], onDelete: SetNull)
+  createdAt             DateTime      @default(now())
 
   @@index([userId, createdAt])
   @@index([attemptId, createdAt])

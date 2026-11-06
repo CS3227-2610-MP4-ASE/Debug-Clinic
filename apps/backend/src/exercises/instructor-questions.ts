@@ -551,8 +551,25 @@ export function createInstructorQuestions({
     listPublished(query) {
       return retrieval(async () => {
         const offset = DraftOffsetSchema.parse(query.offset ?? 0);
+        const q = query.q?.trim();
+        const where = q
+          ? {
+              ...published,
+              OR: [
+                { title: { contains: q, mode: "insensitive" as const } },
+                {
+                  versions: {
+                    some: {
+                      ...completeVersion,
+                      topic: { contains: q, mode: "insensitive" as const },
+                    },
+                  },
+                },
+              ],
+            }
+          : published;
         const rows = await prisma.exercise.findMany({
-          where: published,
+          where,
           orderBy: [{ publishedAt: "desc" }, { id: "desc" }],
           skip: offset,
           take: 51,

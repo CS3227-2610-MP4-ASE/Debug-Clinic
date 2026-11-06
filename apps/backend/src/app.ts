@@ -34,6 +34,8 @@ import {
   PublishedQuestionListQuerySchema,
   PublishedQuestionListResponseSchema,
   PublishedQuestionResponseSchema,
+  LearnerAttemptResponseSchema,
+  LearnerAttemptWriteSchema,
   type CurrentUser,
   type Role,
 } from "@debugclinic/contracts";
@@ -49,6 +51,7 @@ import type { AppConfig } from "./config/env.js";
 import { classifyDatabaseFailure } from "./db/diagnostics.js";
 import type { InstructorDrafts } from "./exercises/instructor-drafts.js";
 import type { InstructorQuestions } from "./exercises/instructor-questions.js";
+import type { LearnerAttempts } from "./exercises/learner-attempts.js";
 import { AppError, DependencyUnavailableError } from "./lib/errors.js";
 import {
   createLogger,
@@ -73,6 +76,7 @@ export interface CreateAppOptions {
   aiProvider?: AiProvider;
   instructorDrafts?: InstructorDrafts;
   instructorQuestions?: InstructorQuestions;
+  learnerAttempts?: LearnerAttempts;
   profileUpdater: ProfileUpdater;
   logger?: AppLogger;
 }
@@ -190,8 +194,11 @@ function createErrorHandler(logger: AppLogger): ErrorRequestHandler {
         code: appError.code,
         message: appError.message,
         requestId,
-        ...((request.method === "POST" || request.method === "PATCH") &&
-        request.path.startsWith("/api/v1/instructor/questions")
+        ...((request.method === "POST" ||
+          request.method === "PATCH" ||
+          request.method === "PUT") &&
+        (request.path.startsWith("/api/v1/instructor/questions") ||
+          request.path.startsWith("/api/v1/learner/questions"))
           ? {
               mutationOutcome:
                 appError.mutationOutcome ??
@@ -258,7 +265,7 @@ export function createApp(options: CreateAppOptions) {
         else callback(new AppError(403, "FORBIDDEN", "Origin is not allowed"));
       },
       credentials: true,
-      methods: ["GET", "POST", "PATCH", "DELETE", "OPTIONS"],
+      methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     }),
   );
   app.use(
@@ -502,7 +509,28 @@ export function createApp(options: CreateAppOptions) {
       );
     }),
   );
+  const requireLearnerMutation: RequestHandler = (request, _response, next) => {
+    const origin = request.header("origin");
+    if (!origin || !options.config.corsOrigins.includes(origin)) {
+      next(new AppError(403, "FORBIDDEN", "An allowed Origin is required"));
+    } else if (!request.is("application/json")) {
+      next(
+        new AppError(
+          400,
+          "BAD_REQUEST",
+          "The request body must use application/json",
+        ),
+      );
+    } else next();
+  };
   const learner = [requireUser(sessionResolver), requireRole("LEARNER")];
+  const attempts = () => {
+    if (!options.learnerAttempts)
+      throw new DependencyUnavailableError(
+        "Learner attempts are temporarily unavailable",
+      );
+    return options.learnerAttempts;
+  };
   app.get(
     "/api/v1/learner/questions",
     ...learner,
@@ -524,6 +552,55 @@ export function createApp(options: CreateAppOptions) {
         PublishedQuestionResponseSchema.parse(
           await questions().getPublished(
             DraftIdSchema.parse(request.params["id"]),
+          ),
+        ),
+      );
+    }),
+  );
+
+  app.get(
+    "/api/v1/learner/questions/:id/attempt",
+    ...learner,
+    asyncHandler(async (request, response) => {
+      response.json(
+        LearnerAttemptResponseSchema.parse(
+          await attempts().get(
+            response.locals.user!.id,
+            DraftIdSchema.parse(request.params["id"]),
+          ),
+        ),
+      );
+    }),
+  );
+  app.put(
+    "/api/v1/learner/questions/:id/attempt",
+    ...learner,
+    requireLearnerMutation,
+    validateBody(LearnerAttemptWriteSchema),
+    asyncHandler(async (request, response) => {
+      response.json(
+        LearnerAttemptResponseSchema.parse(
+          await attempts().save(
+            response.locals.user!.id,
+            DraftIdSchema.parse(request.params["id"]),
+            request.body,
+          ),
+        ),
+      );
+    }),
+  );
+  app.post(
+    "/api/v1/learner/questions/:id/attempt/submit",
+    ...learner,
+    requireLearnerMutation,
+    validateBody(LearnerAttemptWriteSchema),
+    asyncHandler(async (request, response) => {
+      response.json(
+        LearnerAttemptResponseSchema.parse(
+          await attempts().submit(
+            response.locals.user!.id,
+            DraftIdSchema.parse(request.params["id"]),
+            request.body,
           ),
         ),
       );

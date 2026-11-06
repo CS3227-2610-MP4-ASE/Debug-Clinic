@@ -122,3 +122,64 @@ it("requires canonical keys, bounded revisions and strict state timestamps/publi
     }).success,
   ).toBe(false);
 });
+
+describe("learner attempt contracts", () => {
+  const input = {
+    code: "print('ok')\n",
+    reasoning: "I fixed the missing case.",
+    expectedRevision: null,
+  };
+  it("accepts absent and saved revisions, and preserves Python text", () => {
+    expect(contracts.LearnerAttemptWriteSchema.parse(input)).toEqual(input);
+    expect(
+      contracts.LearnerAttemptWriteSchema.parse({
+        ...input,
+        expectedRevision: 3,
+      }).expectedRevision,
+    ).toBe(3);
+  });
+  it("rejects oversized, blank, nulled and extra learner write fields", () => {
+    for (const value of [
+      { ...input, code: "  " },
+      { ...input, code: "x".repeat(20_001) },
+      { ...input, reasoning: "x".repeat(5_001) },
+      { ...input, code: "x\0y" },
+      { ...input, expectedRevision: -1 },
+      { ...input, learnerId: "forged" },
+    ])
+      expect(contracts.LearnerAttemptWriteSchema.safeParse(value).success).toBe(
+        false,
+      );
+  });
+  it("counts surrogate pairs as two UTF16 units", () => {
+    expect(
+      contracts.LearnerAttemptWriteSchema.safeParse({
+        ...input,
+        code: "x".repeat(19_998) + "😀",
+      }).success,
+    ).toBe(true);
+    expect(
+      contracts.LearnerAttemptWriteSchema.safeParse({
+        ...input,
+        code: "x".repeat(19_999) + "😀",
+      }).success,
+    ).toBe(false);
+  });
+  it("bounds optional server search before pagination", () => {
+    expect(
+      contracts.PublishedQuestionListQuerySchema.safeParse({
+        offset: "0",
+        q: "lists",
+      }).success,
+    ).toBe(true);
+    expect(
+      contracts.PublishedQuestionListQuerySchema.safeParse({
+        q: "x".repeat(201),
+      }).success,
+    ).toBe(false);
+    expect(
+      contracts.PublishedQuestionListQuerySchema.safeParse({ q: "bad\0term" })
+        .success,
+    ).toBe(false);
+  });
+});

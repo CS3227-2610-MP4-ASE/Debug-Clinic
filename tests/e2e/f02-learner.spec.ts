@@ -25,10 +25,13 @@ test("B28/B31 public detail is literal, has disabled Coming soon hint and no pri
 }) => {
   const calls: string[] = [];
   await page.route("**/api/v1/learner/**", (route) => {
-    calls.push(
-      `${route.request().method()} ${new URL(route.request().url()).pathname}`,
-    );
-    return route.fulfill({ json: { question: published } });
+    const pathname = new URL(route.request().url()).pathname;
+    calls.push(`${route.request().method()} ${pathname}`);
+    return route.fulfill({
+      json: pathname.endsWith("/attempt")
+        ? { attempt: null }
+        : { question: published },
+    });
   });
   await page.goto(`/learner/questions/${published.id}`);
   await expect(page.getByRole("heading", { level: 1 })).toHaveText(
@@ -52,7 +55,10 @@ test("B28/B31 public detail is literal, has disabled Coming soon hint and no pri
   // React StrictMode may repeat initial GET effects in the development server.
   expect(calls.length).toBeGreaterThan(0);
   expect(new Set(calls)).toEqual(
-    new Set([`GET /api/v1/learner/questions/${published.id}`]),
+    new Set([
+      `GET /api/v1/learner/questions/${published.id}`,
+      `GET /api/v1/learner/questions/${published.id}/attempt`,
+    ]),
   );
   expect(
     await page.evaluate(() => document.documentElement.scrollWidth),
