@@ -24,8 +24,12 @@ interface LearnerWorkspaceProps {
   onSubmit: () => void;
 }
 
+const maxEditorHeight = () =>
+  Math.max(MIN_EDITOR, Math.min(MAX_EDITOR, window.innerHeight - 420));
+const clampEditorHeight = (height: number) =>
+  Math.max(MIN_EDITOR, Math.min(maxEditorHeight(), height));
 const initialHeight = () =>
-  Math.max(MIN_EDITOR, Math.min(320, window.innerHeight * 0.38));
+  clampEditorHeight(Math.min(320, window.innerHeight * 0.38));
 
 export function LearnerWorkspace({
   code,
@@ -53,6 +57,12 @@ export function LearnerWorkspace({
   const dragStart = useRef<{ y: number; height: number } | null>(null);
 
   useEffect(() => () => stopRun.current?.(), []);
+  useEffect(() => {
+    const handleResize = () =>
+      setEditorHeight((height) => clampEditorHeight(height));
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
   useEffect(() => {
     if (disabled) stopRun.current?.();
   }, [disabled]);
@@ -91,12 +101,8 @@ export function LearnerWorkspace({
         })),
     });
   };
-  const maxHeight = () =>
-    Math.max(MIN_EDITOR, Math.min(MAX_EDITOR, window.innerHeight - 420));
   const resize = (delta: number) =>
-    setEditorHeight((current) =>
-      Math.max(MIN_EDITOR, Math.min(maxHeight(), current + delta)),
-    );
+    setEditorHeight((current) => clampEditorHeight(current + delta));
 
   return (
     <Stack
@@ -174,7 +180,7 @@ export function LearnerWorkspace({
         aria-label="Resize editor and output"
         aria-orientation="horizontal"
         aria-valuemin={MIN_EDITOR}
-        aria-valuemax={maxHeight()}
+        aria-valuemax={maxEditorHeight()}
         aria-valuenow={editorHeight}
         tabIndex={0}
         onKeyDown={(event) => {
@@ -190,14 +196,8 @@ export function LearnerWorkspace({
         onPointerMove={(event) => {
           if (dragStart.current)
             setEditorHeight(
-              Math.max(
-                MIN_EDITOR,
-                Math.min(
-                  maxHeight(),
-                  dragStart.current.height +
-                    event.clientY -
-                    dragStart.current.y,
-                ),
+              clampEditorHeight(
+                dragStart.current.height + event.clientY - dragStart.current.y,
               ),
             );
         }}

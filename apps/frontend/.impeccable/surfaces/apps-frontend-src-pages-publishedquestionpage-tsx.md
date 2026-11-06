@@ -19,7 +19,7 @@ OWN-WORLD: Continue the authenticated clinic’s light MUI language: warm paper 
 
 STORY: The learner reads verified problem details, edits the published starting code or saved attempt, optionally runs it or tests their own assertions with temporary stdin, explains the fix, then saves or submits. Local run output is advisory and never an official grade.
 
-FIRST VIEWPORT: At desktop widths, show independently scrolling problem details in the left 40% and the compact editor workspace in the right 60%. Put Python 3 and Run/Test/Stop above the editor; keep scratch tests, stdin, reasoning, output, Save draft, and Submit final attempt reachable without a floating overlay. Stack panes on narrow screens.
+FIRST VIEWPORT: At desktop widths, show a bounded white problem pane in the left 40% and the compact editor workspace in the right 60%. Keep a fixed context header with Description, the published title, and topic while Problem, Starting code, and Expected behavior scroll independently below it. Put Python 3 and Run/Test/Stop above the editor; keep scratch tests, stdin, reasoning, output, Save draft, and Submit final attempt reachable without a floating overlay. Stack panes on narrow screens.
 
 FORM: Extend the existing published-question workspace using the selected compact MUI direction, position 3 in the incumbent shell, seed key 7f6c67df.
 

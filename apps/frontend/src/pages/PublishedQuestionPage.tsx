@@ -389,51 +389,128 @@ export function PublishedQuestionPage() {
             overflow: { xs: "visible", md: "hidden" },
           }}
         >
-          <Stack
+          <Box
             component="article"
             aria-label="Question details"
-            gap={1.25}
-            sx={{ minWidth: 0, minHeight: 0, overflow: "auto", pr: 1 }}
+            sx={{
+              minWidth: 0,
+              minHeight: 0,
+              display: "flex",
+              flexDirection: "column",
+              bgcolor: "background.paper",
+              border: 1,
+              borderColor: "divider",
+              borderRadius: 1.5,
+              overflow: "hidden",
+            }}
           >
-            <Typography component="h2" variant="h6">
-              Description
-            </Typography>
-            <Typography color="text.secondary">
-              Topic: {question.topic}
-            </Typography>
-            <Typography component="h2" variant="h6">
-              Problem
-            </Typography>
-            <Typography
-              sx={{ whiteSpace: "pre-wrap", overflowWrap: "anywhere" }}
-            >
-              {question.problemStatement}
-            </Typography>
-            <Typography component="h2" variant="h6">
-              Starting code
-            </Typography>
-            <Box
-              component="pre"
+            <Stack
+              component="header"
+              gap={0.5}
               sx={{
-                m: 0,
-                p: 1.5,
-                bgcolor: "background.paper",
-                whiteSpace: "pre-wrap",
-                overflowWrap: "anywhere",
-                fontFamily: "monospace",
+                flexShrink: 0,
+                px: 2,
+                py: 1.5,
+                borderBottom: 1,
+                borderColor: "divider",
               }}
             >
-              {question.buggyCode}
-            </Box>
-            <Typography component="h2" variant="h6">
-              Expected behavior
-            </Typography>
-            <Typography
-              sx={{ whiteSpace: "pre-wrap", overflowWrap: "anywhere" }}
+              <Typography component="h2" variant="h6">
+                Description
+              </Typography>
+              <Typography
+                component="h3"
+                variant="subtitle1"
+                sx={{ overflowWrap: "anywhere" }}
+              >
+                {question.title}
+              </Typography>
+              <Typography color="text.secondary">
+                Topic: {question.topic}
+              </Typography>
+            </Stack>
+            <Stack
+              component="section"
+              aria-label="Question description"
+              gap={1.25}
+              sx={{
+                minWidth: 0,
+                minHeight: 0,
+                flex: 1,
+                overflow: "auto",
+                p: 2,
+              }}
             >
-              {question.expectedBehavior}
-            </Typography>
-          </Stack>
+              <Box
+                component="section"
+                aria-labelledby="question-problem-heading"
+              >
+                <Typography
+                  id="question-problem-heading"
+                  component="h2"
+                  variant="h6"
+                >
+                  Problem
+                </Typography>
+                <Typography
+                  sx={{
+                    maxWidth: "72ch",
+                    whiteSpace: "pre-wrap",
+                    overflowWrap: "anywhere",
+                  }}
+                >
+                  {question.problemStatement}
+                </Typography>
+              </Box>
+              <Box
+                component="section"
+                aria-labelledby="question-starting-code-heading"
+              >
+                <Typography
+                  id="question-starting-code-heading"
+                  component="h2"
+                  variant="h6"
+                >
+                  Starting code
+                </Typography>
+                <Box
+                  component="pre"
+                  sx={{
+                    m: 0,
+                    maxWidth: "72ch",
+                    p: 1.5,
+                    bgcolor: "background.default",
+                    whiteSpace: "pre-wrap",
+                    overflowWrap: "anywhere",
+                    fontFamily: "monospace",
+                  }}
+                >
+                  {question.buggyCode}
+                </Box>
+              </Box>
+              <Box
+                component="section"
+                aria-labelledby="question-expected-behavior-heading"
+              >
+                <Typography
+                  id="question-expected-behavior-heading"
+                  component="h2"
+                  variant="h6"
+                >
+                  Expected behavior
+                </Typography>
+                <Typography
+                  sx={{
+                    maxWidth: "72ch",
+                    whiteSpace: "pre-wrap",
+                    overflowWrap: "anywhere",
+                  }}
+                >
+                  {question.expectedBehavior}
+                </Typography>
+              </Box>
+            </Stack>
+          </Box>
           <LearnerWorkspace
             code={code}
             reasoning={reasoning}

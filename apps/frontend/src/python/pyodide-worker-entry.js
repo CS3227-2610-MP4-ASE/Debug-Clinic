@@ -5,6 +5,19 @@ const MAX_CODE = 20_000;
 const MAX_TESTS = 10_000;
 const MAX_STDIN = 8_000;
 const MAX_OUTPUT = 64 * 1024;
+const TRUNCATION_NOTICE = "\n[Output truncated at 64 KiB.]";
+const utf8Bytes = (value) => new TextEncoder().encode(value).byteLength;
+const boundedError = (value) => {
+  let result = "";
+  let bytes = 0;
+  for (const scalar of String(value)) {
+    const size = utf8Bytes(scalar);
+    if (bytes + size > 8_000) break;
+    result += scalar;
+    bytes += size;
+  }
+  return result;
+};
 let active = false;
 const workerScope = globalThis;
 const nativePostMessage = workerScope.postMessage.bind(workerScope);
@@ -34,19 +47,79 @@ workerScope.onmessage = async ({ data }) => {
     nativePostMessage({ type, nonce, runId, ...fields });
   let outputSize = 0;
   let truncated = false;
-  const append = (channel, value) => {
-    const remaining = MAX_OUTPUT - 48 - outputSize;
-    if (remaining <= 0) {
-      truncated = true;
-      return;
+  const outputLimit = MAX_OUTPUT - utf8Bytes(TRUNCATION_NOTICE) - 6;
+  const decoders = {
+    stdout: new TextDecoder("utf-8"),
+    stderr: new TextDecoder("utf-8"),
+  };
+  let pyodide;
+  let originalOutputStreams;
+  const appendText = (channel, text) => {
+    if (!text) return;
+    let safe = "";
+    for (const value of text) {
+      const scalar =
+        value.length === 1 &&
+        value.charCodeAt(0) >= 0xd800 &&
+        value.charCodeAt(0) <= 0xdfff
+          ? "\ufffd"
+          : value;
+      const bytes = utf8Bytes(scalar);
+      if (outputSize + bytes > outputLimit) {
+        truncated = true;
+        break;
+      }
+      safe += scalar;
+      outputSize += bytes;
     }
-    const text = String(value);
-    const chunk = text.slice(0, remaining);
-    outputSize += chunk.length;
-    if (chunk.length < text.length) truncated = true;
-    send("output", { channel, text: chunk });
+    if (safe) send("output", { channel, text: safe });
+  };
+  const writeBytes = (channel, input) => {
+    const decoder = decoders[channel];
+    for (let offset = 0; offset < input.length; offset += 4096) {
+      const decoded = decoder.decode(input.subarray(offset, offset + 4096), {
+        stream: true,
+      });
+      appendText(channel, decoded);
+      if (truncated) break;
+    }
+    return input.length;
+  };
+  const flushOutput = () => {
+    for (const channel of ["stdout", "stderr"]) {
+      appendText(channel, decoders[channel].decode());
+    }
+    if (truncated) {
+      send("output", { channel: "notice", text: TRUNCATION_NOTICE });
+      outputSize += utf8Bytes(TRUNCATION_NOTICE);
+    }
+  };
+  const flushPythonStreams = () => {
+    if (!pyodide || !originalOutputStreams) return;
+    let flushFailed = false;
+    let flushError;
+    for (const [index, name] of [
+      "__debugclinic_original_stdout",
+      "__debugclinic_original_stderr",
+    ].entries()) {
+      const stream = originalOutputStreams[index];
+      pyodide.globals.set(name, stream);
+      try {
+        pyodide.runPython(`${name}.flush()`);
+      } catch (error) {
+        if (!flushFailed) flushError = error;
+        flushFailed = true;
+      } finally {
+        pyodide.globals.delete(name);
+        stream.destroy();
+      }
+    }
+    originalOutputStreams = undefined;
+    if (flushFailed) throw flushError;
   };
 
+  let executionFailed = false;
+  let executionError;
   try {
     send("loading");
     const stdlibUrl = URL.createObjectURL(new Blob([assets.stdlib]));
@@ -63,12 +136,12 @@ workerScope.onmessage = async ({ data }) => {
       }
       return originalFetch(input, init);
     };
-    const pyodide = await loadPyodide({
+    pyodide = await loadPyodide({
       indexURL: "https://invalid.invalid/",
       stdLibURL: stdlibUrl,
       lockFileContents: assets.lock,
-      stdout: (value) => append("stdout", `${value}\n`),
-      stderr: (value) => append("stderr", `${value}\n`),
+      stdout: (value) => appendText("stdout", String(value)),
+      stderr: (value) => appendText("stderr", String(value)),
       createPyodideModule: (settings) =>
         createPyodideModule({
           ...settings,
@@ -76,11 +149,19 @@ workerScope.onmessage = async ({ data }) => {
         }),
     });
     URL.revokeObjectURL(stdlibUrl);
+    pyodide.setStdout({ write: (buffer) => writeBytes("stdout", buffer) });
+    pyodide.setStderr({ write: (buffer) => writeBytes("stderr", buffer) });
     send("running");
     pyodide.globals.set("__debugclinic_stdin", stdin);
     pyodide.runPython(
       `import io\nimport sys\nsys.stdin = io.StringIO(__debugclinic_stdin)`,
     );
+    const streamProxies = pyodide.runPython("[sys.stdout, sys.stderr]");
+    try {
+      originalOutputStreams = streamProxies.toJs({ create_pyproxies: true });
+    } finally {
+      streamProxies.destroy();
+    }
     await pyodide.runPythonAsync(code);
     if (mode === "test") {
       pyodide.globals.set("__debugclinic_tests", tests);
@@ -88,11 +169,22 @@ workerScope.onmessage = async ({ data }) => {
         "exec(compile(__debugclinic_tests, '<scratch tests>', 'exec'))",
       );
     }
-    if (truncated) append("notice", "Output was truncated at 64 KiB.");
-    send("completed");
   } catch (error) {
-    send("error", { message: String(error).slice(0, 8_000) });
+    executionFailed = true;
+    executionError = error;
+  } finally {
+    try {
+      flushPythonStreams();
+    } catch (error) {
+      if (!executionFailed) {
+        executionFailed = true;
+        executionError = error;
+      }
+    }
+    flushOutput();
   }
+  if (executionFailed) send("error", { message: boundedError(executionError) });
+  else send("completed");
 };
 
 workerScope.postMessage = () => {};

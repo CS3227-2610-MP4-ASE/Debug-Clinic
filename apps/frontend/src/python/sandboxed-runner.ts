@@ -19,6 +19,25 @@ const MAX_OUTPUT = 64 * 1024;
 const INIT_TIMEOUT_MS = 30_000;
 const EXECUTION_TIMEOUT_MS = 5_000;
 const ASSET_BASE = "/pyodide-runtime/";
+const utf8Encoder = new TextEncoder();
+const utf8Bytes = (value: string) => utf8Encoder.encode(value).byteLength;
+const boundedText = (value: string, limit: number) => {
+  let result = "";
+  let size = 0;
+  for (const valueScalar of value) {
+    const scalar =
+      valueScalar.length === 1 &&
+      valueScalar.charCodeAt(0) >= 0xd800 &&
+      valueScalar.charCodeAt(0) <= 0xdfff
+        ? "\ufffd"
+        : valueScalar;
+    const bytes = utf8Bytes(scalar);
+    if (size + bytes > limit) break;
+    result += scalar;
+    size += bytes;
+  }
+  return { text: result, bytes: size };
+};
 
 const sandboxBootstrap = (
   parentOrigin: string,
@@ -27,6 +46,19 @@ const sandboxBootstrap = (
 ) => {
   let worker: Worker | undefined;
   let objectUrl: string | undefined;
+  const textBytes = (value: string) =>
+    new TextEncoder().encode(value).byteLength;
+  const shortError = (value: unknown) => {
+    let text = "";
+    let bytes = 0;
+    for (const scalar of String(value)) {
+      const size = new TextEncoder().encode(scalar).byteLength;
+      if (bytes + size > 8_000) break;
+      text += scalar;
+      bytes += size;
+    }
+    return text;
+  };
   const post = (message: Record<string, unknown>) =>
     parent.postMessage({ nonce, runId, ...message }, parentOrigin);
   const validParent = (event: MessageEvent) =>
@@ -66,7 +98,7 @@ const sandboxBootstrap = (
           data.type === "output" &&
           ["stdout", "stderr", "notice"].includes(data.channel) &&
           typeof data.text === "string" &&
-          data.text.length <= 64 * 1024
+          textBytes(data.text) <= 64 * 1024
         )
           post({ type: "output", channel: data.channel, text: data.text });
         else if (
@@ -76,15 +108,12 @@ const sandboxBootstrap = (
         )
           post({ type: data.type });
         else if (data.type === "error" && typeof data.message === "string")
-          post({ type: "error", message: data.message.slice(0, 8_000) });
+          post({ type: "error", message: shortError(data.message) });
       };
       worker.onerror = (event) =>
         post({
           type: "error",
-          message: String(event.message || "Python worker failed").slice(
-            0,
-            8_000,
-          ),
+          message: shortError(event.message || "Python worker failed"),
         });
       worker.postMessage(
         {
@@ -101,7 +130,7 @@ const sandboxBootstrap = (
       );
       post({ type: "loading" });
     } catch (error) {
-      post({ type: "error", message: String(error).slice(0, 8_000) });
+      post({ type: "error", message: shortError(error) });
     }
   });
   addEventListener("unload", () => {
@@ -111,14 +140,20 @@ const sandboxBootstrap = (
   post({ type: "ready" });
 };
 
-function boundedAsset(response: Response, limit: number): Promise<ArrayBuffer> {
+function boundedAsset(
+  response: Response,
+  limit: number,
+  signal: AbortSignal,
+): Promise<ArrayBuffer> {
   if (!response.ok || response.type === "opaque")
     throw new Error("The local Python runtime could not be loaded.");
   const declared = Number(response.headers.get("content-length") ?? 0);
   if (declared > limit)
     throw new Error("A local Python runtime asset exceeded its size limit.");
+  if (signal.aborted) throw new DOMException("Aborted", "AbortError");
   if (!response.body)
     return response.arrayBuffer().then((bytes) => {
+      if (signal.aborted) throw new DOMException("Aborted", "AbortError");
       if (bytes.byteLength > limit)
         throw new Error(
           "A local Python runtime asset exceeded its size limit.",
@@ -127,6 +162,8 @@ function boundedAsset(response: Response, limit: number): Promise<ArrayBuffer> {
     });
   return (async () => {
     const reader = response.body!.getReader();
+    const cancelReader = () => void reader.cancel().catch(() => {});
+    signal.addEventListener("abort", cancelReader, { once: true });
     const chunks: Uint8Array[] = [];
     let size = 0;
     try {
@@ -142,7 +179,9 @@ function boundedAsset(response: Response, limit: number): Promise<ArrayBuffer> {
         }
         chunks.push(value);
       }
+      if (signal.aborted) throw new DOMException("Aborted", "AbortError");
     } finally {
+      signal.removeEventListener("abort", cancelReader);
       reader.releaseLock();
     }
     const bytes = new Uint8Array(size);
@@ -155,58 +194,101 @@ function boundedAsset(response: Response, limit: number): Promise<ArrayBuffer> {
   })();
 }
 
-let cachedRuntimeAssets: Promise<{
+type RuntimeAssets = {
   worker: string;
   wasm: ArrayBuffer;
   stdlib: ArrayBuffer;
   lock: string;
-}> | null = null;
+};
+let cachedRuntimeAssets: RuntimeAssets | null = null;
+let loadGeneration = 0;
+let pendingRuntimeLoad: {
+  generation: number;
+  runId: string;
+  controller: AbortController;
+  promise: Promise<RuntimeAssets>;
+} | null = null;
 
-async function fetchRuntimeAssets() {
-  cachedRuntimeAssets ??= (async () => {
-    const names = [
-      "worker.js",
-      "pyodide.asm.wasm",
-      "python_stdlib.zip",
-      "pyodide-lock.json",
-    ] as const;
-    const limits = [
-      4 * 1024 * 1024,
-      12 * 1024 * 1024,
-      4 * 1024 * 1024,
-      512 * 1024,
-    ];
-    const values = await Promise.all(
-      names.map(async (name, index) => {
-        const url = new URL(`${ASSET_BASE}${name}`, window.location.origin);
-        const response = await fetch(url, {
-          credentials: "omit",
-          mode: "same-origin",
-          redirect: "error",
-          cache: "no-cache",
-        });
-        return boundedAsset(response, limits[index]!);
-      }),
+function fetchRuntimeAssets(runId: string) {
+  let load = pendingRuntimeLoad;
+  if (!cachedRuntimeAssets && (!load || load.controller.signal.aborted)) {
+    const generation = ++loadGeneration;
+    const controller = new AbortController();
+    const promise = (async () => {
+      const names = [
+        "worker.js",
+        "pyodide.asm.wasm",
+        "python_stdlib.zip",
+        "pyodide-lock.json",
+      ] as const;
+      const limits = [
+        4 * 1024 * 1024,
+        12 * 1024 * 1024,
+        4 * 1024 * 1024,
+        512 * 1024,
+      ];
+      const values = await Promise.all(
+        names.map(async (name, index) => {
+          const url = new URL(`${ASSET_BASE}${name}`, window.location.origin);
+          const response = await fetch(url, {
+            credentials: "omit",
+            mode: "same-origin",
+            redirect: "error",
+            cache: "no-cache",
+            signal: controller.signal,
+          });
+          return boundedAsset(response, limits[index]!, controller.signal);
+        }),
+      );
+      return {
+        worker: new TextDecoder().decode(values[0]!),
+        wasm: values[1]!,
+        stdlib: values[2]!,
+        lock: new TextDecoder().decode(values[3]!),
+      };
+    })().catch((error: unknown) => {
+      controller.abort();
+      throw error;
+    });
+    load = { generation, runId, controller, promise };
+    pendingRuntimeLoad = load;
+    void promise.then(
+      (assets) => {
+        if (
+          pendingRuntimeLoad === load &&
+          load?.generation === generation &&
+          !controller.signal.aborted
+        ) {
+          cachedRuntimeAssets = assets;
+          pendingRuntimeLoad = null;
+        }
+      },
+      () => {
+        if (pendingRuntimeLoad === load) pendingRuntimeLoad = null;
+      },
     );
-    return {
-      worker: new TextDecoder().decode(values[0]!),
-      wasm: values[1]!,
-      stdlib: values[2]!,
-      lock: new TextDecoder().decode(values[3]!),
-    };
-  })();
-  let assets;
-  try {
-    assets = await cachedRuntimeAssets;
-  } catch (error) {
-    cachedRuntimeAssets = null;
-    throw error;
   }
+  const selected = load;
+  const promise = cachedRuntimeAssets
+    ? Promise.resolve(cachedRuntimeAssets)
+    : selected!.promise;
   return {
-    worker: assets.worker,
-    wasm: assets.wasm.slice(0),
-    stdlib: assets.stdlib.slice(0),
-    lock: assets.lock,
+    promise: promise.then((assets) => ({
+      worker: assets.worker,
+      wasm: assets.wasm.slice(0),
+      stdlib: assets.stdlib.slice(0),
+      lock: assets.lock,
+    })),
+    cancel() {
+      if (
+        pendingRuntimeLoad === selected &&
+        selected?.runId === runId &&
+        !cachedRuntimeAssets
+      ) {
+        pendingRuntimeLoad = null;
+        selected!.controller.abort();
+      }
+    },
   };
 }
 
@@ -246,14 +328,34 @@ export function startPythonRun(request: PythonRunRequest): () => void {
 
   const nonce = crypto.randomUUID();
   const runId = crypto.randomUUID();
+  const boundedError = (value: unknown) => {
+    let text = "";
+    let bytes = 0;
+    for (const valueScalar of String(value)) {
+      const scalar =
+        valueScalar.length === 1 &&
+        valueScalar.charCodeAt(0) >= 0xd800 &&
+        valueScalar.charCodeAt(0) <= 0xdfff
+          ? "\ufffd"
+          : valueScalar;
+      const encoded = utf8Encoder.encode(scalar);
+      if (bytes + encoded.byteLength > 8_000) break;
+      text += scalar;
+      bytes += encoded.byteLength;
+    }
+    return text;
+  };
   let iframe: HTMLIFrameElement | null = null;
   let finished = false;
   let totalOutput = 0;
+  let readyHandled = false;
+  let assetLoad: ReturnType<typeof fetchRuntimeAssets> | null = null;
   let executionTimer = 0;
   let initTimer = 0;
   const cleanup = () => {
     if (finished) return;
     finished = true;
+    assetLoad?.cancel();
     clearTimeout(executionTimer);
     clearTimeout(initTimer);
     window.removeEventListener("message", receive);
@@ -282,7 +384,10 @@ export function startPythonRun(request: PythonRunRequest): () => void {
     )
       return;
     if (data.type === "ready") {
-      void fetchRuntimeAssets()
+      if (readyHandled) return;
+      readyHandled = true;
+      assetLoad = fetchRuntimeAssets(runId);
+      void assetLoad.promise
         .then((assets) => {
           if (finished || !iframe?.contentWindow) return;
           iframe.contentWindow.postMessage(
@@ -336,14 +441,16 @@ export function startPythonRun(request: PythonRunRequest): () => void {
     ) {
       const remaining = MAX_OUTPUT - totalOutput;
       if (remaining <= 0) return;
-      const text = data.text.slice(0, remaining);
-      totalOutput += text.length;
-      request.onOutput(data.channel, text);
+      const bounded = boundedText(data.text, remaining);
+      if (bounded.bytes > 0) {
+        totalOutput += bounded.bytes;
+        request.onOutput(data.channel, bounded.text);
+      }
     } else if (data.type === "completed") {
       request.onState("completed");
       cleanup();
     } else if (data.type === "error") {
-      fail("error", String(data.message).slice(0, 8_000));
+      fail("error", boundedError(data.message));
     }
   };
 
