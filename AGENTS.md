@@ -43,7 +43,8 @@ evaluation record.
   as well as PATH. Use the configured Node major for verification.
   App-bundled Node can reject native modules under library validation; verify
   with a standalone runtime of the same major before changing dependencies.
-  Inspect a diagnostic result before sending another agent a success claim.
+  Inspect diagnostics and the consolidated reproduction before claiming success
+  or a new product defect; an intermediate test failure may be a harness issue.
 - Keep generated TypeScript build-info files ignored. When changing visible
   wording, update affected browser assertions before running the suite.
   Do not pass `.env` files to Prettier; it has no parser for them.
@@ -100,7 +101,9 @@ evaluation record.
   collection with database variables unset.
 - A failed mutation reply can follow a committed write. Reconcile authoritative
   revisions before another write while retaining local edits and session guards;
-  test lost replies, failed recovery reads and multiline editor overflow.
+  test lost replies, failed recovery reads and multiline editor overflow. Verify
+  clipped-layout hit areas before mouse activation: Playwright locator clicks can
+  programmatically scroll hidden ancestors that users cannot scroll.
 
 # Skill evaluation
 

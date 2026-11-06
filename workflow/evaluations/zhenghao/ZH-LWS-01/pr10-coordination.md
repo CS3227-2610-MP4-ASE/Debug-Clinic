@@ -57,3 +57,58 @@ Implementation prompt was sent to the existing implementation session through
 `send_message_to_thread`, explicitly requesting `gpt-6-luna` / medium.
 Coordinator owns remote push after required checks and independent verdicts.
 Raw telemetry remains outside Git; use a separate sanitized PR10 checkpoint.
+
+## Verified handoff
+
+Repair source `b5837fe`; acceptance freeze `3427713`; independent tests/report
+`792b387`. Functional, standards and security verdicts are pass. Normal no-URL
+browser suite: 168 passes and 20 expected opt-in skips (includes 24 new cases).
+Deterministic suite: 531 passes (includes 15 isolated opt-in guard cases).
+Separate real-cookie/PostgreSQL composed journeys: 8 passes. Lint, typecheck,
+scoped format, full production/declaration build and 16 built-asset route/viewport
+loads pass. Coordinator workflow-monitor suite: 39 passes. No API/schema/backend
+business-logic change; unchanged integration/package checks were not repeated.
+
+Original-source overlays independently reproduce the save/conflict/retry and
+desktop clipping failures; repaired source hashes remained unchanged. The first
+layout probe permitted locator auto-scroll, and a later unsupported visible-height
+threshold rejected a reachable action. The final frozen-outcome test uses actual
+clipping-center hit tests and wheel/mouse activation; it fails original desktop
+code and passes all six repaired layout cases. Coordinator prematurely announced
+the intermediate harness failure as a product defect, then corrected that claim.
+AGENTS guidance now requires consolidated reproduction before such claims.
+
+Current-turn model metadata verified implementation `gpt-6-luna` / medium and
+testing `gpt-6.1-sol` / high. Implementation observed cumulative checkpoint
+35,040,974 minus preceding delivery 33,208,747 = 1,832,227 additional tokens,
+exceeding the initial 1.5m estimate. Testing checkpoint 10,918,225 minus 9,033,592
+= 1,884,633, exceeding the initial 1m estimate. Both retained the requested model;
+execution was already Luna and testing must remain Sol high. Coordinator narrowed
+repeated reads/output and omitted unchanged layers without weakening acceptance.
+These are cumulative telemetry checkpoints, not final task totals or proof of
+cost/token savings. Subsequent documentation and final orchestration are separate.
+
+Documentation checkpoint: cumulative 3,989,276 minus preceding delivery 2,638,905
+= 1,350,371 additional observed tokens, exceeding the initial 0.5m estimate.
+Current writer model/effort was verified as `gpt-6-luna` / medium. Coordinator
+requested bounded reads and completion of only the targeted evidence-based docs;
+no budget was raised or unsupported savings claim added. The earlier fixed
+reflection snapshot remains unchanged.
+
+The owned disposable PostgreSQL container was inspected by exact ID/name/image
+and loopback mapping and removed after all composed checks completed. Product
+source/setup still equals tested `b5837fe`; no backend/API/schema repair occurred.
+The refreshed origin/master remains `036cca6`, already an ancestor of this branch.
+Local master remains untouched. The user explicitly authorizes pushing the
+verified changes to the existing `zh/learner-workspace`; no new branch/PR, remote
+comment, merge or deployment is authorized here. Remote CI results must be
+observed after that push, not inferred from the local pass.
+
+Documentation commit `178e864` passed coordinator accuracy review and scoped
+format/link checks. DG/UG describe verified behavior; the singular reflection
+adds only relevant supported learning, preserving the fixed resource checkpoint.
+The final local handoff snapshot is `monitoring-pr10/`. It includes the original
+delivery and continued stage sessions; it is not a pure PR10 bill or quota record.
+Historical coverage/unsupported-record diagnostics remain visible, and later
+push/CI observation/chat activity is outside this snapshot. No causal savings
+claim is made. Royden's monitor/schema/templates/output paths remain unchanged.
