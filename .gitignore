@@ -13,6 +13,7 @@ generated/prisma/
 generated/deployment.json
 *.tsbuildinfo
 .impeccable/review/
+docs/reflection-requirement.md
 
 # Live agent telemetry stays local; commit only derived milestone evidence.
 .workflow-state/
