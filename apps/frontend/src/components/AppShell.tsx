@@ -50,11 +50,13 @@ export function AppShell({ children }: PropsWithChildren) {
       await signOut();
       setOpen(false);
       await navigate("/sign-in", { replace: true });
+      return true;
     } catch {
       setOpen(false);
       setSignOutError(
         "You are not signed out yet. Check your connection and try Sign out again.",
       );
+      return false;
     } finally {
       setSigningOut(false);
     }

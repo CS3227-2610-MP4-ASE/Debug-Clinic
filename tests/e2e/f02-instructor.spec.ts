@@ -29,6 +29,7 @@ async function install(page: Page) {
     user: { ...f01Owner } as typeof f01Owner | null,
     patchOutcome: "success",
     removeCalls: 0,
+    removeOutcome: "success",
   };
   await page.route("**/api/v1/me", (route) =>
     state.user
@@ -53,6 +54,20 @@ async function install(page: Page) {
       });
     if (url.pathname.endsWith("/remove")) {
       state.removeCalls++;
+      if (state.removeOutcome === "unknown")
+        return route.abort("connectionreset");
+      if (state.removeOutcome === "rollback")
+        return route.fulfill({
+          status: 503,
+          json: {
+            error: {
+              code: "DEPENDENCY_UNAVAILABLE",
+              message: "Removal did not apply. Try again.",
+              requestId: "f02",
+              mutationOutcome: "NOT_APPLIED",
+            },
+          },
+        });
       return route.fulfill({
         json: {
           question: {
@@ -126,6 +141,8 @@ async function install(page: Page) {
           },
         });
       state.question = { ...state.question, ...body.draft, revision: 1 };
+      if (state.patchOutcome === "unknown")
+        return route.abort("connectionreset");
       return route.fulfill({ json: { question: state.question } });
     }
     state.gets++;
@@ -334,6 +351,16 @@ test("B35 logout resolves discard first and a different identity receives a fres
     f01Draft.title,
   );
   expect(state.gets).toBeGreaterThan(1);
+  await page
+    .getByRole("textbox", { name: /^Title/ })
+    .fill("Discard on explicit sign-out");
+  if ((page.viewportSize()?.width ?? 1280) < 600)
+    await page.getByRole("button", { name: "Open navigation" }).click();
+  await page.getByRole("button", { name: "Sign out", exact: true }).click();
+  await page.getByRole("button", { name: "Leave", exact: true }).click();
+  await expect(page).toHaveURL(/\/sign-in$/);
+  expect(signouts).toBe(1);
+  await expect(page.getByRole("textbox", { name: /^Title/ })).toHaveCount(0);
 });
 
 test("B24/B25 Remove has exact cancellation/focus and retains read-only Removed record", async ({
@@ -449,3 +476,134 @@ test("B35 independent AuthProvider session loss retains dirty saved editor and e
   await expect(page).toHaveURL(/\/sign-in$/);
   await expect(page.getByRole("textbox", { name: /^Title/ })).toHaveCount(0);
 });
+
+test("B20 failed explicit logout restores Link and native-unload guards for retained edits", async ({
+  page,
+}) => {
+  await install(page);
+  await page.route("**/api/auth/sign-out", (route) =>
+    route.fulfill({
+      status: 503,
+      json: { message: "Synthetic logout unavailable" },
+    }),
+  );
+  await page.goto(`/instructor/questions/${question.id}`);
+  await page
+    .getByRole("textbox", { name: /^Title/ })
+    .fill("Retained after failed logout");
+  if ((page.viewportSize()?.width ?? 1280) < 600)
+    await page.getByRole("button", { name: "Open navigation" }).click();
+  await page.getByRole("button", { name: "Sign out", exact: true }).click();
+  await page.getByRole("button", { name: "Leave", exact: true }).click();
+  await expect(
+    page.getByRole("alert").filter({ hasText: "You are not signed out yet" }),
+  ).toBeVisible();
+  await page
+    .getByRole("textbox", { name: /^Expected behavior/ })
+    .fill("Additional edit while still dirty");
+  await page.getByRole("link", { name: "My drafts", exact: true }).click();
+  await expect(page.getByRole("dialog")).toContainText(
+    "You have unsaved changes. Leave and discard them?",
+  );
+  await page.getByRole("button", { name: "Stay", exact: true }).click();
+  const dialogPromise = page.waitForEvent("dialog");
+  await page.evaluate(() => {
+    setTimeout(() => window.location.reload(), 0);
+  });
+  const dialog = await dialogPromise;
+  expect(dialog.type()).toBe("beforeunload");
+  await dialog.dismiss();
+  await expect(page.getByRole("textbox", { name: /^Title/ })).toHaveValue(
+    "Retained after failed logout",
+  );
+  await expect(
+    page.getByRole("textbox", { name: /^Expected behavior/ }),
+  ).toHaveValue("Additional edit while still dirty");
+});
+
+test("B19 lost Save remains unconfirmed, stale retry retains edits and consented reload reveals authority", async ({
+  page,
+}) => {
+  const state = await install(page);
+  await page.goto(`/instructor/questions/${question.id}`);
+  await page
+    .getByRole("textbox", { name: /^Title/ })
+    .fill("Committed response was lost");
+  state.patchOutcome = "unknown";
+  await page.getByRole("button", { name: "Save changes", exact: true }).click();
+  await expect(
+    page.getByRole("alert").filter({ hasText: "Save outcome is unconfirmed" }),
+  ).toBeVisible();
+  await expect(page.getByRole("textbox", { name: /^Title/ })).toHaveValue(
+    "Committed response was lost",
+  );
+  state.patchOutcome = "stale";
+  await page.getByRole("button", { name: "Save changes", exact: true }).click();
+  await expect(
+    page.getByRole("alert").filter({ hasText: "This draft changed" }),
+  ).toBeVisible();
+  expect(state.patches[1]).toEqual(state.patches[0]);
+  await page
+    .getByRole("button", { name: "Reload latest", exact: true })
+    .click();
+  await page.getByRole("button", { name: "Stay", exact: true }).click();
+  await expect(page.getByRole("textbox", { name: /^Title/ })).toHaveValue(
+    "Committed response was lost",
+  );
+  await page
+    .getByRole("button", { name: "Reload latest", exact: true })
+    .click();
+  await page.getByRole("button", { name: "Leave", exact: true }).click();
+  await expect(page.getByRole("textbox", { name: /^Title/ })).toHaveValue(
+    "Committed response was lost",
+  );
+  await page.getByRole("link", { name: "New question", exact: true }).click();
+  await expect(page.getByRole("dialog")).toHaveCount(0);
+});
+
+for (const outcome of ["rollback", "unknown"]) {
+  test(`B26 ${outcome} Remove preserves read-only published view and safe retry resolves removal`, async ({
+    page,
+  }) => {
+    const state = await install(page);
+    await preview(page);
+    await page.getByRole("checkbox", { name: review }).check();
+    await page.getByRole("button", { name: "Publish", exact: true }).click();
+    state.removeOutcome = outcome;
+    await page.getByRole("button", { name: "Remove", exact: true }).click();
+    await page
+      .getByRole("dialog")
+      .getByRole("button", { name: "Remove", exact: true })
+      .click();
+    await expect(
+      page.getByRole("alert").filter({
+        hasText:
+          outcome === "unknown"
+            ? "Removal outcome is unconfirmed"
+            : "Removal did not apply",
+      }),
+    ).toBeVisible();
+    await expect(
+      page.getByText("Published. Question content is read-only.", {
+        exact: true,
+      }),
+    ).toBeVisible();
+    await expect(
+      page.getByText("Removed. Your read-only record is retained.", {
+        exact: true,
+      }),
+    ).toHaveCount(0);
+    state.removeOutcome = "success";
+    await page.getByRole("button", { name: "Remove", exact: true }).click();
+    await page
+      .getByRole("dialog")
+      .getByRole("button", { name: "Remove", exact: true })
+      .click();
+    await expect(
+      page.getByText("Removed. Your read-only record is retained.", {
+        exact: true,
+      }),
+    ).toBeVisible();
+    expect(state.removeCalls).toBe(2);
+  });
+}

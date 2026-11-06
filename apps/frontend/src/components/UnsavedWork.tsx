@@ -16,9 +16,10 @@ import {
 } from "react";
 import { useBlocker } from "react-router-dom";
 
+type DiscardAction = () => void | boolean | Promise<void | boolean>;
 interface DiscardState {
   setDirty: (value: boolean) => void;
-  confirmDiscard: (action: () => void | Promise<void>) => void;
+  confirmDiscard: (action: DiscardAction) => void;
   clear: () => void;
 }
 const Context = createContext<DiscardState | null>(null);
@@ -26,17 +27,17 @@ const Context = createContext<DiscardState | null>(null);
 export function UnsavedWorkProvider({ children }: PropsWithChildren) {
   const dirty = useRef(false);
   const [isDirty, setIsDirty] = useState(false);
-  const [action, setAction] = useState<(() => void | Promise<void>) | null>(
-    null,
-  );
+  const [action, setAction] = useState<DiscardAction | null>(null);
+  const registration = useRef(0);
   const blocker = useBlocker(() => dirty.current);
   const stayButton = useRef<HTMLButtonElement>(null);
   const setDirty = useCallback((value: boolean) => {
+    registration.current += 1;
     dirty.current = value;
     setIsDirty(value);
   }, []);
   const clear = useCallback(() => setDirty(false), [setDirty]);
-  const confirmDiscard = useCallback((next: () => void | Promise<void>) => {
+  const confirmDiscard = useCallback((next: DiscardAction) => {
     if (dirty.current) setAction(() => next);
     else void next();
   }, []);
@@ -55,10 +56,26 @@ export function UnsavedWorkProvider({ children }: PropsWithChildren) {
   }
   function leave() {
     clear();
+    const suspendedRegistration = registration.current;
     const next = action;
     setAction(null);
     if (blocker.state === "blocked") blocker.proceed();
-    else if (next) void next();
+    else if (next) {
+      // Failed explicit actions keep the admitted editor mounted. Restore its
+      // guard unless disposal/new registration has already replaced that work.
+      void Promise.resolve()
+        .then(next)
+        .then((result) => {
+          if (
+            result === false &&
+            registration.current === suspendedRegistration
+          )
+            setDirty(true);
+        })
+        .catch(() => {
+          if (registration.current === suspendedRegistration) setDirty(true);
+        });
+    }
   }
   return (
     <Context.Provider value={{ setDirty, clear, confirmDiscard }}>
