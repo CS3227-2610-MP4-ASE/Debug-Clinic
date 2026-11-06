@@ -136,12 +136,12 @@ Open **Published questions** from your learner workspace. Browse current
 questions newest first, or enter words in **Search questions** to match a title
 or topic. Search applies before pages of up to 50 results. Open a question to
 read its problem, buggy Python code and expected behavior. Use **Back to
-questions** to return to the list; your search remains in the address and is
+published questions** to return to the list; your search remains in the address and is
 restored.
 
 In the workspace, edit the Python 3 code and explain your reasoning. Keep both
 fields nonblank. Choose **Save draft** to store your work, then reload the page
-to confirm it is still there. Choose **Submit final** and confirm in the dialog
+to confirm it is still there. Choose **Submit final attempt** and confirm in the dialog
 to submit the current code and explanation. A successful final submission is
 read-only. If a save or submission fails, your current editor text remains so you
 can retry. Back navigation with unsaved edits asks whether to discard them.

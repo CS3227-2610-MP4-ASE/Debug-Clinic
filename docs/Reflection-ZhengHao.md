@@ -34,8 +34,10 @@ This documentation task is measured at 249,538 tokens (247,718 input, including
 403 / 1,820 = 22.14%; reasoning/total is 403 / 249,538 = 0.1615%. The session
 was requested and verified as gpt-6-luna at medium. The planning checkpoint
 records the coordinator as gpt-6.1-sol at high; the independent test report
-records gpt-6.1-sol/high, verified by the coordinator. The implementation
-handoff does not identify a verified runtime model, so it remains unavailable.
+records gpt-6.1-sol/high, verified by the coordinator. The delivery ledger records
+implementation as gpt-6-luna/medium, verified from its session metadata. Selecting
+Luna for clear execution directions does not by itself establish lower token use
+or a measured cost saving.
 
 At this checkpoint, observed planning totals are 55,827,705 tokens (56.78% of
 the measured total), implementation 33,208,747 (33.78%), testing 9,033,592
@@ -64,4 +66,5 @@ measurements used here.
 
 - [Independent acceptance and review](../workflow/evaluations/zhenghao/ZH-LWS-01/testing.md)
 - [Implementation and repair handoff](../workflow/evaluations/zhenghao/ZH-LWS-01/implementation.md)
+- [Verified dispatch and delivery ledger](../workflow/evaluations/zhenghao/ZH-LWS-01/delivery.md)
 - [Fixed generated monitoring checkpoint](../workflow/evaluations/zhenghao/ZH-LWS-01/monitoring/reflection-documentation-checkpoint.json)
