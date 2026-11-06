@@ -149,10 +149,10 @@ The Python 3 editor provides highlighting, line numbers, indentation, bracket
 matching, undo/redo and keyboard editing. A new attempt starts with the published
 buggy code; saved work stays in place. Enter your fix and explain your reasoning.
 Use **Run** to execute the code, or add your own assertions under **Scratch tests**
-and choose **Test** to run them after the code. Test requires nonblank scratch-
+and choose **Test** to run them after the code. Test requires nonblank scratch
 test code. **Standard input** lets programs that call `input()` receive text.
-The Output panel shows actual output, errors and
-run state. Results are local feedback, not official grading. Scratch tests and
+The Output panel shows actual output, errors and run state. Results are local
+feedback, not official grading. Scratch tests and
 standard input stay on this device and are never saved or submitted. Editing code,
 tests or input marks the previous output as stale. Choose **Stop** to end a run;
 the next Run or Test starts a fresh run. A successful Run or Test is not required

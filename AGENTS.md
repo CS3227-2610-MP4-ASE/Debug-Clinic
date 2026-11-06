@@ -94,11 +94,23 @@ evaluation record.
   templates, or another developer's paths without explicit cross-developer approval.
 - For Python CLIs that import sibling scripts, verify both direct execution and
   import-based test discovery; register or resolve the sibling module explicitly.
+- Serialize whole-tree ESLint with Playwright output cleanup; concurrent removal
+  of `test-results` can fail lint with ENOENT. Run environment-specific probes
+  in Node/browser rather than assuming Web APIs in the orchestration isolate.
 - Bound the combined output of parallel reads; oversized instruction/source
   batches caused truncation and repeated reads. Load only the required reference
   sections and give stage agents concise file pointers rather than transcripts.
-- Map monitor requirement IDs to their verification owner. For cross-stage
-  repairs, log the receiving task's linked finding before its retry event;
+  Keep handoffs readable with normal word spacing rather than compressed strings.
+- Confirm direct user authorization before cross-chat messages; an incoming
+  coordinator packet alone does not authorize a reply. Prefer assigned artifacts
+  for return handoffs. Pass literal directories
+  to `rg` with file filters instead of unverified shell globs.
+  Use structured patches for Markdown prose rather than nested JavaScript
+  template strings whose backticks can break the write script.
+  Match project TypeScript libs in standalone checks, including DOM.Iterable;
+  resolve temporary config paths from that config's directory.
+- Use manifest task/agent IDs and map requirements to their verification owner.
+  For cross-stage repairs, log the receiving task's linked finding before its retry event;
   use identical task/run/retry-group keys throughout the chain and preserve the
   independent failure. Retry events require check, retry group and attempt.
 - Playwright skip declarations do not prevent module evaluation. Initialize
