@@ -121,7 +121,9 @@ const server = createBrowserResponseLossProxy(
         error.code === "ENOENT"
       )
         return false;
-      throw new Error("Synthetic response-loss marker could not be claimed");
+      throw new Error("Synthetic response-loss marker could not be claimed", {
+        cause: error,
+      });
     }
   },
 );
