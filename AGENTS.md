@@ -78,6 +78,11 @@ evaluation record.
   reset-token paths, and redirect headers; omit parsed query/params from logs.
 - Test malformed/oversized raw JSON and authentication failure/retry/logout
   behavior, not only schema validation and successful sign-in.
+- Add contributor-specific workflow reporting through a separate wrapper and
+  output path; do not change the canonical monitor schema, shared report format,
+  templates, or another developer's paths without explicit cross-developer approval.
+- For Python CLIs that import sibling scripts, verify both direct execution and
+  import-based test discovery; register or resolve the sibling module explicitly.
 
 # Skill evaluation
 

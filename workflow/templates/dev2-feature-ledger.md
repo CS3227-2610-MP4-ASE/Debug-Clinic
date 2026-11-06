@@ -1,14 +1,14 @@
 # Developer 2 feature ledger
 
-Copy to `workflow/handoffs/<contributor>/<feature-id>.md`. Keep one evolving ledger per
+Copy to `workflow/handoffs/royden/<feature-id>.md`. Keep one evolving ledger per
 feature; approved snapshots and derived evidence travel with the feature branch.
 
 ## Identity and roots
 
 - Feature ID/name / requirement IDs / contributor:
 - Code worktree (absolute) / branch / parent branch and exact SHA / PR target:
-- Local draft: `<MP4-parent>/Dev2-local-SDD/`
-- Dated backup: `<MP4-parent>/Dev2-local-SDD-backups/`
+- Local draft: `C:\Users\royde\Desktop\NUS\Sem 5\CS3227\MP4\Dev2-local-SDD\`
+- Dated backup: `C:\Users\royde\Desktop\NUS\Sem 5\CS3227\MP4\Dev2-local-SDD-backups\`
 - Current gate / owner / next unblock condition:
 
 ## Approval and hash record

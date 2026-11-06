@@ -74,34 +74,8 @@ class MonitorTests(unittest.TestCase):
         actual = self.derived()["overall"]
         self.assertEqual(actual["tokens"], {"input": 300, "cached_input": 160, "cache_write": 0, "output": 60, "reasoning_output": 15, "total": 360})
         self.assertAlmostEqual(actual["cache_hit_ratio"], 160 / 300)
-        self.assertEqual(actual["cache_miss_tokens"], 140)
-        self.assertAlmostEqual(actual["cache_miss_ratio"], 140 / 300)
         self.assertEqual(actual["reasoning_output_ratio"], .25)
         self.assertEqual(actual["reasoning_total_ratio"], 15 / 360)
-
-    def test_optional_contributor_is_attributed_in_json_and_markdown(self):
-        self.manifest["contributor"] = "zhenghao"
-        self.append(usage())
-        self.collect()
-        actual = self.derived()
-        rendered = monitor.markdown(actual)
-        self.assertEqual(actual["contributor"], "zhenghao")
-        self.assertEqual(actual["tasks"]["task-a"]["total_token_ratio"], 1)
-        self.assertIn("Contributor: zhenghao", rendered)
-        self.assertIn("Cache miss ratio: 40.00%", rendered)
-        self.assertIn("Reasoning as share of total: 4.17%", rendered)
-        self.assertIn("Highest-token task: task-a (120 tokens)", rendered)
-
-    def test_missing_contributor_remains_backward_compatible(self):
-        monitor.validate_manifest(self.manifest, self.private)
-        actual = self.derived()
-        self.assertIsNone(actual["contributor"])
-        self.assertIn("Contributor: unavailable", monitor.markdown(actual))
-
-    def test_invalid_contributor_fails_closed(self):
-        self.manifest["contributor"] = "Zhenghao Fang"
-        with self.assertRaises(monitor.Invalid):
-            monitor.validate_manifest(self.manifest, self.private)
 
     def test_inherited_records_deduplicate_by_actual_thread_and_response(self):
         child = self.base / "child.jsonl"

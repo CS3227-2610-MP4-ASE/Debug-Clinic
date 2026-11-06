@@ -79,11 +79,9 @@ def write_json(path, value):
 
 def validate_manifest(manifest, state_dir):
     require(isinstance(manifest, dict), "manifest must be an object")
-    require(set(manifest) <= {"schema_version", "feature", "contributor", "repository", "tasks", "agents", "budgets"}, "unknown manifest field")
+    require(set(manifest) <= {"schema_version", "feature", "repository", "tasks", "agents", "budgets"}, "unknown manifest field")
     require(manifest.get("schema_version") == VERSION, "unsupported manifest version")
     safe_id(manifest.get("feature"))
-    if "contributor" in manifest:
-        safe_id(manifest["contributor"])
     repository = Path(manifest.get("repository", ""))
     require(repository.is_absolute() and repository.is_dir(), "repository must be an existing absolute directory")
     require(not state_dir.resolve().is_relative_to(repository.resolve()), "state directory must be outside repository")
@@ -453,12 +451,7 @@ def ratio(numerator, denominator):
 
 def measurements(responses):
     result = totals(responses)
-    cache_miss_tokens = (result["input"] - result["cached_input"]
-                         if result["input"] is not None and result["cached_input"] is not None
-                         and result["cached_input"] <= result["input"] else None)
     return {"tokens": result, "cache_hit_ratio": ratio(result["cached_input"], result["input"]),
-            "cache_miss_tokens": cache_miss_tokens,
-            "cache_miss_ratio": ratio(cache_miss_tokens, result["input"]),
             "reasoning_output_ratio": ratio(result["reasoning_output"], result["output"]),
             "reasoning_total_ratio": ratio(result["reasoning_output"], result["total"])}
 
@@ -575,8 +568,7 @@ def report(manifest, state, as_of=None):
     responses = [row for row in state["responses"].values()
                  if (row["timestamp"] is None or row["timestamp"] <= as_of)
                  and (row["agent"] not in bounds or (row["timestamp"] is not None and row["timestamp"] >= bounds[row["agent"]]))]
-    result = {"schema_version": VERSION, "feature": manifest["feature"], "contributor": manifest.get("contributor"),
-              "generated_at": datetime.fromtimestamp(as_of, timezone.utc).isoformat(),
+    result = {"schema_version": VERSION, "feature": manifest["feature"], "generated_at": datetime.fromtimestamp(as_of, timezone.utc).isoformat(),
               "measurement_policy": "response_usage_v1; cached_input and reasoning_output are subsets; legacy cumulative unsupported",
               "diagnostics": state["diagnostics"], "collector": state["collector"], "overall": measurements(responses),
               "tasks": {}, "agents": {}, "runs": [], "tool_count": None, "tool_duration_seconds": None,
@@ -590,7 +582,6 @@ def report(manifest, state, as_of=None):
             runs = sorted({(event["agent"], event["run"]) for event in selected})
             timings = [intervals([event for event in selected if (event["agent"], event["run"]) == run], as_of) for run in runs]
             metrics = measurements(row for row in responses if row[dimension] == key)
-            metrics["total_token_ratio"] = ratio(metrics["tokens"]["total"], result["overall"]["tokens"]["total"])
             metrics.update({"event_counts": dict(collections.Counter(event["type"] for event in selected)),
                             "scope_violations": sum(event.get("scope_violation", False) for event in selected) if selected else None,
                             "quality": quality(selected, keys[key]),
@@ -635,38 +626,13 @@ def report(manifest, state, as_of=None):
 def markdown(result):
     def display(value):
         return "unavailable" if value is None else str(round(value, 3) if isinstance(value, float) else value)
-
-    def percentage(value):
-        return "unavailable" if value is None else f"{value * 100:.2f}%"
-
-    lines = ["# Workflow telemetry", "", "Feature: " + result["feature"],
-             "Contributor: " + (result.get("contributor") or "unavailable"), "",
+    lines = ["# Workflow telemetry", "", "Feature: " + result["feature"], "",
              "Counts describe observed response usage only. Missing values remain unavailable.",
              "Cached input is included in input; reasoning output is included in output.", "",
-             "## Reflection metrics", "",
-             "- Total tokens: " + display(result["overall"]["tokens"]["total"]),
-             "- Input tokens: " + display(result["overall"]["tokens"]["input"]),
-             "- Cached input tokens: " + display(result["overall"]["tokens"]["cached_input"]),
-             "- Cache-miss input tokens: " + display(result["overall"]["cache_miss_tokens"]),
-             "- Cache hit ratio: " + percentage(result["overall"]["cache_hit_ratio"]),
-             "- Cache miss ratio: " + percentage(result["overall"]["cache_miss_ratio"]),
-             "- Reasoning output tokens: " + display(result["overall"]["tokens"]["reasoning_output"]),
-             "- Reasoning as share of output: " + percentage(result["overall"]["reasoning_output_ratio"]),
-             "- Reasoning as share of total: " + percentage(result["overall"]["reasoning_total_ratio"]),
-             "- Observed responses: " + display(result["overall"]["observed_responses"]), "",
-             "## Task usage", "",
-             "| Task | Total tokens | Share of total | Cache hit | Reasoning / total | Active agent seconds | Dependency wait seconds | Owner wait seconds |",
-             "| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |"]
+             "| Task | Total tokens | Active agent seconds | Dependency wait seconds | Owner wait seconds |", "| --- | ---: | ---: | ---: | ---: |"]
     for key, task in result["tasks"].items():
-        lines.append("| " + " | ".join([key, display(task["tokens"]["total"]), percentage(task["total_token_ratio"]),
-                     percentage(task["cache_hit_ratio"]), percentage(task["reasoning_total_ratio"]),
-                     display(task["summed_agent_active_seconds"]), display(task["summed_dependency_wait_seconds"]),
-                     display(task["summed_owner_wait_seconds"])]) + " |")
-    known_tasks = [(task["tokens"]["total"], key) for key, task in result["tasks"].items()
-                   if task["tokens"]["total"] is not None]
-    highest = max(known_tasks) if known_tasks else None
-    lines += ["", "Highest-token task: " + (f"{highest[1]} ({highest[0]} tokens)" if highest else "unavailable"),
-              "", "Wall seconds: " + display(result["overall"]["wall_seconds"]),
+        lines.append("| " + " | ".join([key, display(task["tokens"]["total"]), display(task["summed_agent_active_seconds"]), display(task["summed_dependency_wait_seconds"]), display(task["summed_owner_wait_seconds"])]) + " |")
+    lines += ["", "Wall seconds: " + display(result["overall"]["wall_seconds"]),
               "", "Tool count and duration: unavailable (no verified lifecycle correlation).",
               "", "Budget warnings: " + (", ".join(result["budget_warnings"]) or "none observed"),
               "", "Diagnostics: " + (", ".join(f"{key}={value}" for key, value in sorted(result["diagnostics"].items())) or "none observed"),

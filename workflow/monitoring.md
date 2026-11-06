@@ -18,7 +18,6 @@ in every host: record whether role instructions were passed to a general agent.
 {
   "schema_version": 1,
   "feature": "MP4-D2-F01",
-  "contributor": "zhenghao",
   "repository": "C:/absolute/path/to/Debug-Clinic",
   "tasks": [{ "id": "implementation", "requirements": ["F01-01"] }],
   "agents": [
@@ -70,7 +69,7 @@ deliberately exclude transcripts and arbitrary output text.
 python scripts/workflow_monitor.py event --state-dir ../.workflow-runs/feature/state --type test_result --task implementation --agent builder --run slice-1 --check focused-tests --requirement F01-01 --result pass
 python scripts/workflow_monitor.py event --state-dir ../.workflow-runs/feature/state --type completion --task implementation --agent builder --run slice-1
 python scripts/workflow_monitor.py validate --state-dir ../.workflow-runs/feature/state
-python scripts/workflow_monitor.py report --state-dir ../.workflow-runs/feature/state --output-dir workflow/evaluations/<contributor>/MP4-D2-F01/monitoring
+python scripts/workflow_monitor.py report --state-dir ../.workflow-runs/feature/state --output-dir workflow/evaluations/royden/MP4-D2-F01
 ```
 
 Collect at assignment/handoff, verification and commit boundaries. A separate
@@ -90,15 +89,12 @@ not for every warning or minor suggestion.
 
 ## Interpret reports
 
-`report.json` is authoritative; `report.md` is the readable reflection summary.
-Set the optional safe `contributor` ID in the private manifest (for example,
-`zhenghao`) so both reports retain attribution without exposing private paths.
-The Markdown report includes overall cache hit/miss, both reasoning-token ratios,
-task shares and the highest-token task. Component totals use unique per-response
-usage records. Cached-input and reasoning-output counts are subsets; adding them
-again inflates totals. Legacy cumulative-only schemas are explicitly unsupported
-in v1. Unknown records are diagnosed; missing measurements remain unavailable.
-Inspect diagnostics and collection coverage before comparing runs.
+`report.json` is authoritative; `report.md` is the readable summary. Component
+totals use unique per-response usage records. Cached-input and reasoning-output
+counts are subsets; adding them again inflates totals. Legacy cumulative-only
+schemas are explicitly unsupported in v1. Unknown records are diagnosed; missing
+measurements remain unavailable. Inspect diagnostics and collection coverage
+before comparing runs.
 
 Report wall time separately from aggregate agent time. Only explicit workflow
 state transitions establish activity/waits; session silence cannot establish idle
