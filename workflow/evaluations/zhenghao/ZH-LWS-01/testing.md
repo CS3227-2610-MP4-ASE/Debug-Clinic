@@ -1,5 +1,10 @@
 # ZH-LWS-01 independent acceptance and review
 
+Latest independent review: **round 1 PASS** for functional, coding standards and
+security on source repair `a13af3e`, verified at `a16324d`. F1–F4 and S1 are
+resolved. The initial expected-red evidence below is retained as history; see
+the final repair-round section for current results and limits.
+
 ## Frozen acceptance interpretation — before implementation inspection
 
 Frozen 6 November 2026 (Asia/Singapore), on branch `zh/learner-workspace`,
@@ -290,3 +295,138 @@ data from product defects. Extracted packaging caught dependency-layout issues
 that source tests/builds did not. Restoring exact dependencies and correcting test
 fixtures improved verification validity; none constitutes evidence of token-cost
 savings, live-provider behavior or a production deployment.
+
+## Repair round 1 — final independent review, 6 November 2026
+
+Reviewed exact repair diff `4181ba4..a13af3e` with Developer2 SDD exclusions applied
+before collection, plus the repair handoff in `implementation.md`. Verification
+HEAD was `a16324db9ace59340dcdca329bb648270fd40917`; its only change after source
+repair `a13af3e` is the implementation handoff. Independent tests remain byte-for-
+byte unchanged from `4181ba4` (verified by scoped `git diff --exit-code`). The
+frozen acceptance interpretation is unchanged. This chat made no source repair.
+
+### Final verdicts
+
+| Pass             | Verdict  | Independent evidence                                                                                                                                                                                                                                                                                                              |
+| ---------------- | -------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Functional       | **Pass** | All formerly failing browser and PostgreSQL cases pass; complete local compatibility suites below pass. F1, F2, F3 and F4 resolved.                                                                                                                                                                                               |
+| Coding standards | **Pass** | Canonical publication eligibility/validation has one authority shared by detail and attempts; validation stays inside the mutation lock. Separate named attempt contracts and dependency-safe shared validators resolve S1. Existing root exports and F01/F02 behavior remain compatible. Static/declaration/package checks pass. |
+| Security         | **Pass** | Invalid canonical publications now deny all three attempt operations; no weakening of role/origin/body/identity/privacy guards. Atomic finalization, ownership, archive serialization and retained references pass real-PG/composed/package checks. No unresolved blocking finding within the approved local scope.               |
+
+These verdicts replace round 0's changes-required verdicts. One repair/review
+round was used. No acceptance expectation was removed or weakened and no
+residual blocking risk was accepted on the owner's behalf.
+
+### Resolution review
+
+- **F1:** pending Save now disables editor/reasoning. The unchanged acceptance
+  test permits this safe strategy and verifies the returned revision is used
+  for the next Save, with later unsaved edits still guarded.
+- **F2:** pending finalization disables editing; final success also explicitly
+  reconciles displayed code/reasoning to the server's submitted snapshot.
+  The unchanged final-snapshot case passes on both projects.
+- **F3:** mutation success/error/finally effects check lifecycle, learner
+  identity revision, session epoch and expiry. Dirty registration carries the
+  page owner, preventing an obsolete page from clearing another page's guard.
+  Cross-account delayed-save disposal and expiry/edit retention pass. Full
+  instructor/session/unsaved-work regressions also pass after this shared change.
+- **F4:** `findCanonicalPublishedQuestion` shares query and owner/public DTO
+  validation. Attempt mutations call it after acquiring the parent Exercise
+  row lock. Invalid stored contracts become unavailable to attempts while the
+  existing public detail safe-503 behavior is preserved. The three unchanged
+  real-PG invalid-provenance cases now pass alongside archive-race cases.
+- **S1:** learner attempt schemas/types live in
+  `packages/contracts/src/learner-attempts.ts`; root named exports remain.
+  `primitives.ts` and `storage-text.ts` avoid an index/attempt circular import.
+  Contracts/backend declarations and the extracted package load successfully.
+
+### Current verification results
+
+All connected commands again used the four identical explicit URL variables
+and standalone Node v24.22.2/npm 11.19.0 from the environment preamble above.
+Docker inspection and SQL reverified the assigned container binding and
+`debugclinic_lws_test|debugclinic` before testing. No migration/seed/reset/fixture
+workaround was needed this round. Local sockets, Docker and tsx IPC used scoped
+sandbox escalation. No live services or deployment actions occurred.
+
+| Command/layer                                                                                    | Result                                                                                                                                                                                 |
+| ------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `npm run lint`                                                                                   | Pass.                                                                                                                                                                                  |
+| `npm run typecheck`                                                                              | Pass, including backend/frontend/contracts, Functions and integration/test types.                                                                                                      |
+| Scoped Prettier over the nine repaired source files and this report                              | Pass; SDD and unrelated dirty files excluded.                                                                                                                                          |
+| `npm test`                                                                                       | **516/516 pass**, 29 files.                                                                                                                                                            |
+| `npm test -- --config tests/frontend/vitest.config.ts`                                           | **5/5 pass** injected output-renderer acceptance.                                                                                                                                      |
+| Focused PG: `npm run test:integration -- tests/integration/learner-workspace-acceptance.test.ts` | **7/7 pass**; all three former F4 failures resolved.                                                                                                                                   |
+| Full `npm run test:integration`                                                                  | **198/198 pass**, 11 files. Includes original migration/publication/auth suites and new acceptance races/search/reference checks.                                                      |
+| Focused browser acceptance, same 51819/51820 command as above                                    | **16/16 pass** across desktop and mobile; all six former F1–F3 project failures resolved.                                                                                              |
+| Full normal browser suite, same 51819/51820 command as above                                     | **144 pass / 20 expected opt-in skips**, no failures. Includes F01/F02, focus/session pagination, account changes, instructor unsaved/sign-out behavior and pointer/keyboard resizing. |
+| F01/F02/learner composed browser command below                                                   | **8/8 pass**, desktop and mobile, real local cookies/PG, captured SMTP and fake AI; no browser request interception.                                                                   |
+| `npm run build`                                                                                  | Pass: production frontend and contract/backend declaration output. Existing dependency-comment/chunk-size advisories remain non-fatal.                                                 |
+| `node --import tsx scripts/verify-built-frontend.ts`                                             | **16 route/viewport loads pass**, no JavaScript errors/external assets/clipping; keyboard/focus/mobile checks pass.                                                                    |
+| Existing extracted Netlify artifact smoke                                                        | Pass: packaged ESM/auth/cookies/publication/public projection/archive checks.                                                                                                          |
+| Independent extracted learner artifact smoke                                                     | Pass: authenticated attempt injection, exact saved code, atomic final, same-payload retry, immutable final/wrong-role denial, archive denial and retained identity.                    |
+
+Exact composed command (different owned ports keep it independent of the normal
+suite; no Google-controller origin diagnostic was repeated):
+
+```sh
+E2E_AUTH_COMPLETION=1 E2E_APP_ORIGIN=http://127.0.0.1:51821 E2E_BACKEND_PORT=51822 \
+  npm run test:e2e -- tests/e2e/f01-composed.spec.ts \
+  tests/e2e/f02-composed.spec.ts tests/e2e/learner-workspace-composed.spec.ts \
+  --workers=1
+```
+
+The composed suite deliberately drops a committed publication reply; its Vite
+`socket hang up` diagnostic is the exercised fault, with the identical-key retry
+and all eight journeys passing. The normal suite's 20 opt-in skips are explicit;
+eight composed cases were verified separately this round. Unmodified external-
+auth controller diagnostics were not rerun; their earlier local evidence remains
+historical, not a new live-provider result.
+
+Packaging command is unchanged from the prior section. New ZIP/manifest are in
+`.netlify/node_modules/auth-smoke-923e9cbb-0c47-4669-8afb-d463fa4e926e/`; both
+passing smoke commands targeted the absolute path ending in
+`extracted/netlify/functions/api.mjs`, never the source handler or AWS bootstrap.
+This tests the repaired contracts/helper as traced by Netlify CLI 27.16.1.
+
+### Final visual evidence and cleanup
+
+Fresh synthetic screenshots were captured and visually inspected at repaired
+HEAD, with final code/reasoning and the reasoning field focused:
+
+- `.workflow-state/lws-acceptance/round1/screenshots/workspace-desktop-1440x900.png`
+  — viewport/image 1440×900; visible blue MUI focus border without an inner native
+  ring intersecting the label; desktop split and center resize grip are visible.
+- `.workflow-state/lws-acceptance/round1/screenshots/workspace-mobile-320x800.png`
+  — viewport 320×800, full-page image 320×1174; title and Back action stack with
+  readable widths, reasoning label is clear of the focus border, actions/output
+  stack, and the automated horizontal-overflow assertion passes.
+
+These supersede the earlier screenshots for final UI assessment. The desktop
+grip is decorative on the existing accessible separator; keyboard and pointer
+resizing still pass, and mobile retains stable stacking. Auth/composed traces
+and screenshots remain disabled. This is visual browser inspection, not a
+screen-reader/contrast audit.
+
+Round-1 logs are preserved outside Git under
+`.workflow-state/lws-acceptance/round1/logs/`: `lws-r1-browser.log`,
+`lws-r1-pg.log`, `lws-r1-unit.log`, `lws-r1-output.log`, `lws-r1-lint.log`,
+`lws-r1-typecheck.log`, `lws-r1-format.log`, `lws-r1-integration-full.log`,
+`lws-r1-browser-full.log`, `lws-r1-composed.log`, `lws-r1-build.log`,
+`lws-r1-built.log`, `lws-r1-package-smoke.log`, and
+`lws-r1-package-learner.log`. Formatting uses
+`xargs -0 npx prettier --check < .workflow-state/lws-acceptance/round1/format-paths.nul`.
+All owned browser/server processes exited; no listeners remain on owned ports
+51819–51822. The coordinator-owned database container remains running as assigned.
+Pre-existing user/coordinator work and AGENTS lessons remain unstaged/preserved.
+
+### Final limitations and handoff
+
+No unresolved blocking finding remains in this local review. Remote CI,
+deployment, real SMTP/Google/SoC, a real Python runner and manual assistive-
+technology/contrast observations remain outside this evidence. Bounded race
+tests do not exhaust every possible scheduler interleaving. No new skills were
+created or revised, and no effectiveness claim comes from structural grading.
+The coordinator owns telemetry; no new usage/cost or budget-overrun claim is
+inferred. Current result is independently green for local integration and
+documentation, with any remote action retaining its separate authorization.
