@@ -7,8 +7,8 @@ feature intent. Preserve the Developer 1/Developer 2 SDD access boundary in
 
 ## Planning gates
 
-Keep drafts in `C:\Users\royde\Desktop\NUS\Sem 5\CS3227\MP4\Dev2-local-SDD\`
-and dated recovery snapshots in the sibling `Dev2-local-SDD-backups\`. Mirror
+Keep drafts in the contributor's `<MP4-parent>/Dev2-local-SDD/` tree and dated
+recovery snapshots in the sibling `Dev2-local-SDD-backups/` tree. Mirror
 eventual repository paths: `docs/mission-brief/<feature-id>-<name>.md` and
 `docs/features/<feature-id>/{GrillingDecisions,PRD,TDD,RequirementsToTests}.md`.
 Grilling decisions are optional; the other package artifacts are required.
@@ -137,18 +137,18 @@ out of test artifacts and logs.
 
 ## Roles and evidence
 
-| Role                   | Writable scope / completion                                                                                                                    |
-| ---------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
-| coordinator            | Assigned ledger, integration artifacts; gate evidence and green integration                                                                    |
-| implementer            | Assigned source/unit tests; verified coherent commits                                                                                          |
-| acceptance_test_author | Assigned acceptance tests and frozen interpretation; independent cases and test handoff                                                        |
-| independent_reviewer   | Read-only; separate functional and standards reports                                                                                           |
-| security_reviewer      | Read-only; risk findings and limitations                                                                                                       |
-| spec_reviewer          | Read-only; complete-package readiness for human review                                                                                         |
-| developer_guide_writer | `docs/DeveloperGuide.md`; actual verified architecture                                                                                         |
-| user_guide_writer      | `docs/UserGuide.md`; actual verified user behavior                                                                                             |
-| interaction_logger     | Assigned feature log under `logs/royden/`; attributed factual checkpoints                                                                      |
-| evaluation_analyst     | Assigned derived reports under `workflow/evaluations/royden/` and assigned entries in `docs/Reflections.md`; measured analysis and blind spots |
+| Role                   | Writable scope / completion                                                                                                                           |
+| ---------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
+| coordinator            | Assigned ledger, integration artifacts; gate evidence and green integration                                                                           |
+| implementer            | Assigned source/unit tests; verified coherent commits                                                                                                 |
+| acceptance_test_author | Assigned acceptance tests and frozen interpretation; independent cases and test handoff                                                               |
+| independent_reviewer   | Read-only; separate functional and standards reports                                                                                                  |
+| security_reviewer      | Read-only; risk findings and limitations                                                                                                              |
+| spec_reviewer          | Read-only; complete-package readiness for human review                                                                                                |
+| developer_guide_writer | `docs/DeveloperGuide.md`; actual verified architecture                                                                                                |
+| user_guide_writer      | `docs/UserGuide.md`; actual verified user behavior                                                                                                    |
+| interaction_logger     | Assigned feature log under `logs/<contributor>/`; attributed factual checkpoints                                                                      |
+| evaluation_analyst     | Assigned derived reports under `workflow/evaluations/<contributor>/` and assigned entries in `docs/Reflections.md`; measured analysis and blind spots |
 
 Guide writers use verified implementation rather than planned capabilities.
 The logger preserves chronology and missing-evidence labels, without inventing
