@@ -2,8 +2,8 @@
 
 Branch: `zh/learner-chatbot-assistant`.
 Parent: local master `2c372c5a9af9fafddf950e446121e475687ab29a`.
-Current gate: free-text delivery blocked; owner-selected constrained-coaching
-amendment in independent planning review. No renewed implementation authority.
+Current gate: free-text delivery blocked; constrained-coaching package passed
+independent review. Owner package/source approval and new live allowance pending.
 Approved planning snapshot: `87520f63844010567c844388bb725b8a8deee10a`.
 Latest application/handoff head: `b4878edeb0027e128a76d24820534efb34c1686c`.
 
@@ -45,13 +45,13 @@ session manifests are not published in this ledger.
 
 ## Stage assignments
 
-| Task           | Model/effort               | Dispatch/status                                                                                   |
-| -------------- | -------------------------- | ------------------------------------------------------------------------------------------------- |
-| planning       | verified GPT-6.1 Sol/high  | Original coordinator; reviewed plan complete                                                      |
-| implementation | verified gpt-6-luna/medium | Existing chat completed repair source e2eb967 and handoff 50a0f71; independent acceptance pending |
-| ai-security    | verified gpt-6.1-sol/high  | Existing chat `01a1b47c-237f-7b01-8bd1-7ee5b1fbf508` resumed against integrated 6261db7           |
-| testing        | GPT-6.1 Sol/high           | Not dispatched; follows security corrections                                                      |
-| documentation  | GPT-6.1 Sol/high           | Not dispatched; guides and incremental docs/Reflection-ZhengHao.md                                |
+| Task           | Model/effort               | Dispatch/status                                                                      |
+| -------------- | -------------------------- | ------------------------------------------------------------------------------------ |
+| planning       | verified GPT-6.1 Sol/high  | Constrained package b1c9457 independently reviewed; owner package approval pending   |
+| implementation | verified gpt-6-luna/medium | Idle after b4878ed; constrained packet prepared, renewed source authority pending    |
+| ai-security    | verified gpt-6.1-sol/high  | Original design BLOCKED at b4878ed; twelve calls and two correction rounds exhausted |
+| testing        | GPT-6.1 Sol/high           | Not dispatched; follows security corrections                                         |
+| documentation  | GPT-6.1 Sol/high           | Not dispatched; guides and incremental docs/Reflection-ZhengHao.md                   |
 
 Internal planning review is counted under planning, not as a sixth user-facing
 stage. Reuse conversations for repairs. Serialize stage writes; no simultaneous

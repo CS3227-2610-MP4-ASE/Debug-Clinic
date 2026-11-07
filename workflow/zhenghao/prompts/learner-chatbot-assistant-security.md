@@ -1,5 +1,28 @@
 # ZH-CHAT-01 — AI security stage packet
 
+Constrained-v1 dispatch amendment: only after recorded owner package approval
+and renewed implementation authorization, read the complete reviewed amendment
+006 and its pinned hashes in the feature ledger. It supersedes the old generated-
+prose boundary; retained CHAT requirements and all access restrictions below
+remain. Review CC-01..07, strict selection decoding, independent service checks,
+exact catalogue rendering on every saved/replay path, catalogue collision and
+cumulative semantics, rejected-output usage, unknown/newer versions, legacy
+quarantine and simulated old-client/instance cutover. Preserve failed free-text
+reports and fixtures at their original revisions; use new selection-contract
+fixtures rather than rewriting old evidence into green results.
+
+Reuse the existing security conversation. Phase run prefix is
+`constrained-v1-security`; proposed incremental budget is 2m tokens/30 minutes,
+subject to the approved package. Preserve earlier totals/overruns. Any new live
+allowance must be supplied from a separate explicit owner decision; the old
+twelve-call allowance is exhausted. If six additional generations are authorized,
+use a separate linked private allowance ledger, max twelve new attempts and one
+ten-minute window with the approved bounds. Three benign level-specific cases
+must be delivered and score at least 8/10; reject-only attack outcomes are not
+useful coaching. No waiver follows from deterministic catalogue equality. Keep
+unrun evidence distinct from observed failures. Return a new constrained-design
+security report without overwriting the failed original final verdict.
+
 Dispatch only after the implementation handoff and exact base/head are supplied
 by the coordinator. Use one independent GPT-6.1 Sol/high conversation. Reuse it
 for targeted repair verification; do not create another stage chat.

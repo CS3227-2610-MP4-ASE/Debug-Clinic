@@ -1,5 +1,23 @@
 # ZH-CHAT-01 — Documentation stage packet
 
+For separately approved constrained-v1 delivery, include amendment 006 and its
+verified implementation/evaluation. Explain the fixed coaching-response boundary
+and reduced tailoring without exposing internal move identifiers in learner
+instructions. State automatic deletion of ALL earlier chat content/snapshots,
+including benign and final read-only chats, retained work/level/eligibility,
+unknown/newer-version handling and the separately gated deployment cutover.
+Document already-delivered old browser content as outside recall, not erased
+retroactively. Release guides describe verified behavior only.
+
+Preserve the failed free-text evaluations and exhausted original twelve calls.
+For relevant incremental reflection, record why seven deterministic passes did
+not establish safe/useful live coaching, how the design changed, actual model/
+stage coverage and measured overhead. Preserve canonical totals and distinguish
+coordinator followups from design work; cache reuse and cheaper execution are
+not demonstrated raw-token/cost reductions. Do not answer unrelated reflection
+questions. Phase prefix `constrained-v1-documentation`; proposed incremental
+budget 1m tokens/25 minutes, subject to package approval. No extra conversation.
+
 Dispatch only with the final verified implementation SHA and independent security,
 functional and coding-standards handoffs. Use GPT-6.1 Sol/high. Reuse this one
 conversation for later documentation corrections; completion stays with coordinator.

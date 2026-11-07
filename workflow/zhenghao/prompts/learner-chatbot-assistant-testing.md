@@ -1,5 +1,26 @@
 # ZH-CHAT-01 — Independent testing stage packet
 
+For separately approved constrained-v1 work, read complete amendment 006 and
+record its exact approval/hash before deriving the independent interpretation.
+It replaces the old free-text acceptance seam, not the retained CHAT behavior.
+Freeze expected CC-01..07 outcomes before inspecting implementation diffs. Cover
+all catalogue moves/levels, malicious extra fields and encoded content, useful
+actual selection, canonical version metadata, every saved/replay exposure,
+legacy/unknown/newer-version handling, retained eligibility, automatic old-chat
+deletion including final read-only conversations, and simulated late old clients.
+Old free-text security failures remain historical facts; new protocol fixtures
+must be labeled as new, not claimed unchanged. Preserve catalogue collision and
+cumulative semantic checks as well as structural output equality.
+
+Constrained phase run prefix is `constrained-v1-testing`; proposed incremental
+budget is 3m tokens/60 minutes, subject to package approval. Use the same testing
+conversation once dispatched. Full closure needs separately authorized actual
+model usefulness evidence or an explicit owner decision about that evidence gap.
+No extra model call is authorized by this testing packet. The verified local
+pinned CLI manifest is
+`/Users/zhenghaofang/.npm/_npx/e9adb3c3f6de0f20/node_modules/netlify-cli/package.json`;
+recheck version 27.16.1 before using the existing local artifact packager.
+
 Dispatch only after implementation and security handoffs plus the exact integrated
 base/head are supplied. Use GPT-6.1 Sol/high; reuse this conversation for repairs.
 
