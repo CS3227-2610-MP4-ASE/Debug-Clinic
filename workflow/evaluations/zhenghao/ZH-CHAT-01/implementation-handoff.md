@@ -125,7 +125,53 @@ be checked before a second isolated run. Do not count that first invocation as
 test evidence; its result remains unavailable. The later captured isolated run
 passed and removed its own disposable container. Afterward, the coordinator
 checked the installed Docker binary directly and observed no remaining
-`debugclinic-verify-*` containers, which verifies cleanup at this checkpoint.
+`debugclinic-verify-*` containers, which verifies cleanup at that checkpoint.
+
+## Independent security correction round 2
+
+Repair base: `e5fd23dfa2d68d17d0f9074c16a031d300dacb07`. The only source/test
+paths changed in this final correction are the local coaching output policy
+and its existing provider test file. The independent report, fixtures, and
+recheck harness were not edited. The coordinator-owned security README remains
+untouched by the implementer.
+
+- Corrected expression matching now strips a leading `return` wrapper, so an
+  expression-only response such as `sum(values)` is screened.
+- Correction prose can align a corrected operator with shared operands and
+  correction framing even if it omits the old assignment symbol. The synthetic
+  accumulator response remains private; its unchanged live output was rejected
+  by the local guard as `complete-correction`.
+- Diagnostic clauses that ask learners to print, inspect, trace, check,
+  observe, compare, or debug are excluded from the edit-instruction heuristic
+  unless explicit correction wording is also present. The prescribed benign
+  print-last-element and diagnosis cases were accepted.
+- The policy checks the candidate plus at most eight prior assistant replies.
+  When all nine replies are short (12 characters or fewer each), a compact
+  joined form is also checked for an exact corrected expression. The prescribed
+  nine-fragment correction was blocked on exchange nine; the first eight
+  fragments were accepted. This remains bounded to the existing context window
+  and does not retain state beyond it.
+- Direct prompt-disclosure normalization now also recognizes a request for the
+  system message. The canonical correction and filter metadata remain local to
+  the post-response guard and are excluded from provider input and client data.
+
+Final-round verification on Node 24:
+
+| Check | Result |
+| ----- | ------ |
+| Focused provider tests | Pass: 13/13. |
+| `npm run typecheck` | Pass across workspaces, functions, and integration TypeScript. |
+| Scoped ESLint | Pass on the two owned TypeScript files. |
+| Prettier | Pass on the two owned TypeScript files. |
+| Unchanged independent `run-isolated.mjs --policy-recheck` | Pass: 7/7 actual-service objectives against disposable PostgreSQL 17; container and synthetic rows removed. No live model calls. |
+
+The evaluator confirmed private correction context remained excluded from the
+provider and client paths. Its private response file was read only by the
+unchanged harness; the response itself was not printed or copied into Git or
+monitor evidence. No live-call allowance was used. These deterministic checks
+do not establish semantic safety for arbitrary model paraphrases or unbounded
+multi-turn disclosure. SEC-02 therefore remains open for the same independent
+security review; this round stops before any additional provider call.
 
 The latest private monitor collection covers the mapped implementer session
 since 7 November 2026 12:33 SGT, not this repair run alone: 45,105,423 cumulative
@@ -142,6 +188,7 @@ Concern-separated local commits:
 - `ebae9a0` — `feat(assistant): add private learner coaching service`
 - `d8b9167` — `feat(assistant): add learner coaching panel`
 - `e2eb967a602a7243d277e598a5562bcd9f106ca7` — `fix(assistant): address security review round one`
+- `4ac845a9b93bcb76b7e1925c1344c71ec0883284` — `fix(assistant): tighten coaching correction output guard`
 - This handoff is a documentation-only follow-on commit; its resulting branch head is returned with this handoff.
 
 No push was performed. Next: re-review the exact repair head independently. SEC-01/SEC-03 local service checks pass; SEC-02 remains open pending semantic review and the separately authorized bounded synthetic model check. The existing testing and documentation stages follow that review.
