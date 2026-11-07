@@ -7,28 +7,28 @@ This add-on derives reflection metrics from the unchanged canonical workflow mon
 
 ## Reflection metrics
 
-- Total tokens: 21655156
-- Input tokens: 21598681
-- Cached input tokens: 21151232
-- Cache-miss input tokens: 447449
-- Cache hit ratio: 97.93%
-- Cache miss ratio: 2.07%
-- Reasoning output tokens: 18509
-- Reasoning as share of output: 32.77%
-- Reasoning as share of total: 0.09%
-- Observed responses: 99
+- Total tokens: 146315959
+- Input tokens: 145819779
+- Cached input tokens: 144180224
+- Cache-miss input tokens: 1639555
+- Cache hit ratio: 98.88%
+- Cache miss ratio: 1.12%
+- Reasoning output tokens: 242983
+- Reasoning as share of output: 48.97%
+- Reasoning as share of total: 0.17%
+- Observed responses: 802
 
 ## Task usage
 
 | Task | Total tokens | Share of total | Cache hit | Cache miss | Reasoning / total |
 | --- | ---: | ---: | ---: | ---: | ---: |
-| planning | 20074208 | 92.70% | 98.22% | 1.78% | 0.07% |
-| implementation | 1580948 | 7.30% | 94.16% | 5.84% | 0.26% |
-| ai-security | unavailable | unavailable | unavailable | unavailable | unavailable |
+| planning | 82605321 | 56.46% | 99.28% | 0.72% | 0.10% |
+| implementation | 52828769 | 36.11% | 98.52% | 1.48% | 0.25% |
+| ai-security | 10881869 | 7.44% | 97.55% | 2.45% | 0.28% |
 | testing | unavailable | unavailable | unavailable | unavailable | unavailable |
 | documentation | unavailable | unavailable | unavailable | unavailable | unavailable |
 
-Highest-token task: planning (20074208 tokens)
+Highest-token task: planning (82605321 tokens)
 
 ## Interpretation limits
 

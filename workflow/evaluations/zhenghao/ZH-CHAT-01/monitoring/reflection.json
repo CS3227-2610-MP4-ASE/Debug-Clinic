@@ -1,15 +1,15 @@
 {
   "contributor": "zhenghao",
   "diagnostics": {
-    "legacy_cumulative_tokens_unsupported_v1": 98,
-    "unknown_record_schema": 9
+    "legacy_cumulative_tokens_unsupported_v1": 806,
+    "unknown_record_schema": 16
   },
   "feature": "ZH-CHAT-01",
-  "generated_at": "2026-11-07T04:39:06.087835+00:00",
+  "generated_at": "2026-11-07T09:20:49.293427+00:00",
   "highest_token_task": {
     "id": "planning",
-    "total_token_ratio": 0.926994384154979,
-    "total_tokens": 20074208
+    "total_token_ratio": 0.5645680865202134,
+    "total_tokens": 82605321
   },
   "limitations": [
     "cached input is included in input and reasoning output is included in output and total",
@@ -19,40 +19,40 @@
   ],
   "measurement_policy": "derived from canonical workflow_monitor response_usage_v1 totals",
   "overall": {
-    "cache_hit_ratio": 0.9792835034694942,
-    "cache_miss_ratio": 0.020716496530505727,
-    "cache_miss_tokens": 447449,
-    "observed_responses": 99,
-    "reasoning_output_ratio": 0.32773793714032756,
-    "reasoning_total_ratio": 0.0008547156159946389,
+    "cache_hit_ratio": 0.9887562921076708,
+    "cache_miss_ratio": 0.011243707892329202,
+    "cache_miss_tokens": 1639555,
+    "observed_responses": 802,
+    "reasoning_output_ratio": 0.48970736426296907,
+    "reasoning_total_ratio": 0.0016606732557451235,
     "tokens": {
       "cache_write": 0,
-      "cached_input": 21151232,
-      "input": 21598681,
-      "output": 56475,
-      "reasoning_output": 18509,
-      "total": 21655156
+      "cached_input": 144180224,
+      "input": 145819779,
+      "output": 496180,
+      "reasoning_output": 242983,
+      "total": 146315959
     },
     "total_token_ratio": null,
-    "wall_seconds": 2024.7368347644806
+    "wall_seconds": 18927.942426919937
   },
   "schema_version": 1,
   "tasks": {
     "ai-security": {
-      "cache_hit_ratio": null,
-      "cache_miss_ratio": null,
-      "cache_miss_tokens": null,
-      "reasoning_output_ratio": null,
-      "reasoning_total_ratio": null,
+      "cache_hit_ratio": 0.9755035254702094,
+      "cache_miss_ratio": 0.024496474529790653,
+      "cache_miss_tokens": 264478,
+      "reasoning_output_ratio": 0.35835629286593584,
+      "reasoning_total_ratio": 0.002808892479775303,
       "tokens": {
-        "cache_write": null,
-        "cached_input": null,
-        "input": null,
-        "output": null,
-        "reasoning_output": null,
-        "total": null
+        "cache_write": 0,
+        "cached_input": 10532096,
+        "input": 10796574,
+        "output": 85295,
+        "reasoning_output": 30566,
+        "total": 10881869
       },
-      "total_token_ratio": null
+      "total_token_ratio": 0.07437239980089937
     },
     "documentation": {
       "cache_hit_ratio": null,
@@ -71,36 +71,36 @@
       "total_token_ratio": null
     },
     "implementation": {
-      "cache_hit_ratio": 0.9415823519655001,
-      "cache_miss_ratio": 0.05841764803449992,
-      "cache_miss_tokens": 91572,
-      "reasoning_output_ratio": 0.30384844868735084,
-      "reasoning_total_ratio": 0.0025769348517471796,
+      "cache_hit_ratio": 0.9851535801322631,
+      "cache_miss_ratio": 0.014846419867736924,
+      "cache_miss_tokens": 780666,
+      "reasoning_output_ratio": 0.5408653162107557,
+      "reasoning_total_ratio": 0.0025184762491815777,
       "tokens": {
         "cache_write": 0,
-        "cached_input": 1475968,
-        "input": 1567540,
-        "output": 13408,
-        "reasoning_output": 4074,
-        "total": 1580948
+        "cached_input": 51802112,
+        "input": 52582778,
+        "output": 245991,
+        "reasoning_output": 133048,
+        "total": 52828769
       },
-      "total_token_ratio": 0.07300561584502092
+      "total_token_ratio": 0.3610595136788872
     },
     "planning": {
-      "cache_hit_ratio": 0.9822338128417148,
-      "cache_miss_ratio": 0.017766187158285193,
-      "cache_miss_tokens": 355877,
-      "reasoning_output_ratio": 0.3351754243388209,
-      "reasoning_total_ratio": 0.0007190819184497839,
+      "cache_hit_ratio": 0.9927898117267151,
+      "cache_miss_ratio": 0.007210188273284902,
+      "cache_miss_tokens": 594411,
+      "reasoning_output_ratio": 0.48133346270937694,
+      "reasoning_total_ratio": 0.0009608218821642252,
       "tokens": {
         "cache_write": 0,
-        "cached_input": 19675264,
-        "input": 20031141,
-        "output": 43067,
-        "reasoning_output": 14435,
-        "total": 20074208
+        "cached_input": 81846016,
+        "input": 82440427,
+        "output": 164894,
+        "reasoning_output": 79369,
+        "total": 82605321
       },
-      "total_token_ratio": 0.926994384154979
+      "total_token_ratio": 0.5645680865202134
     },
     "testing": {
       "cache_hit_ratio": null,

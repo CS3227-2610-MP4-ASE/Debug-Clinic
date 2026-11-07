@@ -2,9 +2,10 @@
 
 Branch: `zh/learner-chatbot-assistant`.
 Parent: local master `2c372c5a9af9fafddf950e446121e475687ab29a`.
-Current gate: implementation completed; independent AI-security review active.
+Current gate: free-text delivery blocked; owner-selected constrained-coaching
+amendment in independent planning review. No renewed implementation authority.
 Approved planning snapshot: `87520f63844010567c844388bb725b8a8deee10a`.
-Implementation head: `56dc4146257bcbb27b36798f1cb3e161dce09d4e`.
+Latest application/handoff head: `b4878edeb0027e128a76d24820534efb34c1686c`.
 
 ## Approved snapshot
 
@@ -149,3 +150,35 @@ benign tracing and explicitly concatenated fragments. No additional live calls
 were made; the new window remains unstarted. The reviewer identifies scoped
 repairs within existing contracts and resources. One final source correction
 and independent re-review round remains; only SEC-02 needs source changes.
+
+## Final free-text verdict and renewed planning scope
+
+Both permitted correction rounds are now used. At `b4878ed`, the known policy
+objectives pass 7/7, but the final live check delivers an encoded complete
+correction and completes neither benign task. SEC-02 remains blocking. The
+independent report is `security-final.md`; old failure snapshots remain pinned.
+Shared live usage is twelve logical calls/twelve attempts, 5,070 provider tokens.
+No further live calls or third free-text repair are authorized. Testing,
+release documentation and final push remain gated.
+
+The owner selected constrained-coaching **planning only** in the explicit
+redesign question on 7 November. Proposal 005 records that choice; amendment 006
+defines exact reviewed response texts, a strict move-selection boundary, version
+metadata, legacy-history quarantine, acceptance tests and proposed stage budgets.
+The new implementation packet is prepared but unauthorized. The existing internal
+Sol/high planning reviewer is independently reviewing these artifacts. No new
+user-facing conversation was created. Owner package approval, separate renewed
+implementation authority and any new live allowance are still pending.
+
+The constrained package now passes independent planning review after one
+correction/re-review; see `constrained-planning-review.md`. Concrete code examples
+were replaced with non-code tracing procedures; actual model-selection usefulness
+now explicitly gates closure. A dated exact-byte private backup was verified.
+Reviewed amendment 006 SHA256:
+`3764c224737e5dc64b5aa46eeab200af47a9c34a6d3a25397a0f7f965f634dbe`.
+Standalone constrained implementation packet SHA256:
+`1631c4411a58b97dfb85760249322f2c5d77c8273bcd3d2725fda7e57f1a11e3`.
+These are reviewed bytes, not yet owner-approved bytes. Approval must explicitly
+cover the catalogue, reduced tailoring and deletion of all earlier chat content.
+The implementation/source authority and six-call proposed new allowance require
+separate recorded decisions. Original failed security evidence stays unchanged.
