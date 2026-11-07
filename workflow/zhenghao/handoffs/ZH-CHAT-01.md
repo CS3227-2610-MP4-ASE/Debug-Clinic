@@ -44,13 +44,13 @@ session manifests are not published in this ledger.
 
 ## Stage assignments
 
-| Task           | Model/effort               | Dispatch/status                                                                                              |
-| -------------- | -------------------------- | ------------------------------------------------------------------------------------------------------------ |
-| planning       | verified GPT-6.1 Sol/high  | Original coordinator; reviewed plan complete                                                                 |
-| implementation | verified gpt-6-luna/medium | Completed local chat `01a1b448-99c6-7861-bd1d-3ea7613baff1`; backend ebae9a0, panel d8b9167, handoff 56dc414 |
-| ai-security    | verified gpt-6.1-sol/high  | Active local chat `01a1b47c-237f-7b01-8bd1-7ee5b1fbf508`, reviewing integrated 9e9ebf0                       |
-| testing        | GPT-6.1 Sol/high           | Not dispatched; follows security corrections                                                                 |
-| documentation  | GPT-6.1 Sol/high           | Not dispatched; guides and incremental docs/Reflection-ZhengHao.md                                           |
+| Task           | Model/effort               | Dispatch/status                                                                                   |
+| -------------- | -------------------------- | ------------------------------------------------------------------------------------------------- |
+| planning       | verified GPT-6.1 Sol/high  | Original coordinator; reviewed plan complete                                                      |
+| implementation | verified gpt-6-luna/medium | Existing chat completed repair source e2eb967 and handoff 50a0f71; independent acceptance pending |
+| ai-security    | verified gpt-6.1-sol/high  | Existing chat `01a1b47c-237f-7b01-8bd1-7ee5b1fbf508` resumed against integrated 6261db7           |
+| testing        | GPT-6.1 Sol/high           | Not dispatched; follows security corrections                                                      |
+| documentation  | GPT-6.1 Sol/high           | Not dispatched; guides and incremental docs/Reflection-ZhengHao.md                                |
 
 Internal planning review is counted under planning, not as a sixth user-facing
 stage. Reuse conversations for repairs. Serialize stage writes; no simultaneous
@@ -133,3 +133,19 @@ with all three linked findings, run `security-fix-1`, unchanged ownership and
 requirements. It has no live-call authority. The existing security conversation
 will independently recheck the repair and own the remaining bounded live calls.
 No testing-stage acceptance or live-ready approval has been granted.
+
+The first re-review dispatch stopped immediately on a workspace spend-cap error
+at 14:22 SGT on 7 November, before any tools or live calls. After the owner's
+"continue" instruction, the same reviewer conversation was resumed at 16:42 SGT.
+This interruption does not consume a source correction round or synthetic call.
+Keep the elapsed interruption separate from observed active review work; do not
+infer activity from session silence. No model substitution was made.
+
+The first correction re-review resolves SEC-01 and SEC-03 against `6261db7`.
+SEC-02 remains blocking: seven actual-service policy objectives yield three
+passes and four failures. The packet in `security-recheck.md` preserves exact
+fixtures for expression-only correction, the original live accumulator prose,
+benign tracing and explicitly concatenated fragments. No additional live calls
+were made; the new window remains unstarted. The reviewer identifies scoped
+repairs within existing contracts and resources. One final source correction
+and independent re-review round remains; only SEC-02 needs source changes.

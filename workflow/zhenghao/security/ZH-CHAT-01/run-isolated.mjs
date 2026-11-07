@@ -81,7 +81,9 @@ try {
   run([
     "--import",
     "tsx",
-    "workflow/zhenghao/security/ZH-CHAT-01/service-checks.ts",
+    process.argv.includes("--policy-recheck")
+      ? "workflow/zhenghao/security/ZH-CHAT-01/policy-recheck.ts"
+      : "workflow/zhenghao/security/ZH-CHAT-01/service-checks.ts",
   ]);
 } finally {
   if (container && /^[a-f0-9]{64}$/.test(container))
