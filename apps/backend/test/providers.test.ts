@@ -1,5 +1,9 @@
 import { describe, expect, it, vi } from "vitest";
-import { SocLlmProvider } from "../src/ai/provider.js";
+import {
+  FakeAiProvider,
+  SocLlmProvider,
+  type CoachingProviderInput,
+} from "../src/ai/provider.js";
 import { readEnv } from "../src/config/env.js";
 
 const config = readEnv({
@@ -42,8 +46,73 @@ const answer = () =>
       },
     ],
   });
+const coachingInput: CoachingProviderInput = {
+  level: 1,
+  question: {
+    title: "List sum",
+    problemStatement: "Find the skipped value.",
+    expectedBehavior: "Return all values.",
+    buggyCode: "return sum(values[:-1])",
+  },
+  current: {
+    message: "Why is the last item missing?",
+    code: "return sum(values[:-1])",
+  },
+  history: [],
+};
 
 describe("SoCLaaS transport", () => {
+  it("uses a deterministic fake coaching response with unavailable token usage", async () => {
+    const result = await new FakeAiProvider().generateCoaching!(coachingInput);
+    expect(result).toMatchObject({
+      attempts: 1,
+      inputTokens: null,
+      outputTokens: null,
+    });
+    expect(result.message).not.toContain("return sum(values)");
+  });
+
+  it("bounds coaching retries and parses nullable usage from the established envelope", async () => {
+    const transport = vi
+      .fn<typeof fetch>()
+      .mockResolvedValueOnce(new Response(null, { status: 503 }))
+      .mockResolvedValueOnce(
+        Response.json({
+          choices: [
+            {
+              message: {
+                content: JSON.stringify({
+                  message: "Trace the final loop iteration.",
+                }),
+              },
+            },
+          ],
+          usage: { prompt_tokens: 17, completion_tokens: 8 },
+        }),
+      );
+    const result = await new SocLlmProvider(config, transport)
+      .generateCoaching!(coachingInput);
+    expect(transport).toHaveBeenCalledTimes(2);
+    expect(result).toMatchObject({
+      message: "Trace the final loop iteration.",
+      attempts: 2,
+      inputTokens: 17,
+      outputTokens: 8,
+    });
+  });
+
+  it("rejects malformed coaching output and never returns upstream text", async () => {
+    const transport = vi.fn<typeof fetch>().mockResolvedValue(
+      Response.json({
+        choices: [{ message: { content: JSON.stringify({ message: "" }) } }],
+      }),
+    );
+    await expect(
+      new SocLlmProvider(config, transport).generateCoaching!(coachingInput),
+    ).rejects.toThrow("temporarily unavailable");
+    expect(transport).toHaveBeenCalledTimes(1);
+  });
+
   it("maps deadline expiry during a network retry to a safe dependency error", async () => {
     const transport = vi
       .fn<typeof fetch>()

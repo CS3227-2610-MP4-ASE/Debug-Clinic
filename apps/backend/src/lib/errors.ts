@@ -10,6 +10,7 @@ export class AppError extends Error {
     message: string,
     public readonly details?: Array<{ path: string; message: string }>,
     public readonly mutationOutcome?: "NOT_APPLIED" | "UNKNOWN",
+    public readonly retryAfterSeconds?: number,
   ) {
     super(message);
     this.name = "AppError";

@@ -6,6 +6,7 @@ import { createPrismaClient } from "./db/client.js";
 import { createInstructorDrafts } from "./exercises/instructor-drafts.js";
 import { createInstructorQuestions } from "./exercises/instructor-questions.js";
 import { createLearnerAttempts } from "./exercises/learner-attempts.js";
+import { createLearnerAssistant } from "./exercises/learner-assistant.js";
 import { createLogger } from "./lib/logger.js";
 
 const config = readEnv();
@@ -18,9 +19,9 @@ const app = createApp({
   config,
   database: prisma,
   auth,
-  aiProvider,
   instructorQuestions: createInstructorQuestions({ prisma, logger }),
   learnerAttempts: createLearnerAttempts(prisma),
+  learnerAssistant: createLearnerAssistant(prisma, aiProvider),
   instructorDrafts: createInstructorDrafts({
     prisma,
     provider: aiProvider,
