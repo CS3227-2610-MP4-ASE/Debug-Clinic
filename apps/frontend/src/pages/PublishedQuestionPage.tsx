@@ -18,6 +18,7 @@ import { useAuth } from "../auth/AuthProvider.js";
 import { QuestionError } from "../lib/instructor-questions.js";
 import { useUnsavedWork } from "../components/UnsavedWork.js";
 import { LearnerWorkspace } from "../components/LearnerWorkspace.js";
+import { LearnerAssistantPanel } from "../components/LearnerAssistantPanel.js";
 import {
   getLearnerAttempt,
   getPublishedQuestion,
@@ -35,6 +36,8 @@ export function PublishedQuestionPage() {
   const [attempt, setAttempt] = useState<LearnerAttempt | null>(null);
   const [code, setCode] = useState("");
   const [reasoning, setReasoning] = useState("");
+  const [runOutput, setRunOutput] = useState("");
+  const [assistantOpenRequest, setAssistantOpenRequest] = useState(0);
   const [pending, setPending] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -462,6 +465,14 @@ export function PublishedQuestionPage() {
                   {question.problemStatement}
                 </Typography>
               </Box>
+              <Button
+                variant="outlined"
+                onClick={() =>
+                  setAssistantOpenRequest((current) => current + 1)
+                }
+              >
+                {submitted ? "Open coaching chat" : "Get Hint"}
+              </Button>
               <Box
                 component="section"
                 aria-labelledby="question-starting-code-heading"
@@ -526,6 +537,7 @@ export function PublishedQuestionPage() {
             saving={saving}
             onCodeChange={editCode}
             onReasoningChange={editReasoning}
+            onOutputChange={setRunOutput}
             onSave={() => void persist(false)}
             onSubmit={() => {
               if (
@@ -537,6 +549,19 @@ export function PublishedQuestionPage() {
             }}
           />
         </Box>
+      )}
+      {question && user && (
+        <LearnerAssistantPanel
+          key={`${id}:${question.versionId}:${user.id}`}
+          exerciseId={id}
+          exerciseVersionId={question.versionId}
+          userId={user.id}
+          readOnly={submitted || sessionExpired}
+          code={code}
+          reasoning={reasoning}
+          output={runOutput}
+          openRequest={assistantOpenRequest}
+        />
       )}
     </Box>
   );

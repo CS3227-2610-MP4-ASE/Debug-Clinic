@@ -12,6 +12,7 @@ import type {
   LearnerAttemptWrite,
 } from "@debugclinic/contracts";
 import { f01Learner } from "../support/f01-fixtures.js";
+import { mockEmptyLearnerAssistantState } from "../support/learner-assistant-fixture.js";
 
 const question = {
   id: "recovery-case",
@@ -132,6 +133,7 @@ async function fixture(
     state.server = snapshot(input, (state.server?.revision ?? -1) + 1, final);
     return route.fulfill({ json: { attempt: state.server } });
   });
+  await mockEmptyLearnerAssistantState(page, question.id, question.versionId);
   await page.goto(`/learner/questions/${question.id}`);
   await expectPythonEditable(code(page), true);
   return state;

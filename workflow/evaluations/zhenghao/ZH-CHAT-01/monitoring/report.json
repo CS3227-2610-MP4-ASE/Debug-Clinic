@@ -1,0 +1,788 @@
+{
+  "agents": {
+    "coordinator": {
+      "budget_warnings": [],
+      "cache_hit_ratio": 0.9937226323167717,
+      "collection_since": "2026-11-07T04:05:21.351Z",
+      "event_counts": {
+        "assignment": 2,
+        "completion": 2,
+        "handoff": 4,
+        "integration": 1,
+        "owner_wait": 2,
+        "retry": 1,
+        "start": 4,
+        "test_result": 1
+      },
+      "item_metrics_status": "observed within collection bounds",
+      "model_context": {
+        "effort": "high",
+        "model": "gpt-6.1-sol"
+      },
+      "observed_command_count": 192,
+      "observed_command_duration_seconds": 16.032409251,
+      "observed_subagent_activity_count": 9,
+      "quality": {
+        "failed_checks": 0,
+        "missing_requirement_evidence": [],
+        "open_review_findings": null,
+        "quality_evidence_available": true,
+        "repair_limit_reached": false,
+        "repair_limit_violation": false,
+        "requirement_evidence_policy": "a failure clears all passes for the same task/run/check; later requirement passes accumulate independently",
+        "retry_evidence_missing": true,
+        "review_limit_reached": false,
+        "review_limit_violation": false
+      },
+      "reasoning_output_ratio": 0.48517156292192376,
+      "reasoning_total_ratio": 0.00098972685886934,
+      "scope_violations": 0,
+      "summed_agent_active_seconds": 1069.1851859092712,
+      "summed_dependency_wait_seconds": null,
+      "summed_owner_wait_seconds": 1185.623298883438,
+      "tokens": {
+        "cache_write": 0,
+        "cached_input": 83533824,
+        "input": 84061509,
+        "output": 171832,
+        "reasoning_output": 83368,
+        "total": 84233341
+      },
+      "wall_seconds": 19538.49416399002
+    },
+    "implementer": {
+      "budget_warnings": [],
+      "cache_hit_ratio": 0.9851535801322631,
+      "collection_since": "2026-11-07T04:33:39.898Z",
+      "event_counts": {
+        "assignment": 1,
+        "commit": 7,
+        "completion": 2,
+        "handoff": 4,
+        "retry": 19,
+        "review_finding": 8,
+        "start": 1,
+        "test_result": 49
+      },
+      "item_metrics_status": "observed within collection bounds",
+      "model_context": {
+        "effort": "medium",
+        "model": "gpt-6-luna"
+      },
+      "observed_command_count": 306,
+      "observed_command_duration_seconds": 597.983016459,
+      "observed_subagent_activity_count": 0,
+      "quality": {
+        "failed_checks": 7,
+        "missing_requirement_evidence": [],
+        "open_review_findings": 4,
+        "quality_evidence_available": true,
+        "repair_limit_reached": true,
+        "repair_limit_violation": false,
+        "requirement_evidence_policy": "a failure clears all passes for the same task/run/check; later requirement passes accumulate independently",
+        "retry_evidence_missing": true,
+        "review_limit_reached": false,
+        "review_limit_violation": false
+      },
+      "reasoning_output_ratio": 0.5408653162107557,
+      "reasoning_total_ratio": 0.0025184762491815777,
+      "scope_violations": 0,
+      "summed_agent_active_seconds": 3170.1083760261536,
+      "summed_dependency_wait_seconds": null,
+      "summed_owner_wait_seconds": null,
+      "tokens": {
+        "cache_write": 0,
+        "cached_input": 51802112,
+        "input": 52582778,
+        "output": 245991,
+        "reasoning_output": 133048,
+        "total": 52828769
+      },
+      "wall_seconds": 17839.947164058685
+    },
+    "plan-reviewer": {
+      "budget_warnings": [],
+      "cache_hit_ratio": 0.9190048249777009,
+      "collection_since": "2026-11-07T04:27:32.566Z",
+      "event_counts": {
+        "review_finding": 2
+      },
+      "item_metrics_status": "observed within collection bounds",
+      "model_context": {
+        "effort": "high",
+        "model": "gpt-6.1-sol"
+      },
+      "observed_command_count": 26,
+      "observed_command_duration_seconds": 0.000269579,
+      "observed_subagent_activity_count": 0,
+      "quality": {
+        "failed_checks": null,
+        "missing_requirement_evidence": [],
+        "open_review_findings": 0,
+        "quality_evidence_available": true,
+        "repair_limit_reached": false,
+        "repair_limit_violation": false,
+        "requirement_evidence_policy": "a failure clears all passes for the same task/run/check; later requirement passes accumulate independently",
+        "retry_evidence_missing": false,
+        "review_limit_reached": false,
+        "review_limit_violation": false
+      },
+      "reasoning_output_ratio": 0.5053070960047704,
+      "reasoning_total_ratio": 0.004617419998866623,
+      "scope_violations": 0,
+      "summed_agent_active_seconds": null,
+      "summed_dependency_wait_seconds": null,
+      "summed_owner_wait_seconds": null,
+      "tokens": {
+        "cache_write": 0,
+        "cached_input": 835584,
+        "input": 909227,
+        "output": 8385,
+        "reasoning_output": 4237,
+        "total": 917612
+      },
+      "wall_seconds": null
+    },
+    "security-reviewer": {
+      "budget_warnings": [],
+      "cache_hit_ratio": 0.9755035254702094,
+      "collection_since": "2026-11-07T05:29:57.369Z",
+      "event_counts": {
+        "assignment": 1,
+        "completion": 1,
+        "dependency_wait": 2,
+        "handoff": 3,
+        "retry": 4,
+        "review_finding": 11,
+        "start": 1,
+        "test_result": 17
+      },
+      "item_metrics_status": "observed within collection bounds",
+      "model_context": {
+        "effort": "high",
+        "model": "gpt-6.1-sol"
+      },
+      "observed_command_count": 89,
+      "observed_command_duration_seconds": 81.584854955,
+      "observed_subagent_activity_count": 0,
+      "quality": {
+        "failed_checks": 6,
+        "missing_requirement_evidence": [],
+        "open_review_findings": 5,
+        "quality_evidence_available": true,
+        "repair_limit_reached": false,
+        "repair_limit_violation": false,
+        "requirement_evidence_policy": "a failure clears all passes for the same task/run/check; later requirement passes accumulate independently",
+        "retry_evidence_missing": false,
+        "review_limit_reached": false,
+        "review_limit_violation": false
+      },
+      "reasoning_output_ratio": 0.35835629286593584,
+      "reasoning_total_ratio": 0.002808892479775303,
+      "scope_violations": 0,
+      "summed_agent_active_seconds": 846.6243860721588,
+      "summed_dependency_wait_seconds": 15918.331974029541,
+      "summed_owner_wait_seconds": null,
+      "tokens": {
+        "cache_write": 0,
+        "cached_input": 10532096,
+        "input": 10796574,
+        "output": 85295,
+        "reasoning_output": 30566,
+        "total": 10881869
+      },
+      "wall_seconds": 14462.476164102554
+    }
+  },
+  "budget_warnings": [],
+  "collector": {
+    "bytes_read": 23597442,
+    "calls": 14,
+    "seconds": 0.17477958096424118,
+    "session_bytes_processed": 23276418
+  },
+  "diagnostics": {
+    "legacy_cumulative_tokens_unsupported_v1": 818,
+    "unknown_record_schema": 17
+  },
+  "feature": "ZH-CHAT-01",
+  "generated_at": "2026-11-07T09:30:59.845164+00:00",
+  "measurement_policy": "response_usage_v1; cached_input and reasoning_output are subsets; legacy cumulative unsupported",
+  "overall": {
+    "cache_hit_ratio": 0.9889014423773042,
+    "known_total_token_lower_bound": 148861591,
+    "observed_responses": 814,
+    "pending_session_bytes": 0,
+    "quality": {
+      "failed_checks": 13,
+      "missing_requirement_evidence": [
+        "implementation:CHAT-01",
+        "implementation:CHAT-04",
+        "implementation:CHAT-05",
+        "implementation:CHAT-06",
+        "implementation:CHAT-09",
+        "testing:CHAT-01",
+        "testing:CHAT-02",
+        "testing:CHAT-03",
+        "testing:CHAT-04",
+        "testing:CHAT-05",
+        "testing:CHAT-06",
+        "testing:CHAT-07",
+        "testing:CHAT-08",
+        "testing:CHAT-09",
+        "testing:CHAT-10",
+        "testing:CHAT-11",
+        "testing:CHAT-12",
+        "testing:CHAT-13",
+        "testing:CHAT-14",
+        "documentation:CHAT-14"
+      ],
+      "open_review_findings": 9,
+      "quality_evidence_available": true,
+      "repair_limit_reached": true,
+      "repair_limit_violation": false,
+      "requirement_evidence_policy": "a failure clears all passes for the same task/run/check; later requirement passes accumulate independently",
+      "retry_evidence_missing": true,
+      "review_limit_reached": false,
+      "review_limit_violation": false
+    },
+    "reasoning_output_ratio": 0.4911388594006291,
+    "reasoning_total_ratio": 0.001687601202650051,
+    "tokens": {
+      "cache_write": 0,
+      "cached_input": 146703616,
+      "input": 148350088,
+      "output": 511503,
+      "reasoning_output": 251219,
+      "total": 148861591
+    },
+    "wall_seconds": 19538.49416399002
+  },
+  "runs": [
+    {
+      "active_seconds": 296.45751094818115,
+      "agent": "coordinator",
+      "dependency_wait_seconds": null,
+      "open_interval": null,
+      "owner_wait_seconds": 314.0917639732361,
+      "quality": {
+        "failed_checks": 0,
+        "missing_requirement_evidence": [],
+        "open_review_findings": null,
+        "quality_evidence_available": true,
+        "repair_limit_reached": false,
+        "repair_limit_violation": false,
+        "requirement_evidence_policy": "a failure clears all passes for the same task/run/check; later requirement passes accumulate independently",
+        "retry_evidence_missing": false,
+        "review_limit_reached": false,
+        "review_limit_violation": false
+      },
+      "run": "constrained-v1-planning",
+      "task": "planning",
+      "token_status": "unavailable: no explicit response-to-run mapping",
+      "tokens": null,
+      "wall_seconds": 610.5492749214172,
+      "warnings": []
+    },
+    {
+      "active_seconds": 772.7276749610901,
+      "agent": "coordinator",
+      "dependency_wait_seconds": null,
+      "open_interval": null,
+      "owner_wait_seconds": 871.531534910202,
+      "quality": {
+        "failed_checks": null,
+        "missing_requirement_evidence": [],
+        "open_review_findings": null,
+        "quality_evidence_available": false,
+        "repair_limit_reached": false,
+        "repair_limit_violation": false,
+        "requirement_evidence_policy": "a failure clears all passes for the same task/run/check; later requirement passes accumulate independently",
+        "retry_evidence_missing": false,
+        "review_limit_reached": false,
+        "review_limit_violation": false
+      },
+      "run": "discovery-1",
+      "task": "planning",
+      "token_status": "unavailable: no explicit response-to-run mapping",
+      "tokens": null,
+      "wall_seconds": 1644.2592098712921,
+      "warnings": []
+    },
+    {
+      "active_seconds": null,
+      "agent": "coordinator",
+      "dependency_wait_seconds": null,
+      "open_interval": null,
+      "owner_wait_seconds": null,
+      "quality": {
+        "failed_checks": null,
+        "missing_requirement_evidence": [],
+        "open_review_findings": null,
+        "quality_evidence_available": false,
+        "repair_limit_reached": false,
+        "repair_limit_violation": false,
+        "requirement_evidence_policy": "a failure clears all passes for the same task/run/check; later requirement passes accumulate independently",
+        "retry_evidence_missing": false,
+        "review_limit_reached": false,
+        "review_limit_violation": false
+      },
+      "run": "free-text-integration",
+      "task": "planning",
+      "token_status": "unavailable: no explicit response-to-run mapping",
+      "tokens": null,
+      "wall_seconds": null,
+      "warnings": []
+    },
+    {
+      "active_seconds": null,
+      "agent": "coordinator",
+      "dependency_wait_seconds": null,
+      "open_interval": null,
+      "owner_wait_seconds": null,
+      "quality": {
+        "failed_checks": null,
+        "missing_requirement_evidence": [],
+        "open_review_findings": null,
+        "quality_evidence_available": false,
+        "repair_limit_reached": false,
+        "repair_limit_violation": false,
+        "requirement_evidence_policy": "a failure clears all passes for the same task/run/check; later requirement passes accumulate independently",
+        "retry_evidence_missing": true,
+        "review_limit_reached": false,
+        "review_limit_violation": false
+      },
+      "run": "package-review",
+      "task": "planning",
+      "token_status": "unavailable: no explicit response-to-run mapping",
+      "tokens": null,
+      "wall_seconds": null,
+      "warnings": []
+    },
+    {
+      "active_seconds": 3170.1083760261536,
+      "agent": "implementer",
+      "dependency_wait_seconds": null,
+      "open_interval": null,
+      "owner_wait_seconds": null,
+      "quality": {
+        "failed_checks": 6,
+        "missing_requirement_evidence": [],
+        "open_review_findings": null,
+        "quality_evidence_available": true,
+        "repair_limit_reached": false,
+        "repair_limit_violation": false,
+        "requirement_evidence_policy": "a failure clears all passes for the same task/run/check; later requirement passes accumulate independently",
+        "retry_evidence_missing": true,
+        "review_limit_reached": false,
+        "review_limit_violation": false
+      },
+      "run": "build-1",
+      "task": "implementation",
+      "token_status": "unavailable: no explicit response-to-run mapping",
+      "tokens": null,
+      "wall_seconds": 3170.1083760261536,
+      "warnings": []
+    },
+    {
+      "active_seconds": null,
+      "agent": "implementer",
+      "dependency_wait_seconds": null,
+      "open_interval": null,
+      "owner_wait_seconds": null,
+      "quality": {
+        "failed_checks": 0,
+        "missing_requirement_evidence": [],
+        "open_review_findings": 3,
+        "quality_evidence_available": true,
+        "repair_limit_reached": false,
+        "repair_limit_violation": false,
+        "requirement_evidence_policy": "a failure clears all passes for the same task/run/check; later requirement passes accumulate independently",
+        "retry_evidence_missing": false,
+        "review_limit_reached": false,
+        "review_limit_violation": false
+      },
+      "run": "security-fix-1",
+      "task": "implementation",
+      "token_status": "unavailable: no explicit response-to-run mapping",
+      "tokens": null,
+      "wall_seconds": null,
+      "warnings": [
+        "terminal_without_start"
+      ]
+    },
+    {
+      "active_seconds": null,
+      "agent": "implementer",
+      "dependency_wait_seconds": null,
+      "open_interval": null,
+      "owner_wait_seconds": null,
+      "quality": {
+        "failed_checks": 1,
+        "missing_requirement_evidence": [],
+        "open_review_findings": 1,
+        "quality_evidence_available": true,
+        "repair_limit_reached": true,
+        "repair_limit_violation": false,
+        "requirement_evidence_policy": "a failure clears all passes for the same task/run/check; later requirement passes accumulate independently",
+        "retry_evidence_missing": false,
+        "review_limit_reached": false,
+        "review_limit_violation": false
+      },
+      "run": "security-fix-2",
+      "task": "implementation",
+      "token_status": "unavailable: no explicit response-to-run mapping",
+      "tokens": null,
+      "wall_seconds": null,
+      "warnings": []
+    },
+    {
+      "active_seconds": null,
+      "agent": "plan-reviewer",
+      "dependency_wait_seconds": null,
+      "open_interval": null,
+      "owner_wait_seconds": null,
+      "quality": {
+        "failed_checks": null,
+        "missing_requirement_evidence": [],
+        "open_review_findings": 0,
+        "quality_evidence_available": true,
+        "repair_limit_reached": false,
+        "repair_limit_violation": false,
+        "requirement_evidence_policy": "a failure clears all passes for the same task/run/check; later requirement passes accumulate independently",
+        "retry_evidence_missing": false,
+        "review_limit_reached": false,
+        "review_limit_violation": false
+      },
+      "run": "package-review",
+      "task": "planning",
+      "token_status": "unavailable: no explicit response-to-run mapping",
+      "tokens": null,
+      "wall_seconds": null,
+      "warnings": []
+    },
+    {
+      "active_seconds": 846.6243860721588,
+      "agent": "security-reviewer",
+      "dependency_wait_seconds": 13615.851778030396,
+      "open_interval": "dependency_wait_seconds",
+      "owner_wait_seconds": null,
+      "quality": {
+        "failed_checks": 3,
+        "missing_requirement_evidence": [],
+        "open_review_findings": 3,
+        "quality_evidence_available": true,
+        "repair_limit_reached": false,
+        "repair_limit_violation": false,
+        "requirement_evidence_policy": "a failure clears all passes for the same task/run/check; later requirement passes accumulate independently",
+        "retry_evidence_missing": false,
+        "review_limit_reached": false,
+        "review_limit_violation": false
+      },
+      "run": "review-1",
+      "task": "ai-security",
+      "token_status": "unavailable: no explicit response-to-run mapping",
+      "tokens": null,
+      "wall_seconds": 14462.476164102554,
+      "warnings": []
+    },
+    {
+      "active_seconds": null,
+      "agent": "security-reviewer",
+      "dependency_wait_seconds": 2302.4801959991455,
+      "open_interval": "dependency_wait_seconds",
+      "owner_wait_seconds": null,
+      "quality": {
+        "failed_checks": 1,
+        "missing_requirement_evidence": [],
+        "open_review_findings": 1,
+        "quality_evidence_available": true,
+        "repair_limit_reached": false,
+        "repair_limit_violation": false,
+        "requirement_evidence_policy": "a failure clears all passes for the same task/run/check; later requirement passes accumulate independently",
+        "retry_evidence_missing": false,
+        "review_limit_reached": false,
+        "review_limit_violation": false
+      },
+      "run": "review-2",
+      "task": "ai-security",
+      "token_status": "unavailable: no explicit response-to-run mapping",
+      "tokens": null,
+      "wall_seconds": 2302.4801959991455,
+      "warnings": []
+    },
+    {
+      "active_seconds": null,
+      "agent": "security-reviewer",
+      "dependency_wait_seconds": null,
+      "open_interval": null,
+      "owner_wait_seconds": null,
+      "quality": {
+        "failed_checks": 2,
+        "missing_requirement_evidence": [],
+        "open_review_findings": 1,
+        "quality_evidence_available": true,
+        "repair_limit_reached": false,
+        "repair_limit_violation": false,
+        "requirement_evidence_policy": "a failure clears all passes for the same task/run/check; later requirement passes accumulate independently",
+        "retry_evidence_missing": false,
+        "review_limit_reached": false,
+        "review_limit_violation": false
+      },
+      "run": "review-3",
+      "task": "ai-security",
+      "token_status": "unavailable: no explicit response-to-run mapping",
+      "tokens": null,
+      "wall_seconds": null,
+      "warnings": [
+        "terminal_without_start"
+      ]
+    }
+  ],
+  "schema_version": 1,
+  "tasks": {
+    "ai-security": {
+      "budget_warnings": [
+        "tokens_soft_budget_reached",
+        "elapsed_seconds_soft_budget_reached"
+      ],
+      "cache_hit_ratio": 0.9755035254702094,
+      "event_counts": {
+        "assignment": 1,
+        "completion": 1,
+        "dependency_wait": 2,
+        "handoff": 3,
+        "retry": 4,
+        "review_finding": 11,
+        "start": 1,
+        "test_result": 17
+      },
+      "item_metrics_status": "observed within collection bounds",
+      "observed_command_count": 89,
+      "observed_command_duration_seconds": 81.584854955,
+      "observed_subagent_activity_count": 0,
+      "quality": {
+        "failed_checks": 6,
+        "missing_requirement_evidence": [],
+        "open_review_findings": 5,
+        "quality_evidence_available": true,
+        "repair_limit_reached": false,
+        "repair_limit_violation": false,
+        "requirement_evidence_policy": "a failure clears all passes for the same task/run/check; later requirement passes accumulate independently",
+        "retry_evidence_missing": false,
+        "review_limit_reached": false,
+        "review_limit_violation": false
+      },
+      "reasoning_output_ratio": 0.35835629286593584,
+      "reasoning_total_ratio": 0.002808892479775303,
+      "scope_violations": 0,
+      "summed_agent_active_seconds": 846.6243860721588,
+      "summed_dependency_wait_seconds": 15918.331974029541,
+      "summed_owner_wait_seconds": null,
+      "tokens": {
+        "cache_write": 0,
+        "cached_input": 10532096,
+        "input": 10796574,
+        "output": 85295,
+        "reasoning_output": 30566,
+        "total": 10881869
+      },
+      "wall_seconds": 14462.476164102554
+    },
+    "documentation": {
+      "budget_warnings": [],
+      "cache_hit_ratio": null,
+      "event_counts": {},
+      "item_metrics_status": "unavailable: no timestamped items within collection bounds",
+      "observed_command_count": null,
+      "observed_command_duration_seconds": null,
+      "observed_subagent_activity_count": null,
+      "quality": {
+        "failed_checks": null,
+        "missing_requirement_evidence": [
+          "CHAT-14"
+        ],
+        "open_review_findings": null,
+        "quality_evidence_available": false,
+        "repair_limit_reached": false,
+        "repair_limit_violation": false,
+        "requirement_evidence_policy": "a failure clears all passes for the same task/run/check; later requirement passes accumulate independently",
+        "retry_evidence_missing": false,
+        "review_limit_reached": false,
+        "review_limit_violation": false
+      },
+      "reasoning_output_ratio": null,
+      "reasoning_total_ratio": null,
+      "scope_violations": null,
+      "summed_agent_active_seconds": null,
+      "summed_dependency_wait_seconds": null,
+      "summed_owner_wait_seconds": null,
+      "tokens": {
+        "cache_write": null,
+        "cached_input": null,
+        "input": null,
+        "output": null,
+        "reasoning_output": null,
+        "total": null
+      },
+      "wall_seconds": null
+    },
+    "implementation": {
+      "budget_warnings": [
+        "tokens_soft_budget_reached",
+        "elapsed_seconds_soft_budget_reached"
+      ],
+      "cache_hit_ratio": 0.9851535801322631,
+      "event_counts": {
+        "assignment": 1,
+        "commit": 7,
+        "completion": 2,
+        "handoff": 4,
+        "retry": 19,
+        "review_finding": 8,
+        "start": 1,
+        "test_result": 49
+      },
+      "item_metrics_status": "observed within collection bounds",
+      "observed_command_count": 306,
+      "observed_command_duration_seconds": 597.983016459,
+      "observed_subagent_activity_count": 0,
+      "quality": {
+        "failed_checks": 7,
+        "missing_requirement_evidence": [
+          "CHAT-01",
+          "CHAT-04",
+          "CHAT-05",
+          "CHAT-06",
+          "CHAT-09"
+        ],
+        "open_review_findings": 4,
+        "quality_evidence_available": true,
+        "repair_limit_reached": true,
+        "repair_limit_violation": false,
+        "requirement_evidence_policy": "a failure clears all passes for the same task/run/check; later requirement passes accumulate independently",
+        "retry_evidence_missing": true,
+        "review_limit_reached": false,
+        "review_limit_violation": false
+      },
+      "reasoning_output_ratio": 0.5408653162107557,
+      "reasoning_total_ratio": 0.0025184762491815777,
+      "scope_violations": 0,
+      "summed_agent_active_seconds": 3170.1083760261536,
+      "summed_dependency_wait_seconds": null,
+      "summed_owner_wait_seconds": null,
+      "tokens": {
+        "cache_write": 0,
+        "cached_input": 51802112,
+        "input": 52582778,
+        "output": 245991,
+        "reasoning_output": 133048,
+        "total": 52828769
+      },
+      "wall_seconds": 17839.947164058685
+    },
+    "planning": {
+      "budget_warnings": [
+        "tokens_soft_budget_reached",
+        "elapsed_seconds_soft_budget_reached"
+      ],
+      "cache_hit_ratio": 0.9929231164950719,
+      "event_counts": {
+        "assignment": 2,
+        "completion": 2,
+        "handoff": 4,
+        "integration": 1,
+        "owner_wait": 2,
+        "retry": 1,
+        "review_finding": 2,
+        "start": 4,
+        "test_result": 1
+      },
+      "item_metrics_status": "observed within collection bounds",
+      "observed_command_count": 218,
+      "observed_command_duration_seconds": 16.032678830000002,
+      "observed_subagent_activity_count": 9,
+      "quality": {
+        "failed_checks": 0,
+        "missing_requirement_evidence": [],
+        "open_review_findings": 0,
+        "quality_evidence_available": true,
+        "repair_limit_reached": false,
+        "repair_limit_violation": false,
+        "requirement_evidence_policy": "a failure clears all passes for the same task/run/check; later requirement passes accumulate independently",
+        "retry_evidence_missing": false,
+        "review_limit_reached": false,
+        "review_limit_violation": false
+      },
+      "reasoning_output_ratio": 0.48610841374565106,
+      "reasoning_total_ratio": 0.0010288199593021584,
+      "scope_violations": 0,
+      "summed_agent_active_seconds": 1069.1851859092712,
+      "summed_dependency_wait_seconds": null,
+      "summed_owner_wait_seconds": 1185.623298883438,
+      "tokens": {
+        "cache_write": 0,
+        "cached_input": 84369408,
+        "input": 84970736,
+        "output": 180217,
+        "reasoning_output": 87605,
+        "total": 85150953
+      },
+      "wall_seconds": 19538.49416399002
+    },
+    "testing": {
+      "budget_warnings": [],
+      "cache_hit_ratio": null,
+      "event_counts": {},
+      "item_metrics_status": "unavailable: no timestamped items within collection bounds",
+      "observed_command_count": null,
+      "observed_command_duration_seconds": null,
+      "observed_subagent_activity_count": null,
+      "quality": {
+        "failed_checks": null,
+        "missing_requirement_evidence": [
+          "CHAT-01",
+          "CHAT-02",
+          "CHAT-03",
+          "CHAT-04",
+          "CHAT-05",
+          "CHAT-06",
+          "CHAT-07",
+          "CHAT-08",
+          "CHAT-09",
+          "CHAT-10",
+          "CHAT-11",
+          "CHAT-12",
+          "CHAT-13",
+          "CHAT-14"
+        ],
+        "open_review_findings": null,
+        "quality_evidence_available": false,
+        "repair_limit_reached": false,
+        "repair_limit_violation": false,
+        "requirement_evidence_policy": "a failure clears all passes for the same task/run/check; later requirement passes accumulate independently",
+        "retry_evidence_missing": false,
+        "review_limit_reached": false,
+        "review_limit_violation": false
+      },
+      "reasoning_output_ratio": null,
+      "reasoning_total_ratio": null,
+      "scope_violations": null,
+      "summed_agent_active_seconds": null,
+      "summed_dependency_wait_seconds": null,
+      "summed_owner_wait_seconds": null,
+      "tokens": {
+        "cache_write": null,
+        "cached_input": null,
+        "input": null,
+        "output": null,
+        "reasoning_output": null,
+        "total": null
+      },
+      "wall_seconds": null
+    }
+  },
+  "tool_count": null,
+  "tool_duration_seconds": null,
+  "tool_metrics_status": "unavailable: no verified tool lifecycle correlation"
+}

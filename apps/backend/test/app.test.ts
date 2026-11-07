@@ -3,10 +3,10 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { CurrentUser } from "@debugclinic/contracts";
 
-import { FakeAiProvider, type AiProvider } from "../src/ai/provider.js";
 import { createApp, type ProfileUpdater } from "../src/app.js";
 import type { SessionResolver } from "../src/auth/session.js";
 import type { AppConfig } from "../src/config/env.js";
+import type { LearnerAssistant } from "../src/exercises/learner-assistant.js";
 import { PassThrough } from "node:stream";
 import { createLogger } from "../src/lib/logger.js";
 
@@ -51,7 +51,7 @@ const sessionResolver: SessionResolver = async (req) => {
 
 function buildApp(options?: {
   databaseFailure?: boolean;
-  aiProvider?: AiProvider;
+  learnerAssistant?: LearnerAssistant;
   profileUpdater?: ProfileUpdater;
 }) {
   return createApp({
@@ -62,7 +62,9 @@ function buildApp(options?: {
         : vi.fn().mockResolvedValue([{ result: 1 }]),
     },
     sessionResolver,
-    aiProvider: options?.aiProvider ?? new FakeAiProvider(),
+    ...(options?.learnerAssistant
+      ? { learnerAssistant: options.learnerAssistant }
+      : {}),
     profileUpdater:
       options?.profileUpdater ??
       ((async (id, name) => ({
@@ -177,87 +179,104 @@ describe("DebugClinic API", () => {
     expect(updater).not.toHaveBeenCalled();
   });
 
-  it("returns deterministic, schema-valid fake AI coaching", async () => {
+  it("returns safe NOT_FOUND for the retired caller-selected hint route", async () => {
     const response = await request(buildApp())
       .post("/api/v1/ai/hint-preview")
       .set("authorization", "Bearer learner")
       .send({
         attemptId: "attempt-1",
-        proposedCode: "print(value)",
-        reasoning: "The value may be uninitialized.",
-        stage: 1,
+        proposedCode: "pass",
+        reasoning: "test",
+        stage: 3,
       })
+      .expect(404);
+    expect(response.body.error.code).toBe("NOT_FOUND");
+  });
+
+  it("protects assistant reads and origin-checks learner mutations", async () => {
+    const state = {
+      exerciseVersionId: "version-1",
+      revision: 0,
+      unlockedLevel: 1,
+      hasSuccessfulReply: false,
+      readOnly: false,
+      expiresAt: null,
+      messages: [],
+    } as const;
+    const service: LearnerAssistant = {
+      get: vi.fn().mockResolvedValue(state),
+      send: vi.fn().mockResolvedValue({ assistant: state }),
+      clear: vi.fn().mockResolvedValue(state),
+      reconcile: vi.fn().mockResolvedValue({
+        requestId: "c7ee4994-572d-4a87-aeaa-7a0e5e30a5ad",
+        status: "FAILED",
+        reply: null,
+      }),
+      cleanupExpired: vi.fn().mockResolvedValue(0),
+    };
+    const app = buildApp({ learnerAssistant: service });
+    const path = "/api/v1/learner/questions/exercise-1/assistant";
+    await request(app).get(path).expect(401);
+    await request(app)
+      .get(path)
+      .set("authorization", "Bearer instructor")
+      .expect(403);
+    const read = await request(app)
+      .get(path)
+      .set("authorization", "Bearer learner")
       .expect(200);
-    expect(response.body.kind).toBe("HINT");
-    expect(response.body.stage).toBe(1);
-  });
+    expect(read.body.assistant.unlockedLevel).toBe(1);
+    expect(service.get).toHaveBeenCalledTimes(1);
 
-  it("rejects invalid AI output", async () => {
-    const invalidProvider: AiProvider = {
-      generateHint: vi.fn().mockResolvedValue({ message: "missing fields" }),
+    const body = {
+      requestId: "c7ee4994-572d-4a87-aeaa-7a0e5e30a5ad",
+      expectedRevision: 0,
+      expectedExerciseVersionId: "version-1",
+      action: "MESSAGE",
+      message: "What should I trace?",
+      context: { shareCode: false, shareReasoning: false, shareOutput: false },
     };
-    const response = await request(buildApp({ aiProvider: invalidProvider }))
-      .post("/api/v1/ai/hint-preview")
+    await request(app)
+      .post(`${path}/messages`)
       .set("authorization", "Bearer learner")
-      .send({
-        attemptId: "attempt-1",
-        proposedCode: "pass",
-        reasoning: "Testing",
-        stage: 1,
-      })
-      .expect(503);
-    expect(response.body.error.code).toBe("DEPENDENCY_UNAVAILABLE");
+      .send(body)
+      .expect(403);
+    expect(service.send).not.toHaveBeenCalled();
+    await request(app)
+      .post(`${path}/messages`)
+      .set("authorization", "Bearer learner")
+      .set("origin", config.appOrigin)
+      .send(body)
+      .expect(200);
+    expect(service.send).toHaveBeenCalledWith(
+      "learner-1",
+      "exercise-1",
+      expect.objectContaining({ action: "MESSAGE" }),
+    );
   });
 
-  it("does not shape provider failures as successful responses", async () => {
-    const failingProvider: AiProvider = {
-      generateHint: vi.fn().mockRejectedValue(new Error("provider secret")),
-    };
-    const response = await request(buildApp({ aiProvider: failingProvider }))
-      .post("/api/v1/ai/hint-preview")
-      .set("authorization", "Bearer learner")
-      .send({
-        attemptId: "attempt-1",
-        proposedCode: "pass",
-        reasoning: "Testing",
-        stage: 1,
-      })
-      .expect(503);
-    expect(JSON.stringify(response.body)).not.toContain("provider secret");
-  });
-
-  it("returns safe validation errors for malformed requests", async () => {
-    const response = await request(buildApp())
-      .post("/api/v1/ai/hint-preview")
-      .set("authorization", "Bearer learner")
-      .send({ stage: 9 })
-      .expect(400);
-    expect(response.body.error.code).toBe("BAD_REQUEST");
-    expect(response.body.error.requestId).toBeTruthy();
-  });
-
-  it("returns 400 for invalid raw JSON without exposing its contents", async () => {
-    const response = await request(buildApp())
-      .post("/api/v1/ai/hint-preview")
+  it("handles malformed and oversized assistant JSON without exposing body text", async () => {
+    const malformed = await request(buildApp())
+      .post("/api/v1/learner/questions/exercise-1/assistant/messages")
       .set("content-type", "application/json")
-      .send('{"password":"parser-secret", invalid}')
+      .send('{"apiKey":"MALFORMED_BODY_SENTINEL", invalid}')
       .expect(400);
-    expect(response.body.error.code).toBe("BAD_REQUEST");
-    expect(response.body.error.requestId).toBeTruthy();
-    expect(response.body.error.message).toContain("valid JSON");
-    expect(JSON.stringify(response.body)).not.toContain("parser-secret");
-    expect(response.body).not.toHaveProperty("stack");
-  });
+    expect(malformed.body.error.code).toBe("BAD_REQUEST");
+    expect(JSON.stringify(malformed.body)).not.toContain(
+      "MALFORMED_BODY_SENTINEL",
+    );
 
-  it("returns 413 for JSON above the 64kb limit", async () => {
-    const response = await request(buildApp())
-      .post("/api/v1/ai/hint-preview")
-      .send({ reasoning: "x".repeat(65 * 1024), password: "large-body-secret" })
+    const oversized = await request(buildApp())
+      .post("/api/v1/learner/questions/exercise-1/assistant/messages")
+      .send({
+        message: "x".repeat(65 * 1024),
+        apiKey: "OVERSIZED_BODY_SENTINEL",
+      })
       .expect(413);
-    expect(response.body.error.code).toBe("BAD_REQUEST");
-    expect(response.body.error.requestId).toBeTruthy();
-    expect(response.body.error.message).toContain("64kb");
-    expect(JSON.stringify(response.body)).not.toContain("large-body-secret");
+    expect(oversized.body.error.code).toBe("BAD_REQUEST");
+    expect(JSON.stringify(oversized.body)).not.toContain(
+      "OVERSIZED_BODY_SENTINEL",
+    );
   });
 
   it("does not expose unknown errors just because they declare a client status", async () => {

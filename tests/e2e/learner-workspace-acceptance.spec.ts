@@ -6,6 +6,7 @@ import {
 // Independent LWS acceptance. HTTP doubles isolate browser lifecycle behavior.
 import { expect, test, type Page } from "@playwright/test";
 import { f01Learner } from "../support/f01-fixtures.js";
+import { mockEmptyLearnerAssistantState } from "../support/learner-assistant-fixture.js";
 
 const question = {
   id: "independent-workspace",
@@ -49,6 +50,7 @@ async function fixture(page: Page) {
   await page.route(`**${detail}/attempt`, (route) =>
     route.fulfill({ json: { attempt: null } }),
   );
+  await mockEmptyLearnerAssistantState(page, question.id, question.versionId);
 }
 async function open(page: Page) {
   await page.goto(`/learner/questions/${question.id}`);

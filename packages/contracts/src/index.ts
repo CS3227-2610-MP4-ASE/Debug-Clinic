@@ -3,6 +3,20 @@ import { DraftIdSchema, RevisionSchema } from "./primitives.js";
 import { storageMessage, storageText } from "./storage-text.js";
 export { DraftIdSchema, RevisionSchema } from "./primitives.js";
 export {
+  AssistantActionSchema,
+  AssistantClearRequestSchema,
+  AssistantContextSchema,
+  AssistantMessageRequestSchema,
+  AssistantMessageSchema,
+  AssistantMutationResponseSchema,
+  AssistantRequestResponseSchema,
+  AssistantStateResponseSchema,
+  AssistantStateSchema,
+  type AssistantMessage,
+  type AssistantMessageRequest,
+  type AssistantState,
+} from "./learner-assistant.js";
+export {
   LearnerAttemptResponseSchema,
   LearnerAttemptSchema,
   LearnerAttemptWriteSchema,

@@ -11,6 +11,7 @@ import { createPrismaClient } from "../../apps/backend/src/db/client.js";
 import { createInstructorDrafts } from "../../apps/backend/src/exercises/instructor-drafts.js";
 import { createInstructorQuestions } from "../../apps/backend/src/exercises/instructor-questions.js";
 import { createLearnerAttempts } from "../../apps/backend/src/exercises/learner-attempts.js";
+import { createLearnerAssistant } from "../../apps/backend/src/exercises/learner-assistant.js";
 import { createLogger } from "../../apps/backend/src/lib/logger.js";
 import { testRuntimeDatabaseTarget } from "./database-target.js";
 import { browserTestOrigin } from "./browser-target.js";
@@ -87,7 +88,6 @@ const app = createApp({
   config,
   auth,
   database: prisma,
-  aiProvider,
   instructorDrafts: createInstructorDrafts({
     prisma,
     provider: aiProvider,
@@ -96,6 +96,7 @@ const app = createApp({
   }),
   instructorQuestions: createInstructorQuestions({ prisma, logger }),
   learnerAttempts: createLearnerAttempts(prisma),
+  learnerAssistant: createLearnerAssistant(prisma, aiProvider),
   logger,
   profileUpdater: async (id, name) =>
     prisma.user.update({

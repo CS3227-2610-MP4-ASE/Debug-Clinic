@@ -9,10 +9,14 @@ import express, {
 import { rateLimit } from "express-rate-limit";
 import helmet from "helmet";
 import { pinoHttp } from "pino-http";
-import { ZodError, type ZodType } from "zod";
+import { ZodError, z, type ZodType } from "zod";
 
 import {
-  AiHintRequestSchema,
+  AssistantClearRequestSchema,
+  AssistantMessageRequestSchema,
+  AssistantMutationResponseSchema,
+  AssistantRequestResponseSchema,
+  AssistantStateResponseSchema,
   ApiErrorSchema,
   CurrentUserResponseSchema,
   HealthResponseSchema,
@@ -40,11 +44,6 @@ import {
   type Role,
 } from "@debugclinic/contracts";
 
-import {
-  createAiProvider,
-  validateAiResponse,
-  type AiProvider,
-} from "./ai/provider.js";
 import { createSessionResolver, type SessionResolver } from "./auth/session.js";
 import type { DebugClinicAuth } from "./auth/auth.js";
 import type { AppConfig } from "./config/env.js";
@@ -52,6 +51,7 @@ import { classifyDatabaseFailure } from "./db/diagnostics.js";
 import type { InstructorDrafts } from "./exercises/instructor-drafts.js";
 import type { InstructorQuestions } from "./exercises/instructor-questions.js";
 import type { LearnerAttempts } from "./exercises/learner-attempts.js";
+import type { LearnerAssistant } from "./exercises/learner-assistant.js";
 import { AppError, DependencyUnavailableError } from "./lib/errors.js";
 import {
   createLogger,
@@ -73,10 +73,10 @@ export interface CreateAppOptions {
   database: DatabaseProbe;
   auth?: DebugClinicAuth;
   sessionResolver?: SessionResolver;
-  aiProvider?: AiProvider;
   instructorDrafts?: InstructorDrafts;
   instructorQuestions?: InstructorQuestions;
   learnerAttempts?: LearnerAttempts;
+  learnerAssistant?: LearnerAssistant;
   profileUpdater: ProfileUpdater;
   logger?: AppLogger;
 }
@@ -189,6 +189,9 @@ function createErrorHandler(logger: AppLogger): ErrorRequestHandler {
       );
     }
 
+    if (appError.retryAfterSeconds)
+      response.setHeader("Retry-After", String(appError.retryAfterSeconds));
+
     const payload = ApiErrorSchema.parse({
       error: {
         code: appError.code,
@@ -224,7 +227,6 @@ export function createApp(options: CreateAppOptions) {
       : async () => {
           return null;
         });
-  const aiProvider = options.aiProvider ?? createAiProvider(options.config);
   const app = express();
 
   app.set("trust proxy", 1);
@@ -531,6 +533,13 @@ export function createApp(options: CreateAppOptions) {
       );
     return options.learnerAttempts;
   };
+  const assistant = () => {
+    if (!options.learnerAssistant)
+      throw new DependencyUnavailableError(
+        "Learner coaching is temporarily unavailable",
+      );
+    return options.learnerAssistant;
+  };
   app.get(
     "/api/v1/learner/questions",
     ...learner,
@@ -572,6 +581,67 @@ export function createApp(options: CreateAppOptions) {
       );
     }),
   );
+  app.get(
+    "/api/v1/learner/questions/:id/assistant",
+    ...learner,
+    asyncHandler(async (request, response) => {
+      response.json(
+        AssistantStateResponseSchema.parse({
+          assistant: await assistant().get(
+            response.locals.user!.id,
+            DraftIdSchema.parse(request.params["id"]),
+          ),
+        }),
+      );
+    }),
+  );
+  app.post(
+    "/api/v1/learner/questions/:id/assistant/messages",
+    ...learner,
+    requireLearnerMutation,
+    validateBody(AssistantMessageRequestSchema),
+    asyncHandler(async (request, response) => {
+      const result = await assistant().send(
+        response.locals.user!.id,
+        DraftIdSchema.parse(request.params["id"]),
+        request.body,
+      );
+      response.json(AssistantMutationResponseSchema.parse(result));
+    }),
+  );
+  app.post(
+    "/api/v1/learner/questions/:id/assistant/clear",
+    ...learner,
+    requireLearnerMutation,
+    validateBody(AssistantClearRequestSchema),
+    asyncHandler(async (request, response) => {
+      response.json(
+        AssistantStateResponseSchema.parse({
+          assistant: await assistant().clear(
+            response.locals.user!.id,
+            DraftIdSchema.parse(request.params["id"]),
+            request.body,
+          ),
+        }),
+      );
+    }),
+  );
+  app.get(
+    "/api/v1/learner/questions/:id/assistant/requests/:requestId",
+    ...learner,
+    asyncHandler(async (request, response) => {
+      const requestId = z.string().uuid().parse(request.params["requestId"]);
+      response.json(
+        AssistantRequestResponseSchema.parse(
+          await assistant().reconcile(
+            response.locals.user!.id,
+            DraftIdSchema.parse(request.params["id"]),
+            requestId,
+          ),
+        ),
+      );
+    }),
+  );
   app.put(
     "/api/v1/learner/questions/:id/attempt",
     ...learner,
@@ -604,30 +674,6 @@ export function createApp(options: CreateAppOptions) {
           ),
         ),
       );
-    }),
-  );
-
-  app.post(
-    "/api/v1/ai/hint-preview",
-    requireUser(sessionResolver),
-    requireRole("LEARNER"),
-    validateBody(AiHintRequestSchema),
-    asyncHandler(async (request, response) => {
-      const user = response.locals.user;
-      if (!user)
-        throw new AppError(401, "UNAUTHENTICATED", "Sign in to continue");
-      try {
-        const result = await aiProvider.generateHint(request.body, {
-          requestId: response.locals.requestId,
-          user,
-        });
-        response.json(validateAiResponse(result));
-      } catch (error) {
-        if (error instanceof AppError) throw error;
-        throw new DependencyUnavailableError(
-          "AI coaching is temporarily unavailable",
-        );
-      }
     }),
   );
 

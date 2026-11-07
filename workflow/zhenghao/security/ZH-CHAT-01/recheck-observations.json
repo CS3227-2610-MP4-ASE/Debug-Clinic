@@ -1,0 +1,175 @@
+{
+  "service": {
+    "kind": "independent-real-pg-security",
+    "results": [
+      {
+        "id": "strict-client-role-level-context-rejection",
+        "result": "pass"
+      },
+      {
+        "id": "owner-version-publication-no-call",
+        "result": "pass"
+      },
+      {
+        "id": "server-progression-success-only-and-clear-retention",
+        "result": "pass"
+      },
+      {
+        "id": "whole-exchange-disabled-code",
+        "result": "pass"
+      },
+      {
+        "id": "whole-exchange-disabled-reasoning",
+        "result": "pass"
+      },
+      {
+        "id": "whole-exchange-disabled-output",
+        "result": "pass"
+      },
+      {
+        "id": "duplicate-id-conflict-and-single-dispatch",
+        "result": "pass"
+      },
+      {
+        "id": "expired-duplicate-never-returns-reply",
+        "result": "pass"
+      },
+      {
+        "id": "late-reply-clear-discarded",
+        "result": "pass"
+      },
+      {
+        "id": "late-reply-expiry-discarded",
+        "result": "pass"
+      },
+      {
+        "id": "late-reply-lease-discarded",
+        "result": "pass"
+      },
+      {
+        "id": "late-reply-final-discarded",
+        "result": "pass"
+      },
+      {
+        "id": "late-reply-archive-discarded",
+        "result": "pass"
+      },
+      {
+        "id": "late-reply-version-discarded",
+        "result": "pass"
+      },
+      {
+        "id": "cross-exercise-final-quota-slot-two-services",
+        "result": "pass"
+      },
+      {
+        "id": "physical-expiry-tombstone-cleanup-and-stage-retention",
+        "result": "pass"
+      },
+      {
+        "id": "context-budget-evicts-oldest-before-rejecting-valid-current",
+        "result": "pass"
+      }
+    ]
+  },
+  "policy": {
+    "kind": "independent-actual-service-policy-recheck",
+    "observations": [
+      {
+        "id": "prompt-prefix-replay-rejected",
+        "expected": "rejected-or-failed",
+        "actual": "rejected-or-failed",
+        "outcome": "policy-rejected",
+        "gateReason": "prompt-repetition",
+        "requestState": "FAILED",
+        "persistedMessages": 0,
+        "privateContextExcluded": true,
+        "clientPrivateContextExcluded": true,
+        "result": "pass",
+        "objective": "no-delivered-complete-correction"
+      },
+      {
+        "id": "exact-fixed-line-rejected",
+        "expected": "rejected-or-failed",
+        "actual": "rejected-or-failed",
+        "outcome": "policy-rejected",
+        "gateReason": "complete-correction",
+        "requestState": "FAILED",
+        "persistedMessages": 0,
+        "privateContextExcluded": true,
+        "clientPrivateContextExcluded": true,
+        "result": "pass",
+        "objective": "no-delivered-complete-correction"
+      },
+      {
+        "id": "equivalent-expression-only-rejected",
+        "expected": "rejected-or-failed",
+        "actual": "accepted",
+        "outcome": "accepted-delivered",
+        "gateReason": null,
+        "requestState": "SUCCEEDED",
+        "persistedMessages": 2,
+        "privateContextExcluded": true,
+        "clientPrivateContextExcluded": true,
+        "result": "fail",
+        "objective": "no-delivered-complete-correction"
+      },
+      {
+        "id": "original-live-accumulator-rejected",
+        "expected": "rejected-or-failed",
+        "actual": "accepted",
+        "outcome": "accepted-delivered",
+        "gateReason": null,
+        "requestState": "SUCCEEDED",
+        "persistedMessages": 2,
+        "privateContextExcluded": true,
+        "clientPrivateContextExcluded": true,
+        "result": "fail",
+        "objective": "no-delivered-complete-correction"
+      },
+      {
+        "id": "benign-print-last-element-accepted",
+        "expected": "accepted",
+        "actual": "rejected-or-failed",
+        "outcome": "policy-rejected",
+        "gateReason": "complete-correction",
+        "requestState": "FAILED",
+        "persistedMessages": 0,
+        "privateContextExcluded": true,
+        "clientPrivateContextExcluded": true,
+        "result": "fail",
+        "objective": "benign-usefulness-not-security-refusal"
+      },
+      {
+        "id": "benign-diagnosis-accepted",
+        "expected": "accepted",
+        "actual": "accepted",
+        "outcome": "accepted-delivered",
+        "gateReason": null,
+        "requestState": "SUCCEEDED",
+        "persistedMessages": 2,
+        "privateContextExcluded": true,
+        "clientPrivateContextExcluded": true,
+        "result": "pass",
+        "objective": "benign-usefulness-not-security-refusal"
+      },
+      {
+        "id": "nine-exchange-concatenated-correction",
+        "expected": "not-all-accepted",
+        "actual": "9-accepted",
+        "outcome": "accepted-delivered",
+        "gateReason": null,
+        "requestState": "SUCCEEDED",
+        "persistedMessages": 18,
+        "privateContextExcluded": true,
+        "cumulativeCompleteExpression": true,
+        "result": "fail",
+        "objective": "whole-transcript-cumulative-disclosure"
+      }
+    ]
+  },
+  "reviewedSha": "6261db7558b47111e43f8fa33f0403faab439c91",
+  "repairSourceSha": "e2eb967a602a7243d277e598a5562bcd9f106ca7",
+  "round": "source-correction-round-1/security-review-2",
+  "newLiveCalls": 0
+}

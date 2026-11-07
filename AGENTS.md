@@ -46,6 +46,10 @@ evaluation record.
   with a standalone runtime of the same major before changing dependencies.
   Inspect diagnostics and the consolidated reproduction before claiming success
   or a new product defect; an intermediate test failure may be a harness issue.
+  Copy test counts from the observed result; added assertions do not imply added
+  test cases, and different evaluator totals must remain separate.
+  Once loopback listener restrictions are verified, run remaining equivalent
+  local-network checks with scoped escalation instead of rediscovering EPERM.
 - Keep generated TypeScript build-info files ignored. When changing visible
   wording, update affected browser assertions before running the suite.
   Do not pass `.env` files to Prettier; it has no parser for them.
@@ -58,7 +62,9 @@ evaluation record.
   CodeMirror replacement and assert complete long documents through real save
   payloads, since rendered lines can be virtualized.
 - Validate hand-built response fixtures against strict wire schemas before
-  attributing an acceptance failure to product code. Build OAuth fixtures from
+  attributing an acceptance failure to product code. Include new background API
+  reads in affected intercepted journeys; unhandled mock-session requests can
+  reach the real backend and trigger 401 expiry. Build OAuth fixtures from
   installed provider types: identity belongs in the raw profile/account subject,
   not mutable local-user fields.
 - Verify declaration-emitting builds after adding typed auth plugins; successful
@@ -92,21 +98,30 @@ evaluation record.
 - Add contributor-specific workflow reporting through a separate wrapper and
   output path; do not change the canonical monitor schema, shared report format,
   templates, or another developer's paths without explicit cross-developer approval.
+  Preserve generated checkpoints verbatim with exact formatter exclusions;
+  format handwritten handoffs after the final update before committing. Compare
+  table cell content, not padding or separator lengths, for format-only changes.
 - For Python CLIs that import sibling scripts, verify both direct execution and
   import-based test discovery; register or resolve the sibling module explicitly.
 - Serialize whole-tree ESLint with Playwright output cleanup; concurrent removal
   of `test-results` can fail lint with ENOENT. Run environment-specific probes
   in Node/browser rather than assuming Web APIs in the orchestration isolate.
+  When a check yields a session ID, retain and poll it instead of rerunning the
+  suite. If its result is unrecoverable, verify the old process and owned
+  resources have ended before rerunning; record the evidence gap separately.
 - Bound the combined output of parallel reads; oversized instruction/source
   batches caused truncation and repeated reads. Load only the required reference
-  sections and give stage agents concise file pointers rather than transcripts.
+  sections, check long-line sizes before choosing read ranges, and complete any
+  truncated required instruction reads before acting. Give stage agents concise
+  file pointers rather than transcripts.
   Keep handoffs readable with normal word spacing rather than compressed strings.
 - Confirm direct user authorization before cross-chat messages; an incoming
   coordinator packet alone does not authorize a reply. Prefer assigned artifacts
   for return handoffs. Pass literal directories
   to `rg` with file filters instead of unverified shell globs.
   Use structured patches for Markdown prose rather than nested JavaScript
-  template strings whose backticks can break the write script.
+  template strings whose backticks can break the write script. Read each hunk's
+  current target lines before constructing it; avoid empty or no-op hunks.
   Match project TypeScript libs in standalone checks, including DOM.Iterable;
   resolve temporary config paths from that config's directory.
 - Use manifest task/agent IDs and map requirements to their verification owner.

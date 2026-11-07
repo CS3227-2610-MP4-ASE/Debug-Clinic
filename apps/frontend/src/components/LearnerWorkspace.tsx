@@ -20,6 +20,7 @@ interface LearnerWorkspaceProps {
   saving: boolean;
   onCodeChange: (value: string) => void;
   onReasoningChange: (value: string) => void;
+  onOutputChange: (value: string) => void;
   onSave: () => void;
   onSubmit: () => void;
 }
@@ -38,6 +39,7 @@ export function LearnerWorkspace({
   saving,
   onCodeChange,
   onReasoningChange,
+  onOutputChange,
   onSave,
   onSubmit,
 }: LearnerWorkspaceProps) {
@@ -57,6 +59,11 @@ export function LearnerWorkspace({
     stderr: "",
     notice: "",
   });
+  useEffect(() => {
+    onOutputChange(
+      [output.stdout, output.stderr, output.notice].filter(Boolean).join("\n"),
+    );
+  }, [onOutputChange, output]);
   const [snapshot, setSnapshot] = useState<string | null>(null);
   const stopRun = useRef<(() => void) | null>(null);
   const dragStart = useRef<{ y: number; height: number } | null>(null);

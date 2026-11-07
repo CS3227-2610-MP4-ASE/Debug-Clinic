@@ -52,21 +52,23 @@ enum AuthAuditAction {
 }
 
 model User {
-  id            String           @id @default(cuid())
-  name          String
-  email         String           @unique
-  emailVerified Boolean          @default(false)
-  image         String?
-  role          Role             @default(LEARNER)
-  createdAt     DateTime         @default(now())
-  updatedAt     DateTime         @updatedAt
-  accounts      Account[]
-  sessions      Session[]
-  exercises     Exercise[]       @relation("ExerciseAuthor")
-  attempts      Attempt[]        @relation("LearnerAttempts")
-  reviews       Review[]         @relation("InstructorReviews")
-  aiUsage       AiUsageEvent[]
-  authAudit     AuthAuditEvent[]
+  id                     String                         @id @default(cuid())
+  name                   String
+  email                  String                         @unique
+  emailVerified          Boolean                        @default(false)
+  image                  String?
+  role                   Role                           @default(LEARNER)
+  createdAt              DateTime                       @default(now())
+  updatedAt              DateTime                       @updatedAt
+  accounts               Account[]
+  sessions               Session[]
+  exercises              Exercise[]                     @relation("ExerciseAuthor")
+  attempts               Attempt[]                      @relation("LearnerAttempts")
+  reviews                Review[]                       @relation("InstructorReviews")
+  aiUsage                AiUsageEvent[]
+  authAudit              AuthAuditEvent[]
+  assistantConversations LearnerAssistantConversation[]
+  assistantQuota         LearnerAssistantQuota?
 
   @@index([role])
 }
@@ -139,20 +141,21 @@ model Exercise {
 }
 
 model ExerciseVersion {
-  id                   String      @id @default(cuid())
-  exerciseId           String
-  version              Int
-  language             String      @default("python")
-  buggyCode            String
-  expectedBehavior     String
-  topic                String?
-  bugExplanation       String?
-  correctedSolution    String?
-  generationProvenance Json?
-  exercise             Exercise    @relation(fields: [exerciseId], references: [id], onDelete: Cascade)
-  hints                HintStage[]
-  attempts             Attempt[]
-  createdAt            DateTime    @default(now())
+  id                     String                         @id @default(cuid())
+  exerciseId             String
+  version                Int
+  language               String                         @default("python")
+  buggyCode              String
+  expectedBehavior       String
+  topic                  String?
+  bugExplanation         String?
+  correctedSolution      String?
+  generationProvenance   Json?
+  exercise               Exercise                       @relation(fields: [exerciseId], references: [id], onDelete: Cascade)
+  hints                  HintStage[]
+  attempts               Attempt[]
+  assistantConversations LearnerAssistantConversation[]
+  createdAt              DateTime                       @default(now())
 
   @@unique([exerciseId, version])
   @@index([exerciseId])
@@ -263,4 +266,80 @@ model AuthAuditEvent {
 
   @@index([userId, createdAt])
   @@index([action, createdAt])
+}
+
+model LearnerAssistantConversation {
+  id                 String                    @id @default(cuid())
+  learnerId          String
+  exerciseVersionId  String
+  unlockedLevel      Int                       @default(1)
+  revision           Int                       @default(0)
+  contentGeneration  Int                       @default(0)
+  hasSuccessfulReply Boolean                   @default(false)
+  lastActivityAt     DateTime?
+  expiresAt          DateTime?
+  learner            User                      @relation(fields: [learnerId], references: [id], onDelete: Cascade)
+  exerciseVersion    ExerciseVersion           @relation(fields: [exerciseVersionId], references: [id], onDelete: Cascade)
+  messages           LearnerAssistantMessage[]
+  requests           LearnerAssistantRequest[]
+
+  @@unique([learnerId, exerciseVersionId])
+  @@index([expiresAt])
+}
+
+model LearnerAssistantMessage {
+  id                String                       @id @default(cuid())
+  conversationId    String
+  sequence          Int
+  role              String
+  text              String
+  level             Int
+  requestId         String
+  shareCode         Boolean                      @default(false)
+  shareReasoning    Boolean                      @default(false)
+  shareOutput       Boolean                      @default(false)
+  codeSnapshot      String?
+  reasoningSnapshot String?
+  outputSnapshot    String?
+  createdAt         DateTime                     @default(now())
+  conversation      LearnerAssistantConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  @@unique([conversationId, sequence])
+  @@index([conversationId, createdAt])
+}
+
+model LearnerAssistantRequest {
+  id                String                       @id @default(cuid())
+  learnerId         String
+  conversationId    String
+  requestId         String
+  payloadDigest     String
+  action            String
+  status            String
+  expectedRevision  Int
+  contentGeneration Int
+  targetLevel       Int
+  leaseExpiresAt    DateTime?
+  replyMessageId    String?
+  providerAttempts  Int                          @default(0)
+  inputTokens       Int?
+  outputTokens      Int?
+  createdAt         DateTime                     @default(now())
+  updatedAt         DateTime                     @updatedAt
+  conversation      LearnerAssistantConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  @@unique([conversationId, requestId])
+  @@unique([learnerId, requestId])
+  @@index([status, leaseExpiresAt])
+  @@index([createdAt])
+  @@index([learnerId, action, createdAt])
+}
+
+model LearnerAssistantQuota {
+  learnerId       String    @id
+  windowStartedAt DateTime?
+  windowCount     Int       @default(0)
+  localDate       String?
+  dailyCount      Int       @default(0)
+  learner         User      @relation(fields: [learnerId], references: [id], onDelete: Cascade)
 }
