@@ -62,7 +62,9 @@ evaluation record.
   CodeMirror replacement and assert complete long documents through real save
   payloads, since rendered lines can be virtualized.
 - Validate hand-built response fixtures against strict wire schemas before
-  attributing an acceptance failure to product code. Build OAuth fixtures from
+  attributing an acceptance failure to product code. Include new background API
+  reads in affected intercepted journeys; unhandled mock-session requests can
+  reach the real backend and trigger 401 expiry. Build OAuth fixtures from
   installed provider types: identity belongs in the raw profile/account subject,
   not mutable local-user fields.
 - Verify declaration-emitting builds after adding typed auth plugins; successful
