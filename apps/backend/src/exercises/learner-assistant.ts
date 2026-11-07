@@ -9,10 +9,14 @@ import { Prisma } from "../../../../generated/prisma/client.js";
 import { z } from "zod";
 import type { DebugClinicPrisma } from "../db/client.js";
 import {
-  coachingSystemPrompt,
+  assembledCoachingPromptUnits,
   type AiProvider,
   type CoachingProviderInput,
 } from "../ai/provider.js";
+import {
+  coachingMessageForProvider,
+  coachingOutputViolation,
+} from "../ai/coaching-output-policy.js";
 import { AppError, DependencyUnavailableError } from "../lib/errors.js";
 import { findCanonicalPublishedQuestion } from "./instructor-questions.js";
 
@@ -110,7 +114,7 @@ function digest(value: unknown) {
 }
 
 async function includedHistory(
-  prisma: DebugClinicPrisma,
+  prisma: Pick<Transaction, "learnerAssistantMessage">,
   conversationId: string,
   enabled: AssistantMessageRequest["context"],
 ): Promise<CoachingProviderInput["history"]> {
@@ -146,7 +150,7 @@ async function includedHistory(
         continue;
       pairs.push({
         learner: JSON.stringify({
-          text: learner.text,
+          text: coachingMessageForProvider(learner.text),
           ...(learner.shareCode ? { code: learner.codeSnapshot } : {}),
           ...(learner.shareReasoning
             ? { reasoning: learner.reasoningSnapshot }
@@ -327,6 +331,24 @@ export function createLearnerAssistant(
           where: { id: conversation.id },
         });
 
+        if (conversation.expiresAt && conversation.expiresAt <= now) {
+          await tx.learnerAssistantMessage.deleteMany({
+            where: { conversationId: conversation.id },
+          });
+          await tx.learnerAssistantRequest.updateMany({
+            where: { conversationId: conversation.id, status: "PENDING" },
+            data: { status: "CANCELLED", leaseExpiresAt: null },
+          });
+          conversation = await tx.learnerAssistantConversation.update({
+            where: { id: conversation.id },
+            data: {
+              contentGeneration: { increment: 1 },
+              revision: { increment: 1 },
+              lastActivityAt: null,
+              expiresAt: null,
+            },
+          });
+        }
         const prior = await tx.learnerAssistantRequest.findUnique({
           where: {
             learnerId_requestId: { learnerId, requestId: input.requestId },
@@ -362,24 +384,6 @@ export function createLearnerAssistant(
               ? "This request is still processing. Check its status before retrying."
               : "This request cannot be replayed. Start a new message.",
           );
-        }
-        if (conversation.expiresAt && conversation.expiresAt <= now) {
-          await tx.learnerAssistantMessage.deleteMany({
-            where: { conversationId: conversation.id },
-          });
-          await tx.learnerAssistantRequest.updateMany({
-            where: { conversationId: conversation.id, status: "PENDING" },
-            data: { status: "CANCELLED", leaseExpiresAt: null },
-          });
-          conversation = await tx.learnerAssistantConversation.update({
-            where: { id: conversation.id },
-            data: {
-              contentGeneration: { increment: 1 },
-              revision: { increment: 1 },
-              lastActivityAt: null,
-              expiresAt: null,
-            },
-          });
         }
         await tx.learnerAssistantRequest.updateMany({
           where: { learnerId, status: "PENDING", leaseExpiresAt: { lte: now } },
@@ -422,6 +426,49 @@ export function createLearnerAssistant(
           throw conflict(
             "Wait for the current coaching reply before sending another message.",
           );
+
+        const history = await includedHistory(
+          tx,
+          conversation.id,
+          input.context,
+        );
+        const providerInput: CoachingProviderInput = {
+          level: asLevel(targetLevel),
+          question: {
+            title: question.title,
+            problemStatement: question.problemStatement,
+            expectedBehavior: question.expectedBehavior,
+            buggyCode: question.buggyCode,
+          },
+          current: currentInput(input),
+          history,
+        };
+        providerInput.current.message = coachingMessageForProvider(
+          providerInput.current.message,
+        );
+        while (
+          history.length > 0 &&
+          assembledCoachingPromptUnits(providerInput) > 48_000
+        )
+          history.shift();
+        if (assembledCoachingPromptUnits(providerInput) > 48_000)
+          throw new AppError(
+            400,
+            "BAD_REQUEST",
+            "The shared context is too large. Turn off a category or send a shorter message.",
+          );
+        const privateSolution = await tx.exerciseVersion.findUnique({
+          where: { id: question.versionId },
+          select: { correctedSolution: true },
+        });
+        if (!privateSolution?.correctedSolution) throw unavailable();
+        const previousAssistantMessages =
+          await tx.learnerAssistantMessage.findMany({
+            where: { conversationId: conversation.id, role: "ASSISTANT" },
+            orderBy: { sequence: "desc" },
+            take: 8,
+            select: { text: true },
+          });
 
         const dayStart = singaporeDayStart(now);
         const [rolling, daily, oldest] = await Promise.all([
@@ -500,6 +547,11 @@ export function createLearnerAssistant(
           targetLevel,
           requestId: input.requestId,
           leaseExpiresAt,
+          providerInput,
+          correctedSolution: privateSolution.correctedSolution,
+          previousAssistantMessages: previousAssistantMessages
+            .reverse()
+            .map(({ text }) => text),
         };
       });
       if (reserved.duplicate)
@@ -509,27 +561,7 @@ export function createLearnerAssistant(
         };
 
       const conversation = reserved.conversation;
-      const history = await includedHistory(
-        prisma,
-        conversation.id,
-        input.context,
-      );
       const targetLevel = asLevel(reserved.targetLevel);
-      const fullPromptSize =
-        coachingSystemPrompt(targetLevel).length +
-        JSON.stringify({
-          question: reserved.question,
-          history,
-          current: currentInput(input),
-        }).length;
-      if (fullPromptSize > 48_000) {
-        await failRequest(reserved.requestId, learnerId, conversation.id, 0);
-        throw new AppError(
-          400,
-          "BAD_REQUEST",
-          "The shared context is too large. Turn off a category or send a shorter message.",
-        );
-      }
       if (!provider.generateCoaching) {
         await failRequest(reserved.requestId, learnerId, conversation.id, 0);
         throw unavailable();
@@ -539,18 +571,17 @@ export function createLearnerAssistant(
       >;
       try {
         result = coachingResultSchema.parse(
-          await provider.generateCoaching({
-            level: targetLevel,
-            question: {
-              title: reserved.question.title,
-              problemStatement: reserved.question.problemStatement,
-              expectedBehavior: reserved.question.expectedBehavior,
-              buggyCode: reserved.question.buggyCode,
-            },
-            current: currentInput(input),
-            history,
-          }),
+          await provider.generateCoaching(reserved.providerInput),
         );
+        const violation = coachingOutputViolation({
+          message: result.message,
+          level: targetLevel,
+          buggyCode: reserved.question.buggyCode,
+          correctedSolution: reserved.correctedSolution,
+          previousAssistantMessages: reserved.previousAssistantMessages,
+        });
+        if (violation)
+          throw new Error("Coaching output failed policy validation");
       } catch (failed) {
         const providerAttempts =
           failed &&
