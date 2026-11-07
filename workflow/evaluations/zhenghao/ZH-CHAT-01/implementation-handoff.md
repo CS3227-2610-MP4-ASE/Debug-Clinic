@@ -65,12 +65,83 @@ The production build compiles the function source and `tsconfig.functions.json` 
 
 Coordinator supplied the public SoCLaaS OpenAPI contract checkpoint at [the API reference](https://soclaas-api.comp.nus.edu.sg/) and [OpenAPI document](https://soclaas-api.comp.nus.edu.sg/openapi.json): non-streamed chat uses required `model`/`messages` and a choices/message response, with optional usage; optional fields vary by model. The implementation agent's browser tool could not independently fetch that OpenAPI URL, so this is attributed to coordinator verification, not independent inspection. The SoC quickstart remained login-protected. No real provider call or credential inspection was performed.
 
+## Independent security correction round 1
+
+Repair base: `9e9ebf0f97905b83fdfe77ef4d32d2378ba0d200`. This round changes only
+application service/provider code, their existing backend/provider and
+PostgreSQL integration test paths, and this handoff. The independent
+`workflow/evaluations/zhenghao/ZH-CHAT-01/security.md` report and
+`workflow/zhenghao/security/ZH-CHAT-01/` evaluator were not edited.
+
+- **SEC-01:** expiration is now processed under the existing conversation lock
+  and transaction clock before request-ID replay lookup. Messages are deleted
+  and pending work cancelled before a successful tombstone can be replayed;
+  replay returns the empty state without a top-level old reply or another
+  provider dispatch. GET/reconcile before and after cleanup, duplicate replay,
+  and cancelled stale-ID behavior have regressions.
+- **SEC-03:** `assembleCoachingMessages` is shared by provider transport and the
+  budget calculation. The 48,000 UTF-16-unit cap now measures the serialized
+  messages actually sent. Oldest whole eligible exchanges are shifted until the
+  prompt fits. Required current content that cannot fit is rejected before a
+  request/quota reservation.
+- **SEC-02:** the system policy now rejects prompt disclosure and exact edits
+  while allowing diagnosis and unrelated examples. Direct prompt-repetition
+  requests are normalized and replaced with a task-focused question before
+  reaching the provider. A local post-response screen checks prompt n-gram
+  overlap and changed-line/correction-token alignment against the canonical
+  instructor correction. The private correction is queried for this local
+  comparison only; the provider input remains the public exercise projection.
+  Unsafe candidates fail closed before persistence, without another model call.
+  Adversarial fixtures cover Unicode-obfuscated prompt requests, prompt replay,
+  exact and prose tiny-exercise edits, operator/operand prose, and cumulative
+  fragments; benign diagnosis and unrelated examples remain accepted.
+
+The SEC-02 screen is deliberately bounded and deterministic; it does not prove
+semantic safety against arbitrary paraphrases or long-term cumulative disclosure
+beyond the eight prior assistant replies retained for model context. Whether the
+private canonical-correction comparison is acceptable as a server-only defense
+was resolved by the coordinator for this repair, conditional on keeping the
+canonical correction and filter metadata out of provider context, responses and
+logs. No new provider, capability, or model call was added. The separate six-call
+synthetic live allowance remains unused; the security reviewer must re-evaluate
+real model behavior before resolving SEC-02.
+
+Repair verification on Node 24:
+
+| Check                                                      | Result                                                                                                                             |
+| ---------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| `npm run typecheck`                                        | Pass across backend/frontend/contracts/functions/integration.                                                                      |
+| Owned-file ESLint and Prettier                             | Pass. One initial typecheck failure and one lint failure were preserved in the private monitor and corrected before green reruns.  |
+| Focused provider/API tests                                 | Pass: 29/29.                                                                                                                       |
+| `npm test`                                                 | Pass: 31 files, 539 tests.                                                                                                         |
+| `npm run db:verify`                                        | Pass after final regression edit: isolated PostgreSQL 17, 5 migrations, 12 files, 199 tests; container and synthetic data removed. |
+| Unchanged independent `run-isolated.mjs` service evaluator | Pass: 17/17, including SEC-01 expiry replay and SEC-03 three-large-send eviction.                                                  |
+| Unchanged independent `provider-checks.ts`                 | Pass: 8/8. No live-provider script was run.                                                                                        |
+| `npm run build`                                            | Pass after source changes. Existing Zod/Rollup annotation and 1.263 MB bundle-size warnings remain.                                |
+
+One earlier combined `db:verify` invocation outlived the initial tool wait and
+its nested session ID was not retained. Process/container completion could not
+be checked before a second isolated run. Do not count that first invocation as
+test evidence; its result remains unavailable. The later captured isolated run
+passed and removed its own disposable container. Afterward, the coordinator
+checked the installed Docker binary directly and observed no remaining
+`debugclinic-verify-*` containers, which verifies cleanup at this checkpoint.
+
+The latest private monitor collection covers the mapped implementer session
+since 7 November 2026 12:33 SGT, not this repair run alone: 45,105,423 cumulative
+observed tokens (44,896,934 input, 208,489 output; cached input 44,428,544 is a
+subset) and 6,099 seconds of mapped session wall time. These are not billing or
+repair-only figures. Preserve the original 1,500,000-token / 90-minute soft
+estimate and the earlier 1,580,948-token checkpoint; the new cumulative snapshot
+must not be added to them.
+
 ## Commits and next gate
 
 Concern-separated local commits:
 
 - `ebae9a0` — `feat(assistant): add private learner coaching service`
 - `d8b9167` — `feat(assistant): add learner coaching panel`
-- The handoff itself is committed separately after verification events are recorded.
+- `e2eb967a602a7243d277e598a5562bcd9f106ca7` — `fix(assistant): address security review round one`
+- This handoff is a documentation-only follow-on commit; its resulting branch head is returned with this handoff.
 
-No push was performed. Next: independent security review, then testing/semantic evaluation and bounded synthetic live check under the separately approved coordinator limits; repair findings within the implementation ownership boundary, update this handoff, and return to the coordinator for integration and documentation stages.
+No push was performed. Next: re-review the exact repair head independently. SEC-01/SEC-03 local service checks pass; SEC-02 remains open pending semantic review and the separately authorized bounded synthetic model check. The existing testing and documentation stages follow that review.
