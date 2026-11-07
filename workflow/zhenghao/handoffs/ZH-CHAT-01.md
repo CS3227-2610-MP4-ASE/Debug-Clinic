@@ -2,7 +2,7 @@
 
 Branch: `zh/learner-chatbot-assistant`.
 Parent: local master `2c372c5a9af9fafddf950e446121e475687ab29a`.
-Current gate: implementation completed; independent AI-security review is next.
+Current gate: implementation completed; independent AI-security review active.
 Approved planning snapshot: `87520f63844010567c844388bb725b8a8deee10a`.
 Implementation head: `56dc4146257bcbb27b36798f1cb3e161dce09d4e`.
 
@@ -48,7 +48,7 @@ session manifests are not published in this ledger.
 | -------------- | -------------------------- | ------------------------------------------------------------------------------------------------------------ |
 | planning       | verified GPT-6.1 Sol/high  | Original coordinator; reviewed plan complete                                                                 |
 | implementation | verified gpt-6-luna/medium | Completed local chat `01a1b448-99c6-7861-bd1d-3ea7613baff1`; backend ebae9a0, panel d8b9167, handoff 56dc414 |
-| ai-security    | GPT-6.1 Sol/high           | Not dispatched; follows implementation                                                                       |
+| ai-security    | verified gpt-6.1-sol/high  | Active local chat `01a1b47c-237f-7b01-8bd1-7ee5b1fbf508`, reviewing integrated 9e9ebf0                       |
 | testing        | GPT-6.1 Sol/high           | Not dispatched; follows security corrections                                                                 |
 | documentation  | GPT-6.1 Sol/high           | Not dispatched; guides and incremental docs/Reflection-ZhengHao.md                                           |
 
@@ -111,3 +111,25 @@ additional provider capabilities are authorized by this check.
 
 The quickstart remains login-protected. Use the established transport envelope
 and preserve that documentation gap; evaluate actual responses separately.
+
+After the first six synthetic calls exposed solution-disclosure failures, the
+owner explicitly authorized "the remaining six calls after repairs" on
+7 November 2026. They may run in a fresh ten-minute evaluation window after
+repairs. The shared total remains twelve logical calls; this extends the window,
+not the call allowance. Preserve the first-round failures and the shared private
+call ledger. No further calls are authorized after that allowance is exhausted.
+
+## Security correction round 1
+
+The independent reviewer returned **changes required** against `9e9ebf0`.
+SEC-01 reproduces expired successful-request replay; SEC-02 observes complete
+corrections in real model replies; SEC-03 reproduces missing oldest-history
+eviction when the current context fits. See `security.md` for preserved outcomes.
+The first six logical calls used six transport attempts and 2,957 provider tokens.
+Those application tokens are separate from development telemetry.
+
+The existing implementation conversation was resumed on verified Luna/medium
+with all three linked findings, run `security-fix-1`, unchanged ownership and
+requirements. It has no live-call authority. The existing security conversation
+will independently recheck the repair and own the remaining bounded live calls.
+No testing-stage acceptance or live-ready approval has been granted.

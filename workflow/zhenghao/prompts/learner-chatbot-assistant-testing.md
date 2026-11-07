@@ -39,6 +39,13 @@ Keep existing auth, instructor and browser-Python regressions in the matrix.
 Run focused checks, then applicable format/lint/typecheck/declaration and production
 builds, deterministic/API tests, real PG integration, browser suites, built frontend
 and packaged backend/cleanup smoke tests. Record baseline failures explicitly.
+Reuse `scripts/package-netlify-artifact.mjs` and the existing extracted-handler
+acceptance pattern in `tests/support/verify-learner-netlify-artifact.ts` where
+applicable. The packager requires the absolute installed pinned CLI 27.16.1
+manifest, Node 24 and local deployment metadata; it performs no upload. Inspect
+the resulting manifest for the scheduled cleanup function too. Do not invoke
+`build:netlify` against configured remote metadata or a remote database merely to
+obtain a package. Use verified disposable loopback PostgreSQL for invocation.
 Independent security findings need regression coverage. Model-semantic/live checks
 require separate owner authorization; fake transport proves orchestration only.
 

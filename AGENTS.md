@@ -99,6 +99,9 @@ evaluation record.
 - Serialize whole-tree ESLint with Playwright output cleanup; concurrent removal
   of `test-results` can fail lint with ENOENT. Run environment-specific probes
   in Node/browser rather than assuming Web APIs in the orchestration isolate.
+  When a check yields a session ID, retain and poll it instead of rerunning the
+  suite. If its result is unrecoverable, verify the old process and owned
+  resources have ended before rerunning; record the evidence gap separately.
 - Bound the combined output of parallel reads; oversized instruction/source
   batches caused truncation and repeated reads. Load only the required reference
   sections, check long-line sizes before choosing read ranges, and complete any

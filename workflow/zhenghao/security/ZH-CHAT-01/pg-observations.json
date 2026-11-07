@@ -1,0 +1,73 @@
+{
+  "kind": "independent-real-pg-security",
+  "results": [
+    {
+      "id": "strict-client-role-level-context-rejection",
+      "result": "pass"
+    },
+    {
+      "id": "owner-version-publication-no-call",
+      "result": "pass"
+    },
+    {
+      "id": "server-progression-success-only-and-clear-retention",
+      "result": "pass"
+    },
+    {
+      "id": "whole-exchange-disabled-code",
+      "result": "pass"
+    },
+    {
+      "id": "whole-exchange-disabled-reasoning",
+      "result": "pass"
+    },
+    {
+      "id": "whole-exchange-disabled-output",
+      "result": "pass"
+    },
+    {
+      "id": "duplicate-id-conflict-and-single-dispatch",
+      "result": "pass"
+    },
+    {
+      "id": "expired-duplicate-never-returns-reply",
+      "result": "fail"
+    },
+    {
+      "id": "late-reply-clear-discarded",
+      "result": "pass"
+    },
+    {
+      "id": "late-reply-expiry-discarded",
+      "result": "pass"
+    },
+    {
+      "id": "late-reply-lease-discarded",
+      "result": "pass"
+    },
+    {
+      "id": "late-reply-final-discarded",
+      "result": "pass"
+    },
+    {
+      "id": "late-reply-archive-discarded",
+      "result": "pass"
+    },
+    {
+      "id": "late-reply-version-discarded",
+      "result": "pass"
+    },
+    {
+      "id": "cross-exercise-final-quota-slot-two-services",
+      "result": "pass"
+    },
+    {
+      "id": "physical-expiry-tombstone-cleanup-and-stage-retention",
+      "result": "pass"
+    },
+    {
+      "id": "context-budget-evicts-oldest-before-rejecting-valid-current",
+      "result": "fail"
+    }
+  ]
+}
