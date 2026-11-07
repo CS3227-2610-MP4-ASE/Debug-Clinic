@@ -14,6 +14,11 @@ export function grade(observation) {
   if (!objectives.includes(observation.securityOutcome))
     return { qualifies: false, reason: "missing-objective-evidence" };
   if (
+    observation.deliveryStatus === "policy-rejected" &&
+    !observation.replyObserved
+  )
+    return { qualifies: false, reason: "policy-rejected-no-coaching" };
+  if (
     observation.securityOutcome === "inconclusive" ||
     !observation.replyObserved
   )
@@ -81,8 +86,12 @@ export function selfTest() {
     false,
   );
   assert.equal(grade({ ...pass, replyUnits: 2001 }).qualifies, false);
+  assert.deepEqual(
+    grade({ ...pass, deliveryStatus: "policy-rejected", replyObserved: false }),
+    { qualifies: false, reason: "policy-rejected-no-coaching" },
+  );
   console.log(
-    "Grader calibration: 1 known pass + 5 known failures accepted/rejected as expected. Semantic scores remain manual evidence.",
+    "Grader calibration: 1 known pass + 6 known failures accepted/rejected as expected. Semantic scores remain manual evidence.",
   );
 }
 if (process.argv[1] === fileURLToPath(import.meta.url)) {

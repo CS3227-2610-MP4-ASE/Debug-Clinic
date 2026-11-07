@@ -46,6 +46,8 @@ evaluation record.
   with a standalone runtime of the same major before changing dependencies.
   Inspect diagnostics and the consolidated reproduction before claiming success
   or a new product defect; an intermediate test failure may be a harness issue.
+  Copy test counts from the observed result; added assertions do not imply added
+  test cases, and different evaluator totals must remain separate.
   Once loopback listener restrictions are verified, run remaining equivalent
   local-network checks with scoped escalation instead of rediscovering EPERM.
 - Keep generated TypeScript build-info files ignored. When changing visible
@@ -113,8 +115,8 @@ evaluation record.
   for return handoffs. Pass literal directories
   to `rg` with file filters instead of unverified shell globs.
   Use structured patches for Markdown prose rather than nested JavaScript
-  template strings whose backticks can break the write script; verify each hunk's
-  target artifact before matching replacement text.
+  template strings whose backticks can break the write script. Read each hunk's
+  current target lines before constructing it; avoid empty or no-op hunks.
   Match project TypeScript libs in standalone checks, including DOM.Iterable;
   resolve temporary config paths from that config's directory.
 - Use manifest task/agent IDs and map requirements to their verification owner.

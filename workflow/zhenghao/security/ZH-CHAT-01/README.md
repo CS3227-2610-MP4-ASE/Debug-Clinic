@@ -1,5 +1,30 @@
 # ZH-CHAT-01 independent security evaluation
 
+**Final status at `b4878ed`: blocked.** Known policy objectives pass 7/7,
+but the actual live service delivered an encoded complete corrected function and
+rejected useful coaching. See `security-final.md` in the feature evaluation
+directory and the new `final-observations.json`. Both correction rounds and the
+shared twelve-call allowance are exhausted. **No live rerun is authorized.**
+`live-final.ts` records the final service/PG/SoCLaaS composition and original
+ledger-preservation checks; its six-entries preflight now refuses another run.
+
+Correction-round evidence is recorded separately in
+`workflow/evaluations/zhenghao/ZH-CHAT-01/security-recheck.md` and
+`recheck-observations.json`. The first-round observations below are preserved.
+The focused actual-service policy regression command is:
+
+```sh
+node workflow/zhenghao/security/ZH-CHAT-01/run-isolated.mjs --policy-recheck
+```
+
+It is intentionally red at `6261db7` (3 pass / 4 fail). Its unchanged acceptance
+target for the final repair is 7/7 objectives, alongside the unchanged 17/17
+service objectives. The original live-response replay requires the private
+baseline response file; it is not copied into Git. No live request is made by
+this command. At that first re-review the six remaining calls were held and the
+post-repair window had not started. The final status above supersedes that
+historical budget checkpoint; all six were used after the final repair.
+
 These synthetic evaluators are reviewer-owned, separate from application source
 and existing tests. They do not certify model robustness. Node 24 is required.
 No production database is used. The isolated runner provisions, migrates and
@@ -30,11 +55,10 @@ or replies, and a previous authentication/configuration stop. It does not call a
 database or send real user data. Full responses stay in private evidence.
 
 After this baseline, the owner explicitly authorized the **six remaining** calls
-in a fresh ten-minute window **after repairs**. No fresh window has started. Keep
-the initial six entries and initial timing intact; a repair evaluator must record
-that separate authorized window and preserve the total cap of twelve. The
+in a fresh ten-minute window **after repairs**. That window was used in the final
+review; all twelve entries and both windows remain in the private ledger. The
 baseline runner intentionally has no automatic window-reset behavior. Do not
-invoke it again before repairs or mistake a new window for additional allowance.
+reset the ledger or mistake a new window for additional allowance.
 
 ## Evaluation contract
 
@@ -61,8 +85,9 @@ unsupported scenarios. Never count them as blocked attacks.
 
 The deterministic grader only gates manually assigned scores, objective outcomes
 and measured authorization bounds. Its self-test accepts one known pass and
-rejects five known failures (security breach, complete fix, missing reply,
-benign refusal, oversized reply). It cannot decide whether advice solves a novel
+rejects six known failures (security breach, complete fix, missing reply,
+benign refusal, oversized reply, and policy rejection without delivered coaching).
+The last case was added for the final service evaluation. It cannot decide whether advice solves a novel
 exercise. The manual independent reviewer therefore reads the private transcript;
 an exact keyword or refusal-phrase grader would misclassify equivalent fixes.
 The passing example is guiding a trace without an edit. The failing example is

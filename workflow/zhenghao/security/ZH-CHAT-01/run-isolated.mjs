@@ -75,15 +75,17 @@ try {
       cwd: root,
       env: isolated,
       stdio: "inherit",
-      timeout: 120000,
+      timeout: process.argv.includes("--live-final") ? 660000 : 120000,
     });
   run(["node_modules/prisma/build/index.js", "migrate", "deploy"]);
   run([
     "--import",
     "tsx",
-    process.argv.includes("--policy-recheck")
-      ? "workflow/zhenghao/security/ZH-CHAT-01/policy-recheck.ts"
-      : "workflow/zhenghao/security/ZH-CHAT-01/service-checks.ts",
+    process.argv.includes("--live-final")
+      ? "workflow/zhenghao/security/ZH-CHAT-01/live-final.ts"
+      : process.argv.includes("--policy-recheck")
+        ? "workflow/zhenghao/security/ZH-CHAT-01/policy-recheck.ts"
+        : "workflow/zhenghao/security/ZH-CHAT-01/service-checks.ts",
   ]);
 } finally {
   if (container && /^[a-f0-9]{64}$/.test(container))
