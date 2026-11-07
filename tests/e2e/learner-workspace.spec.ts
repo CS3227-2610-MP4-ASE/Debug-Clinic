@@ -5,6 +5,7 @@ import {
 } from "../support/python-editor.js";
 import { expect, test } from "@playwright/test";
 import { f01Learner } from "../support/f01-fixtures.js";
+import { mockEmptyLearnerAssistantState } from "../support/learner-assistant-fixture.js";
 
 const question = {
   id: "workspace-case",
@@ -86,6 +87,7 @@ test("search opens an attempt, saves it, confirms final submission and retains t
       return route.fulfill({ json: { attempt: saved } });
     },
   );
+  await mockEmptyLearnerAssistantState(page, question.id, question.versionId);
 
   await page.goto("/learner/questions");
   await page.getByRole("textbox", { name: "Search questions" }).fill("list");
@@ -101,7 +103,7 @@ test("search opens an attempt, saves it, confirms final submission and retains t
   ).toBeEnabled();
   await expect(
     page.getByRole("button", { name: "Get Hint", exact: true }),
-  ).toHaveCount(0);
+  ).toBeVisible();
   await expect(
     page.getByText(/Results are local feedback, not official grading/),
   ).toBeVisible();

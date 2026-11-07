@@ -4,6 +4,7 @@ import { expect, test, type Page } from "@playwright/test";
 import { existsSync } from "node:fs";
 import { resolve } from "node:path";
 import { f01Learner } from "../support/f01-fixtures.js";
+import { mockEmptyLearnerAssistantState } from "../support/learner-assistant-fixture.js";
 import { PublishedQuestionResponseSchema } from "@debugclinic/contracts";
 import {
   expectPythonCode,
@@ -97,6 +98,7 @@ async function fixture(
       });
     },
   );
+  await mockEmptyLearnerAssistantState(page, question.id, question.versionId);
   await page.goto("/learner/questions/python-ide");
   await expectPythonEditable(editor(page), saved?.status !== "FINAL_SUBMITTED");
   return state;
