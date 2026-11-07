@@ -157,12 +157,12 @@ untouched by the implementer.
 
 Final-round verification on Node 24:
 
-| Check | Result |
-| ----- | ------ |
-| Focused provider tests | Pass: 13/13. |
-| `npm run typecheck` | Pass across workspaces, functions, and integration TypeScript. |
-| Scoped ESLint | Pass on the two owned TypeScript files. |
-| Prettier | Pass on the two owned TypeScript files. |
+| Check                                                     | Result                                                                                                                           |
+| --------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| Focused provider tests                                    | Pass: 13/13.                                                                                                                     |
+| `npm run typecheck`                                       | Pass across workspaces, functions, and integration TypeScript.                                                                   |
+| Scoped ESLint                                             | Pass on the two owned TypeScript files.                                                                                          |
+| Prettier                                                  | Pass on the two owned TypeScript files.                                                                                          |
 | Unchanged independent `run-isolated.mjs --policy-recheck` | Pass: 7/7 actual-service objectives against disposable PostgreSQL 17; container and synthetic rows removed. No live model calls. |
 
 The evaluator confirmed private correction context remained excluded from the

@@ -37,3 +37,7 @@ workflow/evaluations/royden/MP4-D2-F02/report.md
 
 # Preserve verbatim generated Zhenghao monitoring checkpoints.
 workflow/evaluations/zhenghao/ZH-LWS-02/monitoring/
+workflow/evaluations/zhenghao/ZH-CHAT-01/monitoring/report.json
+workflow/evaluations/zhenghao/ZH-CHAT-01/monitoring/report.md
+workflow/evaluations/zhenghao/ZH-CHAT-01/monitoring/reflection.json
+workflow/evaluations/zhenghao/ZH-CHAT-01/monitoring/reflection.md

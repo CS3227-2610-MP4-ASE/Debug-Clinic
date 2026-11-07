@@ -96,6 +96,9 @@ evaluation record.
 - Add contributor-specific workflow reporting through a separate wrapper and
   output path; do not change the canonical monitor schema, shared report format,
   templates, or another developer's paths without explicit cross-developer approval.
+  Preserve generated checkpoints verbatim with exact formatter exclusions;
+  format handwritten handoffs after the final update before committing. Compare
+  table cell content, not padding or separator lengths, for format-only changes.
 - For Python CLIs that import sibling scripts, verify both direct execution and
   import-based test discovery; register or resolve the sibling module explicitly.
 - Serialize whole-tree ESLint with Playwright output cleanup; concurrent removal
