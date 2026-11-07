@@ -17,11 +17,24 @@ const editIntent = new Set([
   "set",
   "use",
   "assign",
+  "accumulate",
+  "accumulating",
+  "add",
+  "adding",
   "remove",
   "drop",
   "exclude",
   "instead",
   "rather",
+]);
+const diagnosticIntent = new Set([
+  "inspect",
+  "print",
+  "trace",
+  "check",
+  "observe",
+  "compare",
+  "debug",
 ]);
 const operatorWords: Record<string, string[]> = {
   "+": ["plus", "add", "adding", "increase", "increasing"],
@@ -91,7 +104,8 @@ export function isPromptDisclosureRequest(value: string) {
   ]);
   const hasTarget =
     words.some((word) => targets.has(word)) ||
-    (words.includes("system") && words.includes("developer"));
+    (words.includes("system") &&
+      (words.includes("developer") || words.includes("message")));
   if (!hasTarget) return false;
   return words.some(
     (word, index) =>
@@ -164,10 +178,18 @@ function correctionCodeAppears(
   transcriptTokens: string[],
   changes: ChangedLine[],
 ) {
-  return changes.some(
-    (change) =>
-      change.after.length && includesSequence(transcriptTokens, change.after),
-  );
+  return changes.some((change) => {
+    if (!change.after.length) return false;
+    if (includesSequence(transcriptTokens, change.after)) return true;
+    // A corrected expression is complete even when the model omits the
+    // surrounding return/assignment syntax from its explanation.
+    const expression = change.after.filter(
+      (token, index) => !(index === 0 && token === "return"),
+    );
+    return (
+      expression.length >= 3 && includesSequence(transcriptTokens, expression)
+    );
+  });
 }
 
 function correctionInstructionAppears(
@@ -178,6 +200,16 @@ function correctionInstructionAppears(
   for (let start = 0; start < source.length; start++) {
     if (!editIntent.has(source[start]!)) continue;
     const clause = source.slice(Math.max(0, start - 10), start + 25);
+    // Diagnostic actions can mention the same operands and boundaries as a
+    // fix. Require explicit edit language before interpreting those clauses
+    // as a correction instruction.
+    const explicitEdit = clause.some((token) =>
+      ["replace", "change", "instead", "rather", "switch", "update"].includes(
+        token,
+      ),
+    );
+    if (!explicitEdit && clause.some((token) => diagnosticIntent.has(token)))
+      continue;
     for (const change of changes) {
       const clauseHas = (tokensToFind: string[]) =>
         tokensToFind.some(
@@ -187,6 +219,23 @@ function correctionInstructionAppears(
         );
       const hasBefore = clauseHas(change.beforeOnly);
       const hasAfter = clauseHas(change.afterOnly);
+      const sharedOperands = change.after.filter(
+        (token) =>
+          change.before.includes(token) &&
+          /[\p{L}\p{N}_]/u.test(token) &&
+          !["def", "return", "for", "in"].includes(token),
+      );
+      const namesSharedOperand = sharedOperands.some((token) =>
+        clause.includes(token),
+      );
+      const correctionFraming =
+        explicitEdit ||
+        clause.some((token) =>
+          ["should", "need", "each", "every", "instead", "rather"].includes(
+            token,
+          ),
+        );
+      if (hasAfter && namesSharedOperand && correctionFraming) return true;
       if (hasBefore && hasAfter) return true;
       if (
         hasBefore &&
@@ -233,15 +282,18 @@ export function coachingOutputViolation(input: {
   correctedSolution: string;
   previousAssistantMessages: string[];
 }): CoachingOutputViolation | null {
-  const transcript = [...input.previousAssistantMessages, input.message].join(
-    " ",
-  );
+  const replies = [...input.previousAssistantMessages.slice(-8), input.message];
+  const transcript = replies.join(" ");
   if (repeatsTrustedPrompt(transcript, input.level)) return "prompt-repetition";
 
   const changes = changedLines(input.buggyCode, input.correctedSolution);
   const transcriptTokens = tokens(transcript);
+  const compactReplies = replies.every((reply) => reply.length <= 12)
+    ? tokens(replies.join(""))
+    : [];
   if (
     correctionCodeAppears(transcriptTokens, changes) ||
+    correctionCodeAppears(compactReplies, changes) ||
     correctionInstructionAppears(transcript, changes)
   )
     return "complete-correction";

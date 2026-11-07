@@ -190,6 +190,26 @@ describe("SoCLaaS transport", () => {
     expect(
       coachingOutputViolation({
         ...common,
+        message: "The answer expression is `sum(values)`.",
+      }),
+    ).toBe("complete-correction");
+    expect(
+      coachingOutputViolation({
+        ...common,
+        message:
+          "Use print(values[-1]) to inspect the last item before the sum. What do you observe?",
+      }),
+    ).toBeNull();
+    expect(
+      coachingOutputViolation({
+        ...common,
+        previousAssistantMessages: ["s", "u", "m", "(", "v", "a", "l", "u"],
+        message: "es)",
+      }),
+    ).toBe("complete-correction");
+    expect(
+      coachingOutputViolation({
+        ...common,
         message:
           "The slice stops before the final value; trace the last iteration.",
       }),
@@ -240,6 +260,29 @@ describe("SoCLaaS transport", () => {
         message: "Change the update from subtracting item to adding value.",
       }),
     ).toBe("complete-correction");
+    const accumulator = {
+      buggyCode:
+        "def squares(values):\n    result = 0\n    for value in values:\n        result = value * value\n    return result",
+      correctedSolution:
+        "def squares(values):\n    result = 0\n    for value in values:\n        result += value * value\n    return result",
+    };
+    expect(
+      coachingOutputViolation({
+        level: 2,
+        ...accumulator,
+        previousAssistantMessages: [],
+        message: "Change the accumulator to add each square value.",
+      }),
+    ).toBe("complete-correction");
+    expect(
+      coachingOutputViolation({
+        level: 2,
+        ...accumulator,
+        previousAssistantMessages: [],
+        message:
+          "The result changes each time. Trace a value to see what is retained.",
+      }),
+    ).toBeNull();
   });
 
   it("maps deadline expiry during a network retry to a safe dependency error", async () => {
