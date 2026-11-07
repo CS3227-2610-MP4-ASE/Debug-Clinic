@@ -7,19 +7,19 @@ Cached input is included in input; reasoning output is included in output.
 
 | Task | Total tokens | Active agent seconds | Dependency wait seconds | Owner wait seconds |
 | --- | ---: | ---: | ---: | ---: |
-| planning | 82605321 | 772.897 | unavailable | 871.532 |
+| planning | 85150953 | 1069.185 | unavailable | 1185.623 |
 | implementation | 52828769 | 3170.108 | unavailable | unavailable |
-| ai-security | 10881869 | 846.624 | 14697.228 | unavailable |
+| ai-security | 10881869 | 846.624 | 15918.332 | unavailable |
 | testing | unavailable | unavailable | unavailable | unavailable |
 | documentation | unavailable | unavailable | unavailable | unavailable |
 
-Wall seconds: 18927.942
+Wall seconds: 19538.494
 
 Tool count and duration: unavailable (no verified lifecycle correlation).
 
 Budget warnings: none observed
 
-Diagnostics: legacy_cumulative_tokens_unsupported_v1=806, unknown_record_schema=16
+Diagnostics: legacy_cumulative_tokens_unsupported_v1=818, unknown_record_schema=17
 
 Full component, agent, run, quality and collector measurements are in report.json.
 

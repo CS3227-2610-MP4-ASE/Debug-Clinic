@@ -2,30 +2,31 @@
   "agents": {
     "coordinator": {
       "budget_warnings": [],
-      "cache_hit_ratio": 0.9936126538061503,
+      "cache_hit_ratio": 0.9937226323167717,
       "collection_since": "2026-11-07T04:05:21.351Z",
       "event_counts": {
         "assignment": 2,
-        "completion": 1,
-        "handoff": 1,
+        "completion": 2,
+        "handoff": 4,
         "integration": 1,
-        "owner_wait": 1,
+        "owner_wait": 2,
         "retry": 1,
-        "start": 4
+        "start": 4,
+        "test_result": 1
       },
       "item_metrics_status": "observed within collection bounds",
       "model_context": {
         "effort": "high",
         "model": "gpt-6.1-sol"
       },
-      "observed_command_count": 160,
-      "observed_command_duration_seconds": 10.940622414,
+      "observed_command_count": 192,
+      "observed_command_duration_seconds": 16.032409251,
       "observed_subagent_activity_count": 9,
       "quality": {
-        "failed_checks": null,
+        "failed_checks": 0,
         "missing_requirement_evidence": [],
         "open_review_findings": null,
-        "quality_evidence_available": false,
+        "quality_evidence_available": true,
         "repair_limit_reached": false,
         "repair_limit_violation": false,
         "requirement_evidence_policy": "a failure clears all passes for the same task/run/check; later requirement passes accumulate independently",
@@ -33,21 +34,21 @@
         "review_limit_reached": false,
         "review_limit_violation": false
       },
-      "reasoning_output_ratio": 0.4800490706604732,
-      "reasoning_total_ratio": 0.0009197466904109161,
+      "reasoning_output_ratio": 0.48517156292192376,
+      "reasoning_total_ratio": 0.00098972685886934,
       "scope_violations": 0,
-      "summed_agent_active_seconds": 772.8972489833832,
+      "summed_agent_active_seconds": 1069.1851859092712,
       "summed_dependency_wait_seconds": null,
-      "summed_owner_wait_seconds": 871.531534910202,
+      "summed_owner_wait_seconds": 1185.623298883438,
       "tokens": {
         "cache_write": 0,
-        "cached_input": 81010432,
-        "input": 81531200,
-        "output": 156509,
-        "reasoning_output": 75132,
-        "total": 81687709
+        "cached_input": 83533824,
+        "input": 84061509,
+        "output": 171832,
+        "reasoning_output": 83368,
+        "total": 84233341
       },
-      "wall_seconds": 18927.942426919937
+      "wall_seconds": 19538.49416399002
     },
     "implementer": {
       "budget_warnings": [],
@@ -97,7 +98,7 @@
         "reasoning_output": 133048,
         "total": 52828769
       },
-      "wall_seconds": 17229.3954269886
+      "wall_seconds": 17839.947164058685
     },
     "plan-reviewer": {
       "budget_warnings": [],
@@ -180,7 +181,7 @@
       "reasoning_total_ratio": 0.002808892479775303,
       "scope_violations": 0,
       "summed_agent_active_seconds": 846.6243860721588,
-      "summed_dependency_wait_seconds": 14697.228499889374,
+      "summed_dependency_wait_seconds": 15918.331974029541,
       "summed_owner_wait_seconds": null,
       "tokens": {
         "cache_write": 0,
@@ -190,27 +191,27 @@
         "reasoning_output": 30566,
         "total": 10881869
       },
-      "wall_seconds": 13851.92442703247
+      "wall_seconds": 14462.476164102554
     }
   },
   "budget_warnings": [],
   "collector": {
-    "bytes_read": 23214065,
-    "calls": 13,
-    "seconds": 0.16967170596763026,
-    "session_bytes_processed": 22926833
+    "bytes_read": 23597442,
+    "calls": 14,
+    "seconds": 0.17477958096424118,
+    "session_bytes_processed": 23276418
   },
   "diagnostics": {
-    "legacy_cumulative_tokens_unsupported_v1": 806,
-    "unknown_record_schema": 16
+    "legacy_cumulative_tokens_unsupported_v1": 818,
+    "unknown_record_schema": 17
   },
   "feature": "ZH-CHAT-01",
-  "generated_at": "2026-11-07T09:20:49.293427+00:00",
+  "generated_at": "2026-11-07T09:30:59.845164+00:00",
   "measurement_policy": "response_usage_v1; cached_input and reasoning_output are subsets; legacy cumulative unsupported",
   "overall": {
-    "cache_hit_ratio": 0.9887562921076708,
-    "known_total_token_lower_bound": 146315959,
-    "observed_responses": 802,
+    "cache_hit_ratio": 0.9889014423773042,
+    "known_total_token_lower_bound": 148861591,
+    "observed_responses": 814,
     "pending_session_bytes": 0,
     "quality": {
       "failed_checks": 13,
@@ -245,30 +246,30 @@
       "review_limit_reached": false,
       "review_limit_violation": false
     },
-    "reasoning_output_ratio": 0.48970736426296907,
-    "reasoning_total_ratio": 0.0016606732557451235,
+    "reasoning_output_ratio": 0.4911388594006291,
+    "reasoning_total_ratio": 0.001687601202650051,
     "tokens": {
       "cache_write": 0,
-      "cached_input": 144180224,
-      "input": 145819779,
-      "output": 496180,
-      "reasoning_output": 242983,
-      "total": 146315959
+      "cached_input": 146703616,
+      "input": 148350088,
+      "output": 511503,
+      "reasoning_output": 251219,
+      "total": 148861591
     },
-    "wall_seconds": 18927.942426919937
+    "wall_seconds": 19538.49416399002
   },
   "runs": [
     {
-      "active_seconds": 0.16957402229309082,
+      "active_seconds": 296.45751094818115,
       "agent": "coordinator",
       "dependency_wait_seconds": null,
-      "open_interval": "active_seconds",
-      "owner_wait_seconds": null,
+      "open_interval": null,
+      "owner_wait_seconds": 314.0917639732361,
       "quality": {
-        "failed_checks": null,
+        "failed_checks": 0,
         "missing_requirement_evidence": [],
         "open_review_findings": null,
-        "quality_evidence_available": false,
+        "quality_evidence_available": true,
         "repair_limit_reached": false,
         "repair_limit_violation": false,
         "requirement_evidence_policy": "a failure clears all passes for the same task/run/check; later requirement passes accumulate independently",
@@ -280,7 +281,7 @@
       "task": "planning",
       "token_status": "unavailable: no explicit response-to-run mapping",
       "tokens": null,
-      "wall_seconds": 0.16957402229309082,
+      "wall_seconds": 610.5492749214172,
       "warnings": []
     },
     {
@@ -463,7 +464,7 @@
     {
       "active_seconds": 846.6243860721588,
       "agent": "security-reviewer",
-      "dependency_wait_seconds": 13005.300040960312,
+      "dependency_wait_seconds": 13615.851778030396,
       "open_interval": "dependency_wait_seconds",
       "owner_wait_seconds": null,
       "quality": {
@@ -482,13 +483,13 @@
       "task": "ai-security",
       "token_status": "unavailable: no explicit response-to-run mapping",
       "tokens": null,
-      "wall_seconds": 13851.92442703247,
+      "wall_seconds": 14462.476164102554,
       "warnings": []
     },
     {
       "active_seconds": null,
       "agent": "security-reviewer",
-      "dependency_wait_seconds": 1691.928458929062,
+      "dependency_wait_seconds": 2302.4801959991455,
       "open_interval": "dependency_wait_seconds",
       "owner_wait_seconds": null,
       "quality": {
@@ -507,7 +508,7 @@
       "task": "ai-security",
       "token_status": "unavailable: no explicit response-to-run mapping",
       "tokens": null,
-      "wall_seconds": 1691.928458929062,
+      "wall_seconds": 2302.4801959991455,
       "warnings": []
     },
     {
@@ -576,7 +577,7 @@
       "reasoning_total_ratio": 0.002808892479775303,
       "scope_violations": 0,
       "summed_agent_active_seconds": 846.6243860721588,
-      "summed_dependency_wait_seconds": 14697.228499889374,
+      "summed_dependency_wait_seconds": 15918.331974029541,
       "summed_owner_wait_seconds": null,
       "tokens": {
         "cache_write": 0,
@@ -586,7 +587,7 @@
         "reasoning_output": 30566,
         "total": 10881869
       },
-      "wall_seconds": 13851.92442703247
+      "wall_seconds": 14462.476164102554
     },
     "documentation": {
       "budget_warnings": [],
@@ -678,30 +679,31 @@
         "reasoning_output": 133048,
         "total": 52828769
       },
-      "wall_seconds": 17229.3954269886
+      "wall_seconds": 17839.947164058685
     },
     "planning": {
       "budget_warnings": [
         "tokens_soft_budget_reached",
         "elapsed_seconds_soft_budget_reached"
       ],
-      "cache_hit_ratio": 0.9927898117267151,
+      "cache_hit_ratio": 0.9929231164950719,
       "event_counts": {
         "assignment": 2,
-        "completion": 1,
-        "handoff": 1,
+        "completion": 2,
+        "handoff": 4,
         "integration": 1,
-        "owner_wait": 1,
+        "owner_wait": 2,
         "retry": 1,
         "review_finding": 2,
-        "start": 4
+        "start": 4,
+        "test_result": 1
       },
       "item_metrics_status": "observed within collection bounds",
-      "observed_command_count": 186,
-      "observed_command_duration_seconds": 10.940891993,
+      "observed_command_count": 218,
+      "observed_command_duration_seconds": 16.032678830000002,
       "observed_subagent_activity_count": 9,
       "quality": {
-        "failed_checks": null,
+        "failed_checks": 0,
         "missing_requirement_evidence": [],
         "open_review_findings": 0,
         "quality_evidence_available": true,
@@ -712,21 +714,21 @@
         "review_limit_reached": false,
         "review_limit_violation": false
       },
-      "reasoning_output_ratio": 0.48133346270937694,
-      "reasoning_total_ratio": 0.0009608218821642252,
+      "reasoning_output_ratio": 0.48610841374565106,
+      "reasoning_total_ratio": 0.0010288199593021584,
       "scope_violations": 0,
-      "summed_agent_active_seconds": 772.8972489833832,
+      "summed_agent_active_seconds": 1069.1851859092712,
       "summed_dependency_wait_seconds": null,
-      "summed_owner_wait_seconds": 871.531534910202,
+      "summed_owner_wait_seconds": 1185.623298883438,
       "tokens": {
         "cache_write": 0,
-        "cached_input": 81846016,
-        "input": 82440427,
-        "output": 164894,
-        "reasoning_output": 79369,
-        "total": 82605321
+        "cached_input": 84369408,
+        "input": 84970736,
+        "output": 180217,
+        "reasoning_output": 87605,
+        "total": 85150953
       },
-      "wall_seconds": 18927.942426919937
+      "wall_seconds": 19538.49416399002
     },
     "testing": {
       "budget_warnings": [],

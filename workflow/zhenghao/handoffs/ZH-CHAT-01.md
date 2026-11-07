@@ -2,8 +2,9 @@
 
 Branch: `zh/learner-chatbot-assistant`.
 Parent: local master `2c372c5a9af9fafddf950e446121e475687ab29a`.
-Current gate: free-text delivery blocked; constrained-coaching package passed
-independent review. Owner package/source approval and new live allowance pending.
+Current gate: constrained-coaching package approved; owner explicitly chose
+planning only. Implementation is not authorized. New live allowance is reserved
+for evaluation after a separately authorized implementation.
 Approved planning snapshot: `87520f63844010567c844388bb725b8a8deee10a`.
 Latest application/handoff head: `b4878edeb0027e128a76d24820534efb34c1686c`.
 
@@ -47,8 +48,8 @@ session manifests are not published in this ledger.
 
 | Task           | Model/effort               | Dispatch/status                                                                      |
 | -------------- | -------------------------- | ------------------------------------------------------------------------------------ |
-| planning       | verified GPT-6.1 Sol/high  | Constrained package b1c9457 independently reviewed; owner package approval pending   |
-| implementation | verified gpt-6-luna/medium | Idle after b4878ed; constrained packet prepared, renewed source authority pending    |
+| planning       | verified GPT-6.1 Sol/high  | Constrained package b1c9457 approved; owner explicitly keeps planning-only           |
+| implementation | verified gpt-6-luna/medium | Idle after b4878ed; renewed implementation explicitly not authorized                 |
 | ai-security    | verified gpt-6.1-sol/high  | Original design BLOCKED at b4878ed; twelve calls and two correction rounds exhausted |
 | testing        | GPT-6.1 Sol/high           | Not dispatched; follows security corrections                                         |
 | documentation  | GPT-6.1 Sol/high           | Not dispatched; guides and incremental docs/Reflection-ZhengHao.md                   |
@@ -182,3 +183,32 @@ These are reviewed bytes, not yet owner-approved bytes. Approval must explicitly
 cover the catalogue, reduced tailoring and deletion of all earlier chat content.
 The implementation/source authority and six-call proposed new allowance require
 separate recorded decisions. Original failed security evidence stays unchanged.
+
+## Owner decisions on the constrained package
+
+On 7 November 2026 the owner answered the three separate approval questions
+in coordinator questionnaire `call_f4d8e7d72f9b4e81ac6b57a18baef652`:
+
+- Item 0: **Approve the reviewed package**, at commit `b1c9457`, including the
+  exact catalogue, reduced tailoring and automatic deletion of earlier chat
+  messages/snapshots, including benign and final-read-only chats. The approved
+  amendment and implementation-packet hashes above remain unchanged; their
+  pending-status wording records the earlier review snapshot, not this decision.
+- Item 1: **Keep this planning-only**. Renewed source implementation, repairs,
+  testing and delivery execution are not authorized. No stage execution is
+  dispatched, and no push/deployment is performed. Existing local source and
+  failed security evidence are preserved.
+- Item 2: **Authorize the six-call evaluation**, conditional on implementation
+  being separately authorized and completed first. This is six additional
+  synthetic logical SoCLaaS generations, eighteen including the exhausted
+  original twelve, with at most twelve new transport attempts in one fresh
+  ten-minute window. Keep the configured model/endpoint, context ceiling of
+  8,000 UTF-16 units, reply ceiling of 2,000 (or stricter configured bounds),
+  and synthetic-only data. The old ledger stays intact; a new allowance is
+  recorded separately when execution becomes authorized. No new call has run,
+  and this window has not started.
+
+Package approval and conditional evaluation permission do not override the
+explicit planning-only decision. Planning is complete at this checkpoint;
+future execution requires a new explicit implementation instruction from the
+owner. The initial free-text feature remains security-blocked and unpromoted.
