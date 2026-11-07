@@ -1,15 +1,15 @@
 {
   "contributor": "zhenghao",
   "diagnostics": {
-    "legacy_cumulative_tokens_unsupported_v1": 56,
-    "unknown_record_schema": 8
+    "legacy_cumulative_tokens_unsupported_v1": 98,
+    "unknown_record_schema": 9
   },
   "feature": "ZH-CHAT-01",
-  "generated_at": "2026-11-07T04:32:45.699731+00:00",
+  "generated_at": "2026-11-07T04:39:06.087835+00:00",
   "highest_token_task": {
     "id": "planning",
-    "total_token_ratio": 1.0,
-    "total_tokens": 14151658
+    "total_token_ratio": 0.926994384154979,
+    "total_tokens": 20074208
   },
   "limitations": [
     "cached input is included in input and reasoning output is included in output and total",
@@ -19,22 +19,22 @@
   ],
   "measurement_policy": "derived from canonical workflow_monitor response_usage_v1 totals",
   "overall": {
-    "cache_hit_ratio": 0.9752897875860341,
-    "cache_miss_ratio": 0.02471021241396585,
-    "cache_miss_tokens": 348825,
-    "observed_responses": 57,
-    "reasoning_output_ratio": 0.3064382583868665,
-    "reasoning_total_ratio": 0.0007584270337793635,
+    "cache_hit_ratio": 0.9792835034694942,
+    "cache_miss_ratio": 0.020716496530505727,
+    "cache_miss_tokens": 447449,
+    "observed_responses": 99,
+    "reasoning_output_ratio": 0.32773793714032756,
+    "reasoning_total_ratio": 0.0008547156159946389,
     "tokens": {
       "cache_write": 0,
-      "cached_input": 13767808,
-      "input": 14116633,
-      "output": 35025,
-      "reasoning_output": 10733,
-      "total": 14151658
+      "cached_input": 21151232,
+      "input": 21598681,
+      "output": 56475,
+      "reasoning_output": 18509,
+      "total": 21655156
     },
     "total_token_ratio": null,
-    "wall_seconds": 1644.348730802536
+    "wall_seconds": 2024.7368347644806
   },
   "schema_version": 1,
   "tasks": {
@@ -71,36 +71,36 @@
       "total_token_ratio": null
     },
     "implementation": {
-      "cache_hit_ratio": null,
-      "cache_miss_ratio": null,
-      "cache_miss_tokens": null,
-      "reasoning_output_ratio": null,
-      "reasoning_total_ratio": null,
-      "tokens": {
-        "cache_write": null,
-        "cached_input": null,
-        "input": null,
-        "output": null,
-        "reasoning_output": null,
-        "total": null
-      },
-      "total_token_ratio": null
-    },
-    "planning": {
-      "cache_hit_ratio": 0.9752897875860341,
-      "cache_miss_ratio": 0.02471021241396585,
-      "cache_miss_tokens": 348825,
-      "reasoning_output_ratio": 0.3064382583868665,
-      "reasoning_total_ratio": 0.0007584270337793635,
+      "cache_hit_ratio": 0.9415823519655001,
+      "cache_miss_ratio": 0.05841764803449992,
+      "cache_miss_tokens": 91572,
+      "reasoning_output_ratio": 0.30384844868735084,
+      "reasoning_total_ratio": 0.0025769348517471796,
       "tokens": {
         "cache_write": 0,
-        "cached_input": 13767808,
-        "input": 14116633,
-        "output": 35025,
-        "reasoning_output": 10733,
-        "total": 14151658
+        "cached_input": 1475968,
+        "input": 1567540,
+        "output": 13408,
+        "reasoning_output": 4074,
+        "total": 1580948
       },
-      "total_token_ratio": 1.0
+      "total_token_ratio": 0.07300561584502092
+    },
+    "planning": {
+      "cache_hit_ratio": 0.9822338128417148,
+      "cache_miss_ratio": 0.017766187158285193,
+      "cache_miss_tokens": 355877,
+      "reasoning_output_ratio": 0.3351754243388209,
+      "reasoning_total_ratio": 0.0007190819184497839,
+      "tokens": {
+        "cache_write": 0,
+        "cached_input": 19675264,
+        "input": 20031141,
+        "output": 43067,
+        "reasoning_output": 14435,
+        "total": 20074208
+      },
+      "total_token_ratio": 0.926994384154979
     },
     "testing": {
       "cache_hit_ratio": null,

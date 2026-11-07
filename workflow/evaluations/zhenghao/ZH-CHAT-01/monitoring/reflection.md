@@ -7,28 +7,28 @@ This add-on derives reflection metrics from the unchanged canonical workflow mon
 
 ## Reflection metrics
 
-- Total tokens: 14151658
-- Input tokens: 14116633
-- Cached input tokens: 13767808
-- Cache-miss input tokens: 348825
-- Cache hit ratio: 97.53%
-- Cache miss ratio: 2.47%
-- Reasoning output tokens: 10733
-- Reasoning as share of output: 30.64%
-- Reasoning as share of total: 0.08%
-- Observed responses: 57
+- Total tokens: 21655156
+- Input tokens: 21598681
+- Cached input tokens: 21151232
+- Cache-miss input tokens: 447449
+- Cache hit ratio: 97.93%
+- Cache miss ratio: 2.07%
+- Reasoning output tokens: 18509
+- Reasoning as share of output: 32.77%
+- Reasoning as share of total: 0.09%
+- Observed responses: 99
 
 ## Task usage
 
 | Task | Total tokens | Share of total | Cache hit | Cache miss | Reasoning / total |
 | --- | ---: | ---: | ---: | ---: | ---: |
-| planning | 14151658 | 100.00% | 97.53% | 2.47% | 0.08% |
-| implementation | unavailable | unavailable | unavailable | unavailable | unavailable |
+| planning | 20074208 | 92.70% | 98.22% | 1.78% | 0.07% |
+| implementation | 1580948 | 7.30% | 94.16% | 5.84% | 0.26% |
 | ai-security | unavailable | unavailable | unavailable | unavailable | unavailable |
 | testing | unavailable | unavailable | unavailable | unavailable | unavailable |
 | documentation | unavailable | unavailable | unavailable | unavailable | unavailable |
 
-Highest-token task: planning (14151658 tokens)
+Highest-token task: planning (20074208 tokens)
 
 ## Interpretation limits
 

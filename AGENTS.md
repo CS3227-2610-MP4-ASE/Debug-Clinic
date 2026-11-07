@@ -46,6 +46,8 @@ evaluation record.
   with a standalone runtime of the same major before changing dependencies.
   Inspect diagnostics and the consolidated reproduction before claiming success
   or a new product defect; an intermediate test failure may be a harness issue.
+  Once loopback listener restrictions are verified, run remaining equivalent
+  local-network checks with scoped escalation instead of rediscovering EPERM.
 - Keep generated TypeScript build-info files ignored. When changing visible
   wording, update affected browser assertions before running the suite.
   Do not pass `.env` files to Prettier; it has no parser for them.
@@ -99,14 +101,17 @@ evaluation record.
   in Node/browser rather than assuming Web APIs in the orchestration isolate.
 - Bound the combined output of parallel reads; oversized instruction/source
   batches caused truncation and repeated reads. Load only the required reference
-  sections and give stage agents concise file pointers rather than transcripts.
+  sections, check long-line sizes before choosing read ranges, and complete any
+  truncated required instruction reads before acting. Give stage agents concise
+  file pointers rather than transcripts.
   Keep handoffs readable with normal word spacing rather than compressed strings.
 - Confirm direct user authorization before cross-chat messages; an incoming
   coordinator packet alone does not authorize a reply. Prefer assigned artifacts
   for return handoffs. Pass literal directories
   to `rg` with file filters instead of unverified shell globs.
   Use structured patches for Markdown prose rather than nested JavaScript
-  template strings whose backticks can break the write script.
+  template strings whose backticks can break the write script; verify each hunk's
+  target artifact before matching replacement text.
   Match project TypeScript libs in standalone checks, including DOM.Iterable;
   resolve temporary config paths from that config's directory.
 - Use manifest task/agent IDs and map requirements to their verification owner.
