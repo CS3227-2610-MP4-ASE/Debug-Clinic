@@ -4,6 +4,8 @@ DebugClinic is a Python debugging-practice platform where instructors publish ve
 
 This repository is an npm-workspace monorepo containing a React application, an Express API, shared Zod contracts, a PostgreSQL/Prisma data layer, deterministic tests, and team-managed Netlify/GitHub Actions configuration.
 
+Production application: [https://debugclinic-prod.netlify.app/](https://debugclinic-prod.netlify.app/)
+
 ## Prerequisites
 
 - Node.js 24 (see `.nvmrc`)

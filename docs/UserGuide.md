@@ -5,6 +5,9 @@ practice, browser-local Python execution and the debugging coach. Availability
 on a deployed site depends on its database, Google, email and AI-provider
 configuration.
 
+Open the production application at
+[https://debugclinic-prod.netlify.app/](https://debugclinic-prod.netlify.app/).
+
 ## Public pages
 
 - `/` explains the intended debugging-practice loop.
