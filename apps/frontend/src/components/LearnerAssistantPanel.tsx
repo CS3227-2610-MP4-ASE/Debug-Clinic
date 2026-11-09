@@ -414,6 +414,10 @@ export function LearnerAssistantPanel(props: LearnerAssistantPanelProps) {
         {shareOutput ? ", and local run output" : ""} will be shared with this
         message. Scratch tests and standard input are never shared.
       </Typography>
+      <Typography variant="caption" color="text.secondary" sx={{ px: 1.75 }}>
+        Up to 100 messages or next hints every rolling 10 minutes across your
+        exercises. Opening chat and checking history do not use this limit.
+      </Typography>
       <Box
         role="log"
         aria-label="Coaching conversation"
