@@ -137,6 +137,21 @@ test("IDE Home navigation protects edits and signed-in branding stays inert", as
 }) => {
   await fixture(page);
   await expectPythonCode(editor(page), question.buggyCode);
+  for (const label of [
+    "Scratch tests (not saved)",
+    "Standard input (not saved)",
+    "Explain your reasoning",
+  ]) {
+    const field = page.getByRole("textbox", { name: label, exact: true });
+    await field.focus();
+    await expect(field).toBeFocused();
+    await expect(field).toHaveCSS("outline-style", "none");
+    await expect(field).toHaveCSS("box-shadow", "none");
+    await expect(field.locator("xpath=../fieldset")).toHaveCSS(
+      "border-color",
+      "rgb(36, 87, 197)",
+    );
+  }
   await expect(page.locator(".cm-lineNumbers")).toBeVisible();
   await expect(editor(page).locator("span[class]").first()).toBeVisible();
   await fillPythonCode(editor(page), "print('unsaved')");
