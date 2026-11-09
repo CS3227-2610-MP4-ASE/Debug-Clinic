@@ -125,6 +125,11 @@ scoped write permission when that state is outside the workspace.
   sections, check long-line sizes before choosing read ranges, and complete any
   truncated required instruction reads before acting. Give stage agents concise
   file pointers rather than transcripts.
+  For protected-directory exclusions, prune paths before invoking content tools
+  and test the resulting file list; do not rely on one broad recursive glob.
+  Read mapped Codex conversations one at a time with a one-turn bound and reduce
+  the structured result before printing; per-item preview limits do not cap the
+  total serialized thread response.
   Keep handoffs readable with normal word spacing rather than compressed strings.
 - Confirm direct user authorization before cross-chat messages; an incoming
   coordinator packet alone does not authorize a reply. Prefer assigned artifacts
