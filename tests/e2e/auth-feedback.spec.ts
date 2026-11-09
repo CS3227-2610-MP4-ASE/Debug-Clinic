@@ -96,9 +96,19 @@ test("sign-out waits for the server, clears the shell, and protects the workspac
     signedIn = false;
     await route.fulfill({ json: { success: true } });
   });
+  await page.route("**/api/v1/learner/dashboard", (route) =>
+    route.fulfill({
+      json: {
+        attemptedCount: 0,
+        completedCount: 0,
+        inProgressCount: 0,
+        recentDrafts: [],
+      },
+    }),
+  );
   await page.goto("/learner");
   await expect(
-    page.getByRole("heading", { name: "Your debugging workspace" }),
+    page.getByRole("heading", { name: "Welcome, Test learner" }),
   ).toBeVisible();
   await openNavigation(page);
   await page.getByRole("button", { name: "Sign out", exact: true }).click();

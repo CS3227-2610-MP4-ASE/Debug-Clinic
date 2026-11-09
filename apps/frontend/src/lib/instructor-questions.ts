@@ -6,6 +6,7 @@ import {
   PublishedQuestionResponseSchema,
   PublishedQuestionListResponseSchema,
   LearnerAttemptResponseSchema,
+  LearnerDashboardResponseSchema,
   type LearnerAttemptWrite,
   type OwnerQuestionListQuery,
   type PublishQuestionRequest,
@@ -31,6 +32,7 @@ async function request<T>(
   schema: ZodType<T>,
   method = "GET",
   body?: unknown,
+  signal?: AbortSignal,
 ): Promise<T> {
   try {
     const response = await fetch(`${base}/api/v1/${path}`, {
@@ -41,6 +43,7 @@ async function request<T>(
         ...(body === undefined ? {} : { "Content-Type": "application/json" }),
       },
       ...(body === undefined ? {} : { body: JSON.stringify(body) }),
+      ...(signal ? { signal } : {}),
     });
     if (response.status === 401)
       window.dispatchEvent(new Event("debugclinic:session-expired"));
@@ -117,6 +120,14 @@ export const listPublishedQuestions = (offset = 0, q?: string) =>
   request(
     `learner/questions?offset=${offset}${q ? `&q=${encodeURIComponent(q)}` : ""}`,
     PublishedQuestionListResponseSchema,
+  );
+export const getLearnerDashboard = (signal?: AbortSignal) =>
+  request(
+    "learner/dashboard",
+    LearnerDashboardResponseSchema,
+    "GET",
+    undefined,
+    signal,
   );
 export const getPublishedQuestion = (id: string) =>
   request(

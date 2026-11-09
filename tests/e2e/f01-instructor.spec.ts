@@ -449,7 +449,14 @@ test("B23 late generation response cannot repopulate a fresh page after unmount"
   const pendingRequest = await oldRequest;
   await expect.poll(() => state.generateCalls).toBe(1);
   // Ordinary shell navigation remains possible while feature navigation is locked.
-  await page.getByRole("link", { name: /^DebugClinic$/i }).click();
+  await expect(page.getByRole("link", { name: /^DebugClinic$/i })).toHaveCount(
+    0,
+  );
+  await page.getByText("DebugClinic", { exact: true }).click();
+  await expect(page).toHaveURL(/\/instructor\/questions\/new$/);
+  await expect(page.getByRole("textbox", { name: /topic/i })).toHaveValue(
+    f01Topic,
+  );
   if ((page.viewportSize()?.width ?? 1280) < 600)
     await page.getByRole("button", { name: "Open navigation" }).click();
   await page

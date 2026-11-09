@@ -296,10 +296,7 @@ describe("learner assistant / PostgreSQL", () => {
         secondExerciseId,
         message(0, secondVersionId, { requestId: randomUUID() }),
       ),
-    ).rejects.toMatchObject({
-      status: 429,
-      retryAfterSeconds: expect.any(Number),
-    });
+    ).resolves.toMatchObject({ assistant: { revision: 1 } });
 
     await prisma.attempt.create({
       data: {
@@ -364,6 +361,6 @@ describe("learner assistant / PostgreSQL", () => {
     );
     expect(expiredDuplicate.reply).toBeUndefined();
     expect(expiredDuplicate.assistant.messages).toHaveLength(0);
-    expect(generate).toHaveBeenCalledTimes(10);
+    expect(generate).toHaveBeenCalledTimes(11);
   });
 });

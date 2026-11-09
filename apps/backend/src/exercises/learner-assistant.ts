@@ -28,6 +28,8 @@ const unavailable = () =>
   new DependencyUnavailableError(
     "AI coaching is temporarily unavailable; keep your message and try again",
   );
+export const LEARNER_ASSISTANT_REQUEST_LIMIT = 100;
+export const LEARNER_ASSISTANT_WINDOW_MS = 10 * 60_000;
 const coachingResultSchema = z
   .object({
     message: z
@@ -178,13 +180,6 @@ function currentInput(input: AssistantMessageRequest) {
       : {}),
     ...(input.context.shareOutput ? { output: input.sharedOutput! } : {}),
   };
-}
-
-function singaporeDayStart(now: Date) {
-  const localDate = new Date(now.getTime() + 8 * 60 * 60_000)
-    .toISOString()
-    .slice(0, 10);
-  return new Date(`${localDate}T00:00:00+08:00`);
 }
 
 export interface LearnerAssistant {
@@ -470,57 +465,46 @@ export function createLearnerAssistant(
             select: { text: true },
           });
 
-        const dayStart = singaporeDayStart(now);
-        const [rolling, daily, oldest] = await Promise.all([
+        const windowStart = new Date(
+          now.getTime() - LEARNER_ASSISTANT_WINDOW_MS,
+        );
+        const [rolling, oldest] = await Promise.all([
           tx.learnerAssistantRequest.count({
             where: {
               learnerId,
               action: { in: ["MESSAGE", "NEXT_HINT"] },
-              createdAt: { gt: new Date(now.getTime() - 10 * 60_000) },
-            },
-          }),
-          tx.learnerAssistantRequest.count({
-            where: {
-              learnerId,
-              action: { in: ["MESSAGE", "NEXT_HINT"] },
-              createdAt: { gte: dayStart },
+              createdAt: { gt: windowStart },
             },
           }),
           tx.learnerAssistantRequest.findFirst({
             where: {
               learnerId,
               action: { in: ["MESSAGE", "NEXT_HINT"] },
-              createdAt: { gt: new Date(now.getTime() - 10 * 60_000) },
+              createdAt: { gt: windowStart },
             },
             orderBy: { createdAt: "asc" },
             select: { createdAt: true },
           }),
         ]);
-        if (rolling >= 10 || daily >= 100) {
-          const rollingRetry =
-            rolling >= 10 && oldest
-              ? Math.max(
-                  1,
-                  Math.ceil(
-                    (oldest.createdAt.getTime() + 10 * 60_000 - now.getTime()) /
-                      1000,
-                  ),
-                )
-              : 0;
-          const dailyRetry =
-            daily >= 100
-              ? Math.ceil(
-                  (dayStart.getTime() + 24 * 60 * 60_000 - now.getTime()) /
+        if (rolling >= LEARNER_ASSISTANT_REQUEST_LIMIT) {
+          const retryAfter = oldest
+            ? Math.max(
+                1,
+                Math.ceil(
+                  (oldest.createdAt.getTime() +
+                    LEARNER_ASSISTANT_WINDOW_MS -
+                    now.getTime()) /
                     1000,
-                )
-              : 0;
+                ),
+              )
+            : 1;
           throw new AppError(
             429,
             "RATE_LIMITED",
             "Assistant limit reached. Try again after the indicated wait.",
             undefined,
             undefined,
-            Math.max(rollingRetry, dailyRetry),
+            retryAfter,
           );
         }
         const leaseExpiresAt = new Date(now.getTime() + 35_000);

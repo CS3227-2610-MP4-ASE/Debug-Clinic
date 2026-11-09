@@ -1,4 +1,4 @@
-import { Route, Routes } from "react-router-dom";
+import { Navigate, Route, Routes, useLocation } from "react-router-dom";
 
 import { RoleRoute } from "./auth/RoleRoute.js";
 import { AppShell } from "./components/AppShell.js";
@@ -22,6 +22,20 @@ import {
   ResetPasswordPage,
   VerificationResultPage,
 } from "./pages/RecoveryPages.js";
+
+function LegacyLearnerQuestionListRedirect() {
+  const location = useLocation();
+  return (
+    <Navigate
+      to={{
+        pathname: "/learner/question",
+        search: location.search,
+        hash: location.hash,
+      }}
+      replace
+    />
+  );
+}
 
 export function App() {
   return (
@@ -49,8 +63,12 @@ export function App() {
         <Route element={<RoleRoute role="LEARNER" />}>
           <Route path="/learner" element={<LearnerDashboardPage />} />
           <Route
-            path="/learner/questions"
+            path="/learner/question"
             element={<PublishedQuestionsPage />}
+          />
+          <Route
+            path="/learner/questions"
+            element={<LegacyLearnerQuestionListRedirect />}
           />
           <Route
             path="/learner/questions/:id"

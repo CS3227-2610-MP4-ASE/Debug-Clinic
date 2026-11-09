@@ -24,6 +24,10 @@ export {
   type LearnerAttemptResponse,
   type LearnerAttemptWrite,
 } from "./learner-attempts.js";
+export {
+  LearnerDashboardResponseSchema,
+  type LearnerDashboardResponse,
+} from "./learner-dashboard.js";
 
 export const RoleSchema = z.enum(["LEARNER", "INSTRUCTOR"]);
 export type Role = z.infer<typeof RoleSchema>;

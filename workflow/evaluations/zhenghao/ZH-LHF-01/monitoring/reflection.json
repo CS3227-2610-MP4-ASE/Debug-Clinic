@@ -1,0 +1,74 @@
+{
+  "contributor": "zhenghao",
+  "diagnostics": {
+    "legacy_cumulative_tokens_unsupported_v1": 784,
+    "unknown_record_schema": 11
+  },
+  "feature": "ZH-LHF-01",
+  "generated_at": "2026-11-09T06:36:26.980428+00:00",
+  "highest_token_task": {
+    "id": "implementation",
+    "total_token_ratio": 0.5194640132495558,
+    "total_tokens": 28843177
+  },
+  "limitations": [
+    "cached input is included in input and reasoning output is included in output and total",
+    "cache reuse alone does not prove a reduction in raw token usage",
+    "before/after reduction claims require comparable quality-qualified task runs",
+    "missing measurements remain unavailable"
+  ],
+  "measurement_policy": "derived from canonical workflow_monitor response_usage_v1 totals",
+  "overall": {
+    "cache_hit_ratio": 0.9909498838649321,
+    "cache_miss_ratio": 0.00905011613506786,
+    "cache_miss_tokens": 501031,
+    "observed_responses": 352,
+    "reasoning_output_ratio": 0.4465160779888254,
+    "reasoning_total_ratio": 0.001311195989977826,
+    "tokens": {
+      "cache_write": 0,
+      "cached_input": 54860800,
+      "input": 55361831,
+      "output": 163049,
+      "reasoning_output": 72804,
+      "total": 55524880
+    },
+    "total_token_ratio": null,
+    "wall_seconds": 2740.415104866028
+  },
+  "schema_version": 1,
+  "tasks": {
+    "implementation": {
+      "cache_hit_ratio": 0.9886073491679419,
+      "cache_miss_ratio": 0.011392650832058088,
+      "cache_miss_tokens": 327420,
+      "reasoning_output_ratio": 0.4113729162041372,
+      "reasoning_total_ratio": 0.0014775418117081902,
+      "tokens": {
+        "cache_write": 0,
+        "cached_input": 28412160,
+        "input": 28739580,
+        "output": 103597,
+        "reasoning_output": 42617,
+        "total": 28843177
+      },
+      "total_token_ratio": 0.5194640132495558
+    },
+    "verification": {
+      "cache_hit_ratio": 0.9934787257471204,
+      "cache_miss_ratio": 0.006521274252879668,
+      "cache_miss_tokens": 173611,
+      "reasoning_output_ratio": 0.507754154612124,
+      "reasoning_total_ratio": 0.0011313745603119861,
+      "tokens": {
+        "cache_write": 0,
+        "cached_input": 26448640,
+        "input": 26622251,
+        "output": 59452,
+        "reasoning_output": 30187,
+        "total": 26681703
+      },
+      "total_token_ratio": 0.4805359867504441
+    }
+  }
+}

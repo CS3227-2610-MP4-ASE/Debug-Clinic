@@ -36,13 +36,16 @@ export function AppShell({ children }: PropsWithChildren) {
   );
   const links = user
     ? [
-        { label: "Home", to: "/" },
+        {
+          label: "Home",
+          to: user.role === "INSTRUCTOR" ? "/instructor" : "/learner",
+        },
         {
           label:
             user.role === "INSTRUCTOR"
               ? "Instructor workspace"
               : "Learner workspace",
-          to: user.role === "INSTRUCTOR" ? "/instructor" : "/learner",
+          to: user.role === "INSTRUCTOR" ? "/instructor" : "/learner/question",
         },
       ]
     : publicLinks;
@@ -100,6 +103,31 @@ export function AppShell({ children }: PropsWithChildren) {
       )}
     </Stack>
   );
+  const brandContent = (
+    <>
+      <Box
+        sx={{
+          display: "grid",
+          placeItems: "center",
+          width: 38,
+          height: 38,
+          borderRadius: 2.5,
+          bgcolor: "primary.main",
+          color: "primary.contrastText",
+        }}
+      >
+        <BugReportOutlined aria-hidden="true" />
+      </Box>
+      <Typography
+        variant="h6"
+        component="span"
+        fontWeight={800}
+        letterSpacing="-0.02em"
+      >
+        DebugClinic
+      </Typography>
+    </>
+  );
 
   return (
     <Box sx={{ minHeight: "100vh", display: "flex", flexDirection: "column" }}>
@@ -111,37 +139,30 @@ export function AppShell({ children }: PropsWithChildren) {
       >
         <Container maxWidth="lg">
           <Toolbar disableGutters sx={{ minHeight: 72 }}>
-            <Stack
-              component={RouterLink}
-              to="/"
-              direction="row"
-              alignItems="center"
-              gap={1.25}
-              color="text.primary"
-              sx={{ textDecoration: "none", flexGrow: 1, minHeight: 44 }}
-            >
-              <Box
-                sx={{
-                  display: "grid",
-                  placeItems: "center",
-                  width: 38,
-                  height: 38,
-                  borderRadius: 2.5,
-                  bgcolor: "primary.main",
-                  color: "primary.contrastText",
-                }}
+            {user ? (
+              <Stack
+                component="div"
+                direction="row"
+                alignItems="center"
+                gap={1.25}
+                color="text.primary"
+                sx={{ flexGrow: 1, minHeight: 44 }}
               >
-                <BugReportOutlined aria-hidden="true" />
-              </Box>
-              <Typography
-                variant="h6"
-                component="span"
-                fontWeight={800}
-                letterSpacing="-0.02em"
+                {brandContent}
+              </Stack>
+            ) : (
+              <Stack
+                component={RouterLink}
+                to="/"
+                direction="row"
+                alignItems="center"
+                gap={1.25}
+                color="text.primary"
+                sx={{ textDecoration: "none", flexGrow: 1, minHeight: 44 }}
               >
-                DebugClinic
-              </Typography>
-            </Stack>
+                {brandContent}
+              </Stack>
+            )}
             <Box sx={{ display: { xs: "none", sm: "block" } }}>
               {navigation}
             </Box>

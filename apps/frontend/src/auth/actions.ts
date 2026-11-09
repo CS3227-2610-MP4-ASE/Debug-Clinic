@@ -38,11 +38,37 @@ export function failureMessage(error: unknown, fallback: string): string {
     fallback,
   );
 }
+function safeWorkspacePath(value: unknown): string | null {
+  if (
+    typeof value !== "string" ||
+    !value.startsWith("/") ||
+    value.startsWith("//") ||
+    value.includes("\\") ||
+    /[?#]/.test(value) ||
+    value.split("/").some((part) => part === "." || part === "..")
+  )
+    return null;
+  const segment = "[^/]+";
+  const learner = new RegExp(
+    `^/learner(?:/question|/questions(?:/${segment})?)?$`,
+  );
+  const instructor = new RegExp(
+    `^/instructor(?:/questions(?:/(?:new|${segment}))?|/drafts(?:/${segment})?)?$`,
+  );
+  if (learner.test(value) || instructor.test(value)) return value;
+  return null;
+}
 export function workspace(user: CurrentUser, requested?: unknown): string {
   const route = user.role === "INSTRUCTOR" ? "/instructor" : "/learner";
-  return typeof requested === "string" && requested === route
-    ? requested
-    : route;
+  const safePath = safeWorkspacePath(requested);
+  if (!safePath) return route;
+  return user.role === "LEARNER"
+    ? safePath.startsWith("/learner")
+      ? safePath
+      : route
+    : safePath.startsWith("/instructor")
+      ? safePath
+      : route;
 }
 export async function startGoogle(
   role?: Role,
@@ -52,8 +78,8 @@ export async function startGoogle(
     provider: "google",
     requestSignUp: role !== undefined,
     ...(role ? { additionalData: { registrationRole: role } } : {}),
-    ...(returnTo === "/learner" || returnTo === "/instructor"
-      ? { returnTo }
+    ...(safeWorkspacePath(returnTo)
+      ? { returnTo: safeWorkspacePath(returnTo) }
       : {}),
   });
   if (typeof result["url"] !== "string") throw new AuthActionError(undefined);
