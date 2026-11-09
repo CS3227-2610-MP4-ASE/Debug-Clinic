@@ -154,7 +154,10 @@ test("B04/B07/B09/B11/B25/B28 real saved and direct publication, learner privacy
   await expect(
     page.getByText("Published. Question content is read-only."),
   ).toBeVisible();
-  const learnerContext = await browser.newContext({ baseURL: f01Origin });
+  const learnerContext = await browser.newContext({
+    baseURL: f01Origin,
+    viewport: page.viewportSize(),
+  });
   try {
     const learner = await learnerContext.newPage();
     await register(learner, "Learner");
@@ -170,12 +173,19 @@ test("B04/B07/B09/B11/B25/B28 real saved and direct publication, learner privacy
         exact: true,
       }),
     ).toBeVisible();
-    await expect(learner.locator("main")).not.toContainText(
-      /F02_PRIVATE_EXPLANATION|F02_PRIVATE_SOLUTION/,
-    );
+    const privateContent = /F02_PRIVATE_EXPLANATION|F02_PRIVATE_SOLUTION/;
+    await expect(learner.locator("main")).not.toContainText(privateContent);
+    await learner
+      .getByRole("button", { name: "Get Hint", exact: true })
+      .click();
+    const coach = learner.getByRole("dialog", { name: "Debugging coach" });
+    await expect(coach).toBeVisible();
     await expect(
-      learner.getByRole("button", { name: "Get Hint", exact: true }),
-    ).toHaveCount(0);
+      coach.getByRole("textbox", { name: "Message the coach" }),
+    ).toBeEditable();
+    await expect(coach).not.toContainText(privateContent);
+    await coach.getByRole("button", { name: "Minimize coaching chat" }).click();
+    await expect(coach).toBeHidden();
     await expect(
       learner.getByText(/Results are local feedback, not official grading/),
     ).toBeVisible();
