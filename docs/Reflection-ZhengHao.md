@@ -143,3 +143,45 @@ Evidence: [approved IDE scope](../workflow/zhenghao/specs/003-browser-python-ide
 [final independent testing report](../workflow/evaluations/zhenghao/ZH-LWS-02/testing.md),
 and the fixed [reflection metrics](../workflow/evaluations/zhenghao/ZH-LWS-02/monitoring/reflection-documentation-checkpoint.json)
 and [workflow checkpoint](../workflow/evaluations/zhenghao/ZH-LWS-02/monitoring/report-documentation-checkpoint.json).
+
+## ZH-LHF-01 incremental hotfix checkpoint
+
+For the six learner hotfixes, I explicitly shortened the workflow to one new
+GPT-6 Luna/high implementation conversation and the existing GPT-6.1 Sol/high
+coordinator for independent review and verification. The assignment supplied
+exact routes, quota semantics, dashboard counting rules and ownership boundaries
+upfront. This avoided reopening settled product decisions. Keeping one source
+writer and freezing browser tests during execution prevented concurrent edits;
+the coordinator independently checked the packaged API and full browser suite.
+The full suite exposed stale expectations and asynchronous test-fixture races
+that the initial focused checks missed. Repairs retained the sign-out, retry,
+unsaved-work and execution-disposal assertions. The original full failure and
+targeted reruns remain separate evidence in the
+[verification record](../workflow/evaluations/zhenghao/ZH-LHF-01/verification.md).
+
+This was useful bounded delegation, but not evidence that Luna reduced tokens,
+cost or elapsed time. There was no comparable Sol-only baseline or verified
+pricing calculation. Sandbox/fixture retries and repeated status checks also
+consumed resources. For future small fixes, I would agree one test owner and
+one handoff checkpoint upfront, and inspect actual command evidence before
+reporting progress: compact thread status can omit an in-flight invocation.
+Persisting these decisions and repair findings helps another conversation
+continue without rediscovery; it does not demonstrate platform persisted
+reasoning. Application-chatbot usage is separate from development telemetry.
+
+The fixed **2026-11-09 06:36:26 UTC**
+[usage checkpoint](../workflow/evaluations/zhenghao/ZH-LHF-01/monitoring/reflection.json)
+contains 352 observed responses: 55,524,880 total tokens, including 54,860,800
+cached input tokens and 501,031 cache-miss input tokens (99.09% cache hit).
+These are aggregate response measurements, not a billing total. Implementation
+used 28,843,177 tokens (51.95%); verification used 26,681,703 (48.05%) and
+includes coordination, monitoring and documentation overhead. For implementation,
+reasoning/output was 42,617 / 103,597 = 41.14%; reasoning/total was
+42,617 / 28,843,177 = 0.1478%. Cached input and reasoning output are subsets,
+not extra tokens to add. Both soft token budgets were exceeded; implementation
+also exceeded its soft elapsed budget. Execution already used Luna, so the
+intervention was narrowing repairs and avoiding another full browser run,
+without lowering acceptance criteria. No measured reduction can be attributed
+to that intervention from this single run. The report marks 784 unsupported
+legacy records and 11 unknown schemas as unavailable; subsequent coordinator
+closeout usage is outside this fixed checkpoint.

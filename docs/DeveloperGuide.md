@@ -98,7 +98,11 @@ offline transport; a live key and chat model are still required for acceptance.
 All AI requests originate from the backend. Input and structured output use Zod
 contracts, errors are mapped to non-secret responses, and request logging redacts
 learner code and reasoning. Question generation records minimal usage events;
-hint-preview behavior is unchanged. No custom quota subsystem is introduced.
+learner assistant generation allows 100 logical MESSAGE and NEXT_HINT requests
+per authenticated learner in a rolling ten-minute window across exercises. The
+oldest request in that window determines Retry-After; reads and request replay
+do not consume another slot. Historical quota fields remain for compatibility,
+while the request ledger is authoritative for the rolling limit.
 
 Instructor draft preparation is owned by
 `apps/backend/src/exercises/instructor-drafts.ts`. It exposes generate, Save,
@@ -171,6 +175,7 @@ F01 draft contracts retain their literal DRAFT status and fresh-per-Save creatio
 | `POST /api/v1/instructor/questions/:id/remove`                       | Confirmed archive; repeated Remove returns retained archive                                 |
 | `GET /api/v1/learner/questions[/:id]`                                | LEARNER-only currently published explicit public projection                                 |
 | `GET /api/v1/learner/questions?offset=&q=`                           | Optional case-insensitive title/topic search before 50-item pagination                      |
+| `GET /api/v1/learner/dashboard`                                      | Authenticated learner's distinct exercise counts and up to five accessible current drafts   |
 | `GET /api/v1/learner/questions/:id/attempt`                          | LEARNER-only current learner's attempt for the published version                            |
 | `PUT /api/v1/learner/questions/:id/attempt`                          | Save own draft using expected revision                                                      |
 | `POST /api/v1/learner/questions/:id/attempt/submit`                  | Finalize own attempt; identical retry returns the immutable final                           |
@@ -261,9 +266,11 @@ execution and isolation checks. Build success does not mean a deployment has
 occurred.
 
 UI routes are `/`, `/instructor/questions?status=...`, `/instructor/questions/:id`,
-`/instructor/questions/new`, `/learner/questions` and `/learner/questions/:id`.
-Signed-in **Home** navigation and the brand link open public `/` without signing
-out; the dirty-work guard still confirms leaving an edited learner attempt.
+`/instructor/questions/new`, `/learner`, `/learner/question`, and
+`/learner/questions/:id`. The legacy learner list `/learner/questions` redirects
+to `/learner/question`, preserving its query. Learner **Home** opens `/learner`,
+instructor **Home** opens `/instructor`, and signed-in branding is inert; the
+dirty-work guard still confirms role navigation away from an edited attempt.
 Legacy `/instructor/drafts[/:id]` URLs remain supported. The data-router discard
 boundary covers Link/POP/New/reload/sign-out; beforeunload uses the browser warning.
 An admitted editor stays mounted with mutations disabled after expiry. Identity

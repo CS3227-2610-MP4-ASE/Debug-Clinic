@@ -3,8 +3,10 @@ import {
   Alert,
   Box,
   Button,
+  CircularProgress,
   List,
   ListItem,
+  Skeleton,
   Stack,
   TextField,
   Typography,
@@ -61,8 +63,6 @@ export function PublishedQuestionsPage() {
   }, [offset, query, reload]);
   function search(event: FormEvent) {
     event.preventDefault();
-    setItems([]);
-    setNextOffset(null);
     setOffset(0);
     const nextQuery = input.trim();
     if (nextQuery === query) setReload((value) => value + 1);
@@ -90,6 +90,17 @@ export function PublishedQuestionsPage() {
           value={input}
           onChange={(event) => setInput(event.target.value)}
           inputProps={{ maxLength: 200 }}
+          sx={{
+            "& .MuiOutlinedInput-input:focus-visible": {
+              outline: "none",
+              boxShadow: "none",
+            },
+            "& .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline":
+              {
+                borderColor: "primary.main",
+                borderWidth: 2,
+              },
+          }}
         />
         <Button
           type="submit"
@@ -100,7 +111,32 @@ export function PublishedQuestionsPage() {
           Search
         </Button>
       </Box>
-      {pending && <Typography role="status">Loading questions…</Typography>}
+      {pending && (
+        <Stack
+          component="section"
+          aria-label="Question results"
+          aria-busy="true"
+          gap={1}
+        >
+          {items.length === 0 &&
+            [0, 1, 2].map((row) => (
+              <Box
+                key={row}
+                sx={{ py: 1, borderBottom: 1, borderColor: "divider" }}
+              >
+                <Skeleton width="45%" height={34} />
+                <Skeleton width="70%" />
+                <Skeleton width="30%" />
+              </Box>
+            ))}
+          <Stack direction="row" alignItems="center" gap={1} role="status">
+            <CircularProgress size={20} aria-label="Loading questions" />
+            <Typography>
+              {items.length ? "Updating questions…" : "Loading questions…"}
+            </Typography>
+          </Stack>
+        </Stack>
+      )}
       {error && <Alert severity="error">{error}</Alert>}
       {error && (
         <Button
@@ -118,7 +154,7 @@ export function PublishedQuestionsPage() {
             : "No published questions are available."}
         </Typography>
       )}
-      <List aria-label="Published questions" disablePadding>
+      <List aria-label="Published questions" aria-busy={pending} disablePadding>
         {items.map((item) => (
           <ListItem key={item.id} divider disableGutters>
             <Stack gap={0.5} width="100%" minWidth={0} py={1}>

@@ -66,9 +66,17 @@ show safe guidance and leave the controls available to retry.
 The learner workspace links to published instructor questions. Instructors can
 prepare questions and manage their own Drafts, Published and Removed views.
 
-While signed in, choose **Home** or select the DebugClinic brand to open the
-public home page without signing out. If you have unsaved learner edits, choose
-**Stay** to keep working or **Leave** to discard them and continue to Home.
+The learner **Home** opens your activity dashboard. **Learner workspace** opens
+the published question list at `/learner/question`; the older
+`/learner/questions` list URL redirects there and keeps its search query.
+Question details continue to use `/learner/questions/:id`. The dashboard counts
+saved attempts by exercise, treats a final submission as complete, and shows up
+to five saved drafts that are still available to reopen.
+
+While signed in, the DebugClinic brand is a label and does not navigate. For
+learners, **Home** opens the dashboard; for instructors it opens the instructor
+dashboard. If you have unsaved learner edits, choose **Stay** to keep working or
+**Leave** to discard them before continuing with navigation.
 
 ## Preparing an instructor draft
 
@@ -144,6 +152,10 @@ title and topic stay in the header while **Problem**, **Starting code** and
 **Expected behavior** scroll separately in the body. Use **Back to
 published questions** to return to the list; your search remains in the address and is
 restored.
+
+Assistant message and next-hint requests share a limit of 100 per learner in a
+rolling ten-minute window across exercises. Opening chat and reading history do
+not use this request limit.
 
 The Python 3 editor provides highlighting, line numbers, indentation, bracket
 matching, undo/redo and keyboard editing. A new attempt starts with the published

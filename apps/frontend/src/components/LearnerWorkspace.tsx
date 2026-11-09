@@ -133,6 +133,11 @@ export function LearnerWorkspace({
         minHeight: 0,
         overflow: { xs: "visible", md: "auto" },
         pb: { md: 1 },
+        // MUI's blue field border already provides visible keyboard focus.
+        "& .MuiOutlinedInput-input:focus-visible": {
+          outline: "none",
+          boxShadow: "none",
+        },
       }}
     >
       <Stack

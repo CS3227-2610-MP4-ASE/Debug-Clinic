@@ -167,12 +167,6 @@ function projectPublic(row: PublicRow) {
     expectedBehavior: version?.expectedBehavior,
   });
 }
-export class InvalidPublishedQuestionError extends Error {
-  constructor() {
-    super("The stored published question is invalid");
-    this.name = "InvalidPublishedQuestionError";
-  }
-}
 export async function findCanonicalPublishedQuestion(
   client: Pick<Transaction, "exercise">,
   id: string,
@@ -185,10 +179,35 @@ export async function findCanonicalPublishedQuestion(
   try {
     return projectPublic(row);
   } catch {
-    // A stored row that cannot satisfy the owner/public contracts is not a
-    // canonical published question and must never authorize learner attempts.
     throw new InvalidPublishedQuestionError();
   }
+}
+
+export class InvalidPublishedQuestionError extends Error {
+  constructor() {
+    super("The stored published question is invalid");
+    this.name = "InvalidPublishedQuestionError";
+  }
+}
+
+export async function findCanonicalPublishedQuestions(
+  client: Pick<Transaction, "exercise">,
+  ids: string[],
+) {
+  const rows = await client.exercise.findMany({
+    where: { ...published, id: { in: ids } },
+    select: publicSelect,
+  });
+  const questions = new Map<string, ReturnType<typeof projectPublic>>();
+  for (const row of rows) {
+    try {
+      questions.set(row.id, projectPublic(row));
+    } catch {
+      // A stored row that cannot satisfy the owner/public contracts is not a
+      // canonical published question and must never authorize learner attempts.
+    }
+  }
+  return questions;
 }
 function nextOffset(offset: number, count: number): number | null {
   return count > 50 ? DraftOffsetSchema.parse(offset + 50) : null;

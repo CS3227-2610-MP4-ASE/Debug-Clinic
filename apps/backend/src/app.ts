@@ -40,6 +40,7 @@ import {
   PublishedQuestionResponseSchema,
   LearnerAttemptResponseSchema,
   LearnerAttemptWriteSchema,
+  LearnerDashboardResponseSchema,
   type CurrentUser,
   type Role,
 } from "@debugclinic/contracts";
@@ -52,6 +53,7 @@ import type { InstructorDrafts } from "./exercises/instructor-drafts.js";
 import type { InstructorQuestions } from "./exercises/instructor-questions.js";
 import type { LearnerAttempts } from "./exercises/learner-attempts.js";
 import type { LearnerAssistant } from "./exercises/learner-assistant.js";
+import type { LearnerDashboard } from "./exercises/learner-dashboard.js";
 import { AppError, DependencyUnavailableError } from "./lib/errors.js";
 import {
   createLogger,
@@ -77,6 +79,7 @@ export interface CreateAppOptions {
   instructorQuestions?: InstructorQuestions;
   learnerAttempts?: LearnerAttempts;
   learnerAssistant?: LearnerAssistant;
+  learnerDashboard?: LearnerDashboard;
   profileUpdater: ProfileUpdater;
   logger?: AppLogger;
 }
@@ -540,6 +543,24 @@ export function createApp(options: CreateAppOptions) {
       );
     return options.learnerAssistant;
   };
+  const learnerDashboard = () => {
+    if (!options.learnerDashboard)
+      throw new DependencyUnavailableError(
+        "Learner dashboard is temporarily unavailable",
+      );
+    return options.learnerDashboard;
+  };
+  app.get(
+    "/api/v1/learner/dashboard",
+    ...learner,
+    asyncHandler(async (_request, response) => {
+      response.json(
+        LearnerDashboardResponseSchema.parse(
+          await learnerDashboard().get(response.locals.user!.id),
+        ),
+      );
+    }),
+  );
   app.get(
     "/api/v1/learner/questions",
     ...learner,

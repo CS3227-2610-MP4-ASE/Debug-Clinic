@@ -89,7 +89,8 @@ test("search opens an attempt, saves it, confirms final submission and retains t
   );
   await mockEmptyLearnerAssistantState(page, question.id, question.versionId);
 
-  await page.goto("/learner/questions");
+  await page.goto("/learner/questions?q=initial");
+  await expect(page).toHaveURL(/\/learner\/question\?q=initial/);
   await page.getByRole("textbox", { name: "Search questions" }).fill("list");
   await page.getByRole("button", { name: "Search", exact: true }).click();
   await page
@@ -164,7 +165,7 @@ test("search opens an attempt, saves it, confirms final submission and retains t
     await page.evaluate(() => document.documentElement.scrollWidth),
   ).toBeLessThanOrEqual(321);
   await page.getByRole("link", { name: "Back to published questions" }).click();
-  await expect(page).toHaveURL(/\/learner\/questions\?q=list/);
+  await expect(page).toHaveURL(/\/learner\/question\?q=list/);
   await expect(
     page.getByRole("link", { name: `Open question: ${question.title}` }),
   ).toBeVisible();

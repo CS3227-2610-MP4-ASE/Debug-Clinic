@@ -7,6 +7,7 @@ import { createInstructorDrafts } from "./exercises/instructor-drafts.js";
 import { createInstructorQuestions } from "./exercises/instructor-questions.js";
 import { createLearnerAttempts } from "./exercises/learner-attempts.js";
 import { createLearnerAssistant } from "./exercises/learner-assistant.js";
+import { createLearnerDashboard } from "./exercises/learner-dashboard.js";
 import { createLogger } from "./lib/logger.js";
 
 const config = readEnv();
@@ -22,6 +23,7 @@ const app = createApp({
   instructorQuestions: createInstructorQuestions({ prisma, logger }),
   learnerAttempts: createLearnerAttempts(prisma),
   learnerAssistant: createLearnerAssistant(prisma, aiProvider),
+  learnerDashboard: createLearnerDashboard(prisma),
   instructorDrafts: createInstructorDrafts({
     prisma,
     provider: aiProvider,
