@@ -71,5 +71,5 @@ independent review and autonomous local commits. The [monitoring guide](workflow
 documents the Python 3.11+ collector and `npm run test:workflow` checks.
 See the [four-run pilot](workflow/evaluations/royden/pilot/REPORT.md) and
 [team reflections](docs/Reflections.md) for measured outcomes and limitations.
-Zhenghao's separate [reflection](docs/Reflection_ZhengHao.md) covers his own
+Zhenghao's separate [reflection](docs/Reflection-ZhengHao.md) covers his own
 multi-agent and resource-use evidence.
