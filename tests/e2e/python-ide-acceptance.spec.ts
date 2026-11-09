@@ -47,6 +47,16 @@ async function fixture(
       json: state.user ? { user: state.user } : {},
     }),
   );
+  await page.route("**/api/v1/learner/dashboard", (route) =>
+    route.fulfill({
+      json: {
+        attemptedCount: 0,
+        completedCount: 0,
+        inProgressCount: 0,
+        recentDrafts: [],
+      },
+    }),
+  );
   await page.route("**/api/v1/learner/questions/python-ide", (route) =>
     route.fulfill({
       json: PublishedQuestionResponseSchema.parse({
@@ -122,7 +132,7 @@ async function refresh(page: Page) {
   await response;
 }
 
-test("IDE Home and brand preserve authentication and dirty navigation on desktop/mobile", async ({
+test("IDE Home navigation protects edits and signed-in branding stays inert", async ({
   page,
 }) => {
   await fixture(page);
@@ -145,12 +155,9 @@ test("IDE Home and brand preserve authentication and dirty navigation on desktop
     .filter({ visible: true })
     .click();
   await page.getByRole("button", { name: "Leave", exact: true }).click();
-  await expect(page).toHaveURL(/\/$/);
+  await expect(page).toHaveURL(/\/learner$/);
   await expect(
-    page.getByRole("heading", {
-      name: "Debug Python without surrendering the thinking.",
-      exact: true,
-    }),
+    page.getByRole("heading", { name: /Welcome,.*Learner/i }),
   ).toBeVisible();
   if (await menu.isVisible()) await menu.click();
   await expect(
@@ -159,9 +166,13 @@ test("IDE Home and brand preserve authentication and dirty navigation on desktop
   if (await menu.isVisible()) await page.keyboard.press("Escape");
   await page.goto("/learner/questions/python-ide");
   await expectPythonCode(editor(page), question.buggyCode);
-  await page.getByRole("link", { name: "DebugClinic", exact: true }).click();
-  await expect(page).toHaveURL(/\/$/); // starter/programmatic load must be clean
+  await expect(
+    page.getByRole("link", { name: "DebugClinic", exact: true }),
+  ).toHaveCount(0);
+  await page.getByText("DebugClinic", { exact: true }).click();
+  await expect(page).toHaveURL(/\/learner\/questions\/python-ide$/);
   await expect(page.getByRole("dialog")).toHaveCount(0);
+  await expectPythonCode(editor(page), question.buggyCode);
 });
 
 test("IDE real Python executes stdout/stderr, scratch assertions and stdin without saving scratch state", async ({
@@ -491,8 +502,11 @@ test("IDE saved/final authority and UTF16 limit survive real editor keyboard und
   expect(state.writes[0]!["code"]).toBe(exact);
   await page.reload();
   await expectPythonCode(editor(page), "print('saved authority')\n");
-  await page.getByRole("link", { name: "DebugClinic", exact: true }).click();
-  await expect(page).toHaveURL(/\/$/);
+  await expect(
+    page.getByRole("link", { name: "DebugClinic", exact: true }),
+  ).toHaveCount(0);
+  await page.getByText("DebugClinic", { exact: true }).click();
+  await expect(page).toHaveURL(/\/learner\/questions\/python-ide$/);
   await expect(page.getByRole("dialog")).toHaveCount(0);
 });
 
@@ -504,14 +518,26 @@ test("IDE active execution survives navigation cancellation and disposes on conf
   await expect(result(page).getByRole("status")).toHaveText("Running…", {
     timeout: 20_000,
   });
-  const brand = page.getByRole("link", { name: "DebugClinic", exact: true });
-  await brand.click();
+  const menu = page.getByRole("button", { name: /open navigation/i });
+  if ((page.viewportSize()?.width ?? 1280) < 600) await menu.click();
+  await expect(
+    page.getByRole("link", { name: "Home", exact: true }),
+  ).toBeVisible();
+  await page.getByRole("link", { name: "Home", exact: true }).click();
   await expect(page.getByRole("dialog")).toContainText("unsaved changes");
   await page.getByRole("button", { name: "Stay", exact: true }).click();
+  await expect(page.getByRole("dialog")).toHaveCount(0);
   await expect(page.locator("iframe")).toHaveCount(1);
-  await brand.click();
+  if ((page.viewportSize()?.width ?? 1280) < 600) await menu.click();
+  await expect(
+    page.getByRole("link", { name: "Home", exact: true }),
+  ).toBeVisible();
+  await page.getByRole("link", { name: "Home", exact: true }).click();
   await page.getByRole("button", { name: "Leave", exact: true }).click();
-  await expect(page).toHaveURL(/\/$/);
+  await expect(page).toHaveURL(/\/learner$/);
+  await expect(
+    page.getByRole("heading", { name: /Welcome,.*Learner/i }),
+  ).toBeVisible();
   await expect(page.locator("iframe")).toHaveCount(0);
   expect(state.writes).toEqual([]);
 });

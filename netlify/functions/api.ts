@@ -11,6 +11,7 @@ import { createInstructorDrafts } from "../../apps/backend/src/exercises/instruc
 import { createInstructorQuestions } from "../../apps/backend/src/exercises/instructor-questions.js";
 import { createLearnerAttempts } from "../../apps/backend/src/exercises/learner-attempts.js";
 import { createLearnerAssistant } from "../../apps/backend/src/exercises/learner-assistant.js";
+import { createLearnerDashboard } from "../../apps/backend/src/exercises/learner-dashboard.js";
 import { createLogger } from "../../apps/backend/src/lib/logger.js";
 import { toWebHandler } from "../../apps/backend/src/lib/web-handler.js";
 
@@ -26,6 +27,7 @@ const app = createApp({
   instructorQuestions: createInstructorQuestions({ prisma, logger }),
   learnerAttempts: createLearnerAttempts(prisma),
   learnerAssistant: createLearnerAssistant(prisma, aiProvider),
+  learnerDashboard: createLearnerDashboard(prisma),
   instructorDrafts: createInstructorDrafts({
     prisma,
     provider: aiProvider,

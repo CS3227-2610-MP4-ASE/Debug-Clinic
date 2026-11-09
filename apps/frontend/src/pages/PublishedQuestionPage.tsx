@@ -4,6 +4,8 @@ import {
   AlertTitle,
   Box,
   Button,
+  CircularProgress,
+  Skeleton,
   Stack,
   Typography,
 } from "@mui/material";
@@ -77,7 +79,7 @@ export function PublishedQuestionPage() {
   };
   const ownerId = useId();
   const retryingAttemptLoad = useRef(false);
-  const back = `/learner/questions${location.search}`;
+  const back = `/learner/question${location.search}`;
   const updateDirty = useCallback(
     (value: boolean) => {
       dirty.current = value;
@@ -275,6 +277,7 @@ export function PublishedQuestionPage() {
   const submitted = attempt?.status === "FINAL_SUBMITTED";
   return (
     <Box
+      aria-busy={pending}
       sx={{
         height: { xs: "auto", md: "100%" },
         minHeight: { xs: "calc(100vh - 104px)", md: 0 },
@@ -305,9 +308,24 @@ export function PublishedQuestionPage() {
         </Button>
       </Stack>
       {pending && (
-        <Typography role="status">
-          Loading question and saved attempt…
-        </Typography>
+        <Stack
+          component="section"
+          aria-label="Question and attempt loading"
+          aria-busy="true"
+          gap={1}
+        >
+          {!question && (
+            <Box aria-hidden="true" sx={{ maxWidth: 640 }}>
+              <Skeleton width="42%" height={34} />
+              <Skeleton height={72} />
+              <Skeleton height={110} />
+            </Box>
+          )}
+          <Stack direction="row" alignItems="center" gap={1} role="status">
+            <CircularProgress size={20} aria-label="Loading question" />
+            <Typography>Loading question and saved attempt…</Typography>
+          </Stack>
+        </Stack>
       )}
       {loadError && (
         <Alert severity={unavailable ? "info" : "error"}>

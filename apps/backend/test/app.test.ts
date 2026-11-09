@@ -7,6 +7,7 @@ import { createApp, type ProfileUpdater } from "../src/app.js";
 import type { SessionResolver } from "../src/auth/session.js";
 import type { AppConfig } from "../src/config/env.js";
 import type { LearnerAssistant } from "../src/exercises/learner-assistant.js";
+import type { LearnerDashboard } from "../src/exercises/learner-dashboard.js";
 import { PassThrough } from "node:stream";
 import { createLogger } from "../src/lib/logger.js";
 
@@ -52,6 +53,7 @@ const sessionResolver: SessionResolver = async (req) => {
 function buildApp(options?: {
   databaseFailure?: boolean;
   learnerAssistant?: LearnerAssistant;
+  learnerDashboard?: LearnerDashboard;
   profileUpdater?: ProfileUpdater;
 }) {
   return createApp({
@@ -64,6 +66,9 @@ function buildApp(options?: {
     sessionResolver,
     ...(options?.learnerAssistant
       ? { learnerAssistant: options.learnerAssistant }
+      : {}),
+    ...(options?.learnerDashboard
+      ? { learnerDashboard: options.learnerDashboard }
       : {}),
     profileUpdater:
       options?.profileUpdater ??
@@ -253,6 +258,28 @@ describe("DebugClinic API", () => {
       "exercise-1",
       expect.objectContaining({ action: "MESSAGE" }),
     );
+  });
+
+  it("protects dashboard reads and derives identity from the learner session", async () => {
+    const get = vi.fn().mockResolvedValue({
+      attemptedCount: 2,
+      completedCount: 1,
+      inProgressCount: 1,
+      recentDrafts: [],
+    });
+    const app = buildApp({ learnerDashboard: { get } });
+    await request(app).get("/api/v1/learner/dashboard").expect(401);
+    await request(app)
+      .get("/api/v1/learner/dashboard")
+      .set("authorization", "Bearer instructor")
+      .expect(403);
+    const response = await request(app)
+      .get("/api/v1/learner/dashboard?learnerId=learner-2")
+      .set("authorization", "Bearer learner")
+      .expect(200);
+    expect(response.body.attemptedCount).toBe(2);
+    expect(get).toHaveBeenCalledTimes(1);
+    expect(get).toHaveBeenCalledWith("learner-1");
   });
 
   it("handles malformed and oversized assistant JSON without exposing body text", async () => {
