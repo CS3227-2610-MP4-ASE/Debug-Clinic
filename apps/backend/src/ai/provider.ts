@@ -85,10 +85,9 @@ export class FakeAiProvider implements AiProvider {
   }): Promise<QuestionGenerationResult> {
     return {
       output: {
-        schemaVersion: "f01-question-v1",
+        schemaVersion: "f01-question-v2",
         kind: "draft",
         language: "python",
-        level: "beginner-undergraduate",
         draft: {
           title: "Sum the complete list (fake preview)",
           problemStatement:

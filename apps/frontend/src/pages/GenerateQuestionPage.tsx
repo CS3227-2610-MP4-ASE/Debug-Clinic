@@ -75,8 +75,7 @@ export function GenerateQuestionPage() {
         Generate question
       </Typography>
       <Typography>
-        Choose a beginner undergraduate Python topic to prepare one private
-        debugging draft.
+        Choose a specific Python topic to prepare one private debugging draft.
       </Typography>
       {!preview && !published && (
         <Stack direction="row" gap={1}>
@@ -130,7 +129,7 @@ export function GenerateQuestionPage() {
               topicError ??
               (preview
                 ? "Original generation topic. Use New question to start again."
-                : "1–300 characters. Include related beginner Python concepts.")
+                : "1–300 characters. Related Python concepts can fit one exercise")
             }
           />
           {!preview && (

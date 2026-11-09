@@ -6,6 +6,7 @@ import {
   f01Generation,
   f01Learner,
   f01Owner,
+  f01Refusals,
   f01Saved,
   f01Topic,
 } from "../support/f01-fixtures.js";
@@ -38,6 +39,7 @@ async function install(page: Page) {
     saveGate: undefined as ReturnType<typeof gate> | undefined,
     listGate: undefined as ReturnType<typeof gate> | undefined,
     generationError: false,
+    topicRefusal: undefined as (typeof f01Refusals)[number] | undefined,
     saveError: false,
     listError: false,
     detailError: false,
@@ -66,6 +68,19 @@ async function install(page: Page) {
       if (state.generationGate) await state.generationGate.promise;
       if (state.generationError) return fail();
       const body = route.request().postDataJSON() as { topic: string };
+      if (state.topicRefusal && body.topic === state.topicRefusal.topic) {
+        return route.fulfill({
+          status: 400,
+          json: {
+            error: {
+              code: "BAD_REQUEST",
+              message: "Please choose a supported Python topic",
+              requestId: "f01-browser-request",
+              details: [{ path: "topic", message: state.topicRefusal.message }],
+            },
+          },
+        });
+      }
       return route.fulfill({
         json: {
           topic: body.topic.trim(),
@@ -229,6 +244,34 @@ test("B13/B14/B19 all six fields edit then explicit Save opens editable private 
   ).toHaveValue(f01Edited.correctedSolution);
   expect(state.saveCalls).toBe(1);
 });
+test("B03/B04 one Python topic field validates empty, whitespace and over-limit entries locally", async ({
+  page,
+}) => {
+  const state = await install(page);
+  await page.goto("/instructor/questions/new");
+  await expect(
+    page.getByText(
+      "Choose a specific Python topic to prepare one private debugging draft.",
+    ),
+  ).toBeVisible();
+  const topic = page.getByRole("textbox", {
+    name: "Python topic",
+    exact: true,
+  });
+  await expect(topic).toHaveCount(1);
+  await expect(topic).toHaveAccessibleDescription(
+    "1–300 characters. Related Python concepts can fit one exercise",
+  );
+  for (const invalid of ["", "  ", "x".repeat(301)]) {
+    await topic.fill(invalid);
+    await page.getByRole("button", { name: "Generate", exact: true }).click();
+    await expect(topic).toHaveAccessibleDescription(
+      "Enter a Python topic between 1 and 300 characters.",
+    );
+    expect(state.generateCalls).toBe(0);
+    expect(state.saveCalls).toBe(0);
+  }
+});
 test("B21 generation pending locks topic/actions and exposes explicit retained-topic Retry after safe failure", async ({
   page,
 }) => {
@@ -260,25 +303,50 @@ test("B21 generation pending locks topic/actions and exposes explicit retained-t
   await expect(page.getByRole("textbox", { name: fields.title })).toHaveCount(
     0,
   );
+  expect(state.generateCalls).toBe(1);
   state.generationError = false;
+  const retryRequest = page.waitForRequest(
+    "**/api/v1/instructor/questions/generate",
+  );
   await page.getByRole("button", { name: /^Retry$/i }).click();
+  const retried = await retryRequest;
+  expect(retried.postDataJSON()).toEqual({ topic: f01Topic });
+  expect(await retried.headerValue("authorization")).toBeNull();
   await expect(page.getByRole("textbox", { name: fields.title })).toHaveValue(
     f01Draft.title,
   );
   expect(state.generateCalls).toBe(2);
   expect(state.saveCalls).toBe(0);
 });
-test("B21 correcting topic clears old generation failure", async ({ page }) => {
+test("B06/B21 broad topic refusal keeps the editable topic until the instructor narrows it and resubmits", async ({
+  page,
+}) => {
   const state = await install(page);
-  state.generationError = true;
+  const refusal = f01Refusals[1];
+  state.topicRefusal = refusal;
   await page.goto("/instructor/questions/new");
-  await page.getByRole("textbox", { name: /topic/i }).fill("stuff");
-  await page.getByRole("button", { name: /^Generate$/i }).click();
-  await expect(page.getByRole("alert")).toBeVisible();
-  await page
-    .getByRole("textbox", { name: /topic/i })
-    .fill("Python dictionaries");
+  const topic = page.getByRole("textbox", {
+    name: "Python topic",
+    exact: true,
+  });
+  const generate = page.getByRole("button", { name: "Generate", exact: true });
+  await topic.fill(refusal.topic);
+  await generate.click();
+  await expect(page.getByRole("alert")).toContainText(refusal.message);
+  await expect(topic).toHaveValue(refusal.topic);
+  await expect(topic).toBeEditable();
+  await expect(page.getByRole("textbox", { name: fields.title })).toHaveCount(
+    0,
+  );
+  await topic.fill("Summing a list with a Python for loop");
   await expect(page.getByRole("alert")).toHaveCount(0);
+  expect(state.generateCalls).toBe(1);
+  await generate.click();
+  await expect(page.getByRole("textbox", { name: fields.title })).toHaveValue(
+    f01Draft.title,
+  );
+  expect(state.generateCalls).toBe(2);
+  expect(state.saveCalls).toBe(0);
 });
 test("B22 pending Save suppresses repeats, failed Save retains all edits, manual retry succeeds", async ({
   page,

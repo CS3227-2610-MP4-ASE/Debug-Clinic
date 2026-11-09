@@ -139,7 +139,7 @@ describe("F01 draft module", () => {
     const s = setup();
     vi.spyOn(s.provider, "generateQuestion").mockResolvedValue({
       output: {
-        schemaVersion: "f01-question-v1",
+        schemaVersion: "f01-question-v2",
         kind: "rejected",
         reason: "vague",
       },
@@ -149,8 +149,15 @@ describe("F01 draft module", () => {
     s.usage.create.mockRejectedValue(new Error("private provider text"));
     await expect(s.service.generate("owner", "stuff")).rejects.toMatchObject({
       status: 400,
-      details: [{ path: "topic", message: expect.stringContaining("specify") }],
+      details: [
+        {
+          path: "topic",
+          message:
+            "Please specify a Python concept or narrow the topic to one Python behavior",
+        },
+      ],
     });
+    expect(s.usage.create).toHaveBeenCalledOnce();
     expect(s.usage.create.mock.calls[0]?.[0].data).toMatchObject({
       status: "REJECTED",
       errorCode: "TOPIC_REJECTED",
@@ -160,7 +167,7 @@ describe("F01 draft module", () => {
     const s = setup();
     vi.spyOn(s.provider, "generateQuestion").mockResolvedValue({
       output: {
-        schemaVersion: "f01-question-v1",
+        schemaVersion: "f01-question-v2",
         kind: "rejected",
         reason: "vague",
       },
@@ -170,6 +177,7 @@ describe("F01 draft module", () => {
     await expect(
       s.service.generate("owner", "Python loops"),
     ).rejects.toMatchObject({ status: 503 });
+    expect(s.usage.create).toHaveBeenCalledOnce();
     expect(s.usage.create.mock.calls[0]?.[0].data).toMatchObject({
       status: "FAILED",
       inputTokens: null,
