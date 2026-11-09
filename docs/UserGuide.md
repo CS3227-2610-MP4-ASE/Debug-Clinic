@@ -1,7 +1,9 @@
 # DebugClinic User Guide
 
-This guide describes authentication and instructor draft preparation.
-Availability on a deployed site depends on its database, Google and email configuration.
+This guide covers account access, instructor question publication, learner
+practice, browser-local Python execution and the debugging coach. Availability
+on a deployed site depends on its database, Google, email and AI-provider
+configuration.
 
 ## Public pages
 
@@ -72,6 +74,11 @@ the published question list at `/learner/question`; the older
 Question details continue to use `/learner/questions/:id`. The dashboard counts
 saved attempts by exercise, treats a final submission as complete, and shows up
 to five saved drafts that are still available to reopen.
+
+While the dashboard loads it shows **Loading your activity…**. Use **Refresh**
+or **Try again** after an error. If you have no resumable work, it explains that
+saved drafts will appear there and offers **Browse questions**. Choose **Resume**
+to return to listed work.
 
 While signed in, the DebugClinic brand is a label and does not navigate. For
 learners, **Home** opens the dashboard; for instructors it opens the instructor
@@ -153,9 +160,16 @@ title and topic stay in the header while **Problem**, **Starting code** and
 published questions** to return to the list; your search remains in the address and is
 restored.
 
-Assistant message and next-hint requests share a limit of 100 per learner in a
-rolling ten-minute window across exercises. Opening chat and reading history do
-not use this request limit.
+The list distinguishes initial **Loading questions…** from **Updating
+questions…**. Use **Retry** after a failed load. An empty search says **No
+questions match your search**; an empty catalogue says **No published questions
+are available**. A removed, foreign or otherwise unavailable detail page shows
+**This question is unavailable** without exposing private content.
+
+Opening a detail page first shows **Loading question…** and may then show
+**Loading question and saved attempt…** while your saved state is restored. If
+that request fails, use the displayed retry action; the editor does not replace
+the failure with guessed content.
 
 The Python 3 editor provides highlighting, line numbers, indentation, bracket
 matching, undo/redo and keyboard editing. A new attempt starts with the published
@@ -185,9 +199,57 @@ navigation with unsaved edits asks whether to discard them.
 On desktop, drag the divider between the editor and output areas to resize it;
 the keyboard can also move the focused divider. On a narrow mobile screen, the
 workspace sections stack vertically. The reasoning field shows up to four lines
-at a time and scrolls longer explanations. **Get Hint** remains disabled; no
-hint or coaching is delivered. Final attempts are saved, but no instructor
-submission-review screen or live deployment is provided by this feature.
+at a time and scrolls longer explanations.
+
+## Using the debugging coach
+
+Choose **Get Hint** while an attempt is editable, or **Open coaching chat** after
+final submission. The **Debugging coach** opens as a modeless side panel on
+desktop and a full-screen dialog on small screens. **Minimize coaching chat**
+returns focus to its floating launcher. You can drag that launcher, move it with
+the arrow keys (hold Shift for larger steps), or press Home to reset it.
+
+Before each message, choose what to share:
+
+- **Current code** is on by default.
+- **Reasoning** and **Run output** are off by default.
+- Scratch tests and standard input are never shared.
+
+The summary above the conversation tells you what the next request will share.
+Type under **Message the coach** and choose **Send**. Advice begins at **Level 1
+of 3** and remains at that level until a successful reply enables **Next hint**.
+Next hint can advance to levels 2 and 3. A failed or rejected response does not
+advance the level.
+
+The conversation is private to your account and this published question
+version. It is restored when you reopen the coach, with up to 50 messages shown.
+Successful activity keeps its content for 30 days. **Clear chat** deletes the
+stored messages and their shared snapshots, but it does not reset the current
+hint level or the rolling request count.
+
+The coach shows **Loading your private chat…** during its initial read. An empty
+conversation invites you to ask about the exercise. Provider, policy and network
+failures appear as warnings without inventing a reply or advancing the level;
+the controls remain available for an explicit later retry when the outcome is
+known.
+
+Messages and Next hint share a limit of 100 requests per learner in a rolling
+ten-minute window across exercises. Opening the coach, reading history and
+checking a pending request do not consume another slot. If the outcome of a send
+is uncertain, use **Check status**; do not assume failure and immediately send a
+duplicate. If the service confirms that no reply was saved, you may send a new
+request yourself.
+
+After final submission the coach is read-only, although **Clear chat** remains
+available. Replies are advisory text: they cannot edit or run your code, and
+they may be incomplete, incorrect or too revealing. Local synthetic environments
+use a fake provider, and the audited live free-text evaluation did not establish
+safe or useful production coaching. Availability and reply quality therefore
+depend on the configured environment.
+
+DebugClinic stores final attempts, but the audited master revision has no
+instructor submission-review screen. Instructors can create, publish and remove
+questions; they cannot review learner submissions in the current interface.
 
 ## Development fixtures
 

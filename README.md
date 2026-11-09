@@ -70,4 +70,6 @@ Use the [MP4 workflow](workflow/agents/README.md) for SDD approvals, scoped agen
 independent review and autonomous local commits. The [monitoring guide](workflow/monitoring.md)
 documents the Python 3.11+ collector and `npm run test:workflow` checks.
 See the [four-run pilot](workflow/evaluations/royden/pilot/REPORT.md) and
-[reflections](docs/Reflections.md) for measured outcomes and limitations.
+[team reflections](docs/Reflections.md) for measured outcomes and limitations.
+Zhenghao's separate [reflection](docs/Reflection_ZhengHao.md) covers his own
+multi-agent and resource-use evidence.

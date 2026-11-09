@@ -1,5 +1,35 @@
 # DebugClinic Developer Guide
 
+This guide describes the behavior present at audited master revision
+`5d4155b2062cbbb4de558c5794384f674e9b9985`. Proposed designs and unmerged work
+are not presented as delivered features.
+
+## Prerequisites and local setup
+
+- Node.js 24 (the repository pins major version 24 in `.nvmrc`) and npm 11 or
+  later.
+- Docker with Compose for the local PostgreSQL 17 services.
+- A local environment file based on `.env.example`; never commit credentials.
+
+Run `nvm use`, then `npm ci`. `docker compose up -d postgres` starts the
+development database on loopback port 55432. Copy `.env.example` to `.env`,
+verify that both database URLs target that development service, then run
+`npm run db:migrate` and `npm run db:seed`. Start the frontend and API with
+`npm run dev`.
+
+Tests that connect to PostgreSQL must use an explicitly verified disposable
+database whose name ends in `_test`. `docker compose up -d postgres-test` starts
+the repository's test service on loopback port 5433; use `.env.test.example` as
+the matching template. Never run migration,
+seed, integration, or browser-database commands with a missing, implicit, or
+unverified database URL.
+
+Useful repository checks include `npm run format:check`, `npm run lint`,
+`npm run typecheck`, `npm test`, `npm run test:api`, `npm run
+test:integration`, `npm run test:e2e`, and `npm run build`. Database and opt-in
+browser suites have additional requirements described under
+[Testing strategy](#testing-strategy).
+
 ## Architecture
 
 DebugClinic is an npm-workspace monorepo:
@@ -15,6 +45,13 @@ DebugClinic is an npm-workspace monorepo:
 | `workflow`           | Specifications, architecture decisions, and verification evidence                                    |
 
 The browser calls same-origin `/api` endpoints. Local Vite development proxies these calls to Express. Netlify rewrites the same path to a serverless function using `serverless-http`.
+
+The audited package manifests use React 19 and MUI 7 on Vite 7; Express 5 and
+Better Auth 1.7.14 on the API; Prisma 7 with PostgreSQL 17; Zod 4 shared
+contracts; and TypeScript 5.9. Vitest 4, Supertest and Playwright 1.56 cover the
+test layers. The learner editor uses CodeMirror 6 and the browser runner pins
+Pyodide 314.0.7. Treat these as repository-version facts, not an instruction to
+upgrade dependencies independently.
 
 ## Authentication and authorization
 
@@ -89,7 +126,8 @@ need a separately approved transaction-level policy rather than a row SQL check.
 ## AI adapter
 
 `AiProvider` isolates product code from provider-specific transport. Local
-development and tests use `FakeAiProvider`, which is deterministic and offline.
+development, deploy previews and tests use `FakeAiProvider`, which is
+deterministic and offline.
 `SocLlmProvider` implements the official SoCLaaS bearer-authenticated chat API,
 validates structured message content, owns the response stage/request identity,
 and uses an overall deadline with bounded transient retries. Tests inject an
@@ -204,8 +242,9 @@ retains UTF16 maxima, trims prose and preserves code verbatim.
 Learner selection and DTOs expose identity/title/topic/instructor display name/
 publication time plus version ID/problem/buggy code/expected behavior in detail.
 Solutions, explanations, generation metadata, author email, hints and attempts
-are absent. A separate public renderer displays literal text. Get Hint is disabled
-and performs no request.
+are absent. A separate public renderer displays literal text. The learner
+assistant receives the private canonical fields only on the backend; those fields
+are not added to the learner question DTO.
 
 The learner list/detail reuses the published-question routes, DTOs and canonical
 publication validation introduced for PR #9; it does not add a competing exercise
@@ -227,7 +266,49 @@ async responses are guarded by component lifecycle, learner identity revision an
 session epoch so disposed pages cannot replace current state or clear another
 page's unsaved-work guard. Both `apps/backend/src/server.ts` and
 `netlify/functions/api.ts` compose the real attempt service; missing composition
-fails closed. Get Hint remains disabled; no coaching response is delivered.
+fails closed.
+
+### Learner assistant
+
+The question page composes `LearnerAssistantPanel` with four authenticated,
+learner-only boundaries: read conversation state, send a MESSAGE or NEXT_HINT,
+clear the private conversation, and reconcile an uncertain request by request
+ID. Conversations are scoped to the learner and canonical published version;
+foreign, removed and noncanonical records are not exposed. A final submission
+makes new coaching read-only, although the learner may still clear the chat.
+
+Each request chooses whether to share current editor code, reasoning and local
+run output. Scratch tests and standard input are never included. The provider
+context combines the exercise's server-private canonical fields, only the
+selected current fields, and a bounded compatible history. Changing sharing
+categories does not silently retain a withdrawn category in later provider
+context. Replies render as inert text and cannot execute tools, edit code, run
+Python, fetch URLs or read browser storage.
+
+Coaching starts at level 1. A successful reply enables **Next hint**, which can
+advance through levels 2 and 3; a provider or policy failure does not unlock the
+next level. The service uses request IDs, conversation revisions, generation
+numbers and expiring pending leases so retries and late results do not create
+duplicate logical requests or overwrite newer state. When delivery is
+uncertain, the client offers **Check status** instead of automatically sending
+another mutation.
+
+The persisted request ledger enforces 100 MESSAGE or NEXT_HINT requests per
+learner across exercises in a rolling ten-minute window. Reads, status checks
+and idempotent replay do not consume an additional slot. Up to 50 messages are
+returned. Successful activity extends content expiry by 30 days; the scheduled
+cleanup Function runs every 30 minutes and clears expired content. **Clear
+chat** deletes stored messages and snapshots but preserves the progression level
+and rate-limit ledger.
+
+`FakeAiProvider` validates deterministic mechanics but says nothing about live
+coaching quality. The final authorized live evaluation of the free-text design
+remained blocked: finite local policy checks passed, but one encoded complete
+solution was delivered and benign coaching was also rejected. Therefore the
+known output policy is a limited mitigation, not a universal security boundary
+or evidence that live coaching is production-ready. The subsequently approved
+constrained-coaching redesign remained planning-only and is not documented here
+as delivered behavior.
 
 ### Browser Python IDE
 
@@ -328,7 +409,7 @@ ordinary browser runs need no database URL. The eight opt-in composed journeys
 use real local cookies/PostgreSQL, captured SMTP and fake AI without browser
 interception or live providers. Lint, typecheck, formatting, production build
 and 16 synthetic built-frontend loads passed. Focused recovery browsers use HTTP
-test doubles. These layers overlap and are not one aggregate test count. These
+test doubles. These layers overlap and are not one aggregate test count.
 The PR10 checks were local and do not establish remote CI/deployment or
 live-provider behavior. No Python runner was provided at that earlier checkpoint;
 the later ZH-LWS-02 section documents browser-local execution. Manual
@@ -351,6 +432,13 @@ expected skips). That run does not verify this documentation commit; see the
 [workflow run](https://github.com/CS3227-2610-MP4-ASE/Debug-Clinic/actions/runs/42240818024)
 and [ZH-LWS-02 independent report](../workflow/evaluations/zhenghao/ZH-LWS-02/testing.md)
 for revision-specific evidence and limits.
+
+PR11's first browser job failed after the assistant's new initial GET reached an
+unmocked real backend in intercepted learner journeys. The schema-valid fixture
+repair was followed by a full local browser pass (208 passed, 20 expected
+skips), then green remote `verify` and `browser` jobs. This proves the repaired
+fixture and covered workflows, not live-provider safety. The assistant's final
+independent live-security verdict remained blocked as described above.
 
 When defaults are occupied, set `E2E_APP_ORIGIN=http://127.0.0.1:5273` and
 `E2E_BACKEND_PORT=3101`; the test origin validator allows only a bare HTTP loopback
@@ -467,9 +555,18 @@ References: [Netlify deploy flags](https://cli.netlify.com/commands/deploy/),
 ## Security notes
 
 - Learner Python executes only in the browser-local sandbox described above; the backend does not execute it and output is not official grading. The exercised isolation checks do not establish hard browser memory/process quotas or IPC-flood resistance.
-- Rate limiting is process-local in this milestone; production should use a shared backend or platform control to remain effective across function instances.
+- Some legacy endpoint throttles are process-local; the learner assistant's
+  rolling quota is database-backed and works across function instances.
 - Authentication audit tables exist, but Better Auth event hooks still need to be wired after email and OAuth flows are verified.
-- Provider usage tables exist, but live SoC usage writes await the official contract.
+- Instructor generation and learner coaching persist bounded provider usage when
+  the provider reports it. Missing usage remains unknown rather than zero.
+- The learner assistant's local output checks cannot guarantee semantic safety;
+  the final authorized live evaluation delivered an encoded complete solution
+  and rejected benign coaching. Use the fake provider for deterministic
+  development and treat live-provider enablement as a separate unresolved
+  product and security decision.
+- A `Review` data model exists, but master has no instructor submission-review
+  route or interface. Do not infer a delivered review workflow from the schema.
 - Account-linking behavior must be tested against the final Google configuration before production launch.
 
 ## Acknowledgements
