@@ -73,9 +73,9 @@ repair:
 
 All API/database/browser data was synthetic and local. No live AI provider,
 external account, deployment, push, or production mutation was used. The
-database verification used a disposable local container. The test limitations
-are the prior full-suite failures and the still-pending final two-case
-navigation rerun; neither is represented here as a clean full-suite verdict.
+database verification used a disposable local container. The prior full-suite
+failures and successful targeted repairs remain separate observations; this
+handoff does not represent them as a clean rerun of the entire browser suite.
 
 ## Commit record
 
@@ -83,5 +83,5 @@ The implementation is recorded in two concern-separated local commits below.
 The coordinator's unrelated `AGENTS.md` change remains unstaged.
 
 - Assistant rolling quota: `e1f0c9e` (`fix: use rolling learner assistant quota`).
-- Dashboard, routes, loading feedback, docs, and tests: `3e8e8fa`
+- Dashboard, routes, loading feedback, docs, and tests: `2329786`
   (`feat: add learner dashboard and route polish`).

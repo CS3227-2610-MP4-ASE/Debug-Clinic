@@ -33,6 +33,10 @@ identity. Follow the [monitoring guide](workflow/monitoring.md) and
 [evaluation protocol](workflow/evaluations/royden/protocol.md): raw telemetry
 stays outside Git; sanitized checkpoint evidence belongs in the assigned
 evaluation record.
+Verify actual command invocation and results before reporting a delegated check
+as running or passing; compact status snapshots can omit in-flight tool calls.
+Monitor report commands also lock private state; use
+scoped write permission when that state is outside the workspace.
 
 # Project lessons
 
@@ -52,6 +56,8 @@ evaluation record.
   local-network checks with scoped escalation instead of rediscovering EPERM.
 - Keep generated TypeScript build-info files ignored. When changing visible
   wording, update affected browser assertions before running the suite.
+  After closing a modal, avoid branching on transient menu visibility; use the
+  known viewport and let accessible locator actions wait for the transition.
   Do not pass `.env` files to Prettier; it has no parser for them.
 - MUI required markers can affect exact label-text matching even when hidden
   from the accessible name. Prefer semantic role/name queries for browser tests.
@@ -75,6 +81,9 @@ evaluation record.
   adapters must test cookies and binary bytes; enable serverless-http's binary
   encoding to avoid lossy UTF-8 conversion. Export compiled JavaScript from
   workspaces in production; Netlify tracing may not preserve external TS exports.
+  Rebuild compiled workspace exports before packaging. Private TypeScript probes
+  beneath `node_modules` need explicit ESM (`.mts`); select the extracted Web
+  handler rather than the packager's platform wrapper.
 - Netlify CLI commands in CI must select the monorepo workspace explicitly.
   Workspace selection changes relative Functions paths; use absolute artifact
   paths and check the pinned CLI's path-resolution behavior before deploying.
