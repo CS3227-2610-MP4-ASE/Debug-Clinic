@@ -90,6 +90,16 @@ manifests, raw sessions and event state stay outside Git, and canonical/Royden
 monitoring paths and schemas were unchanged. Later coordinator closeout is
 outside this fixed checkpoint.
 
+## CI screenshot portability repair
+
+GitHub Actions run `42574414422` passed 208 browser cases and skipped 20,
+but failed all six hotfix cases while writing screenshots to macOS-only
+`/private/tmp`. Replace those three paths with Playwright's per-test
+`test.info().outputPath()` so Linux CI creates and retains portable artifacts.
+The affected desktop/mobile spec passed 6/6 locally (8.4 seconds, no retries),
+using fake AI and an owned disposable PostgreSQL container, subsequently removed.
+Scoped ESLint and Prettier passed. Remote CI for the repair is pending.
+
 ## Evidence limits
 
 The normal browser run skips 20 opt-in composed/auth-completion cases. Browser

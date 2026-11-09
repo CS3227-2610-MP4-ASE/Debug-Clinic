@@ -78,7 +78,7 @@ test("legacy learner list redirects with its query and search retains mouse and 
     page.getByRole("link", { name: `Open question: ${question.title}` }),
   ).toBeVisible();
   await page.screenshot({
-    path: `/private/tmp/zh-lhf-01-list-${test.info().project.name}.png`,
+    path: test.info().outputPath("list.png"),
     fullPage: true,
   });
 });
@@ -140,7 +140,7 @@ test("dashboard shows authenticated profile and retryable loading errors", async
     `/learner/questions/${question.id}`,
   );
   await page.screenshot({
-    path: `/private/tmp/zh-lhf-01-dashboard-${test.info().project.name}.png`,
+    path: test.info().outputPath("dashboard.png"),
     fullPage: true,
   });
 });
@@ -198,7 +198,7 @@ test("question detail keeps loading visible before retryable recovery", async ({
     page.getByRole("textbox", { name: "Your Python 3 code" }),
   ).toBeVisible();
   await page.screenshot({
-    path: `/private/tmp/zh-lhf-01-detail-${test.info().project.name}.png`,
+    path: test.info().outputPath("detail.png"),
     fullPage: true,
   });
 });

@@ -58,6 +58,8 @@ scoped write permission when that state is outside the workspace.
   wording, update affected browser assertions before running the suite.
   After closing a modal, avoid branching on transient menu visibility; use the
   known viewport and let accessible locator actions wait for the transition.
+  Save committed browser-test artifacts through `test.info().outputPath()`;
+  never hard-code a developer machine temporary directory.
   Do not pass `.env` files to Prettier; it has no parser for them.
 - MUI required markers can affect exact label-text matching even when hidden
   from the accessible name. Prefer semantic role/name queries for browser tests.
