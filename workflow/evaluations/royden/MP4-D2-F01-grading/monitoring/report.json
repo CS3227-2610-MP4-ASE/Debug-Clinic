@@ -1,0 +1,1684 @@
+{
+  "agents": {
+    "acceptance-author": {
+      "budget_warnings": [],
+      "cache_hit_ratio": 0.9748781275120643,
+      "collection_since": "2026-11-10T21:42:04+08:00",
+      "event_counts": {
+        "assignment": 1,
+        "commit": 1,
+        "completion": 1,
+        "start": 1,
+        "test_result": 2
+      },
+      "item_metrics_status": "observed within collection bounds",
+      "model_context": {
+        "effort": "high",
+        "model": "gpt-6.1-sol"
+      },
+      "observed_command_count": 44,
+      "observed_command_duration_seconds": 77.5335824,
+      "observed_subagent_activity_count": 10,
+      "quality": {
+        "failed_checks": 0,
+        "missing_requirement_evidence": [],
+        "open_review_findings": null,
+        "quality_evidence_available": true,
+        "repair_limit_reached": false,
+        "repair_limit_violation": false,
+        "requirement_evidence_policy": "a failure clears all passes for the same task/run/check; later requirement passes accumulate independently",
+        "retry_evidence_missing": false,
+        "review_limit_reached": false,
+        "review_limit_violation": false
+      },
+      "reasoning_output_ratio": 0.17266398378521283,
+      "reasoning_total_ratio": 0.0009913406946873043,
+      "scope_violations": 0,
+      "summed_agent_active_seconds": 7336.4214079380035,
+      "summed_dependency_wait_seconds": null,
+      "summed_owner_wait_seconds": null,
+      "tokens": {
+        "cache_write": 0,
+        "cached_input": 5747200,
+        "input": 5895301,
+        "output": 34043,
+        "reasoning_output": 5878,
+        "total": 5929344
+      },
+      "wall_seconds": 7336.4214079380035
+    },
+    "backend-builder": {
+      "budget_warnings": [],
+      "cache_hit_ratio": 0.9726422152437212,
+      "collection_since": "2026-11-10T21:41:46+08:00",
+      "event_counts": {
+        "assignment": 1,
+        "completion": 1,
+        "start": 1,
+        "test_result": 2
+      },
+      "item_metrics_status": "observed within collection bounds",
+      "model_context": {
+        "effort": "high",
+        "model": "gpt-6.1-sol"
+      },
+      "observed_command_count": 59,
+      "observed_command_duration_seconds": 131.46094,
+      "observed_subagent_activity_count": 9,
+      "quality": {
+        "failed_checks": 0,
+        "missing_requirement_evidence": [],
+        "open_review_findings": null,
+        "quality_evidence_available": true,
+        "repair_limit_reached": false,
+        "repair_limit_violation": false,
+        "requirement_evidence_policy": "a failure clears all passes for the same task/run/check; later requirement passes accumulate independently",
+        "retry_evidence_missing": false,
+        "review_limit_reached": false,
+        "review_limit_violation": false
+      },
+      "reasoning_output_ratio": 0.2510961428480651,
+      "reasoning_total_ratio": 0.0015866416139375514,
+      "scope_violations": 0,
+      "summed_agent_active_seconds": 7354.15357708931,
+      "summed_dependency_wait_seconds": null,
+      "summed_owner_wait_seconds": null,
+      "tokens": {
+        "cache_write": 0,
+        "cached_input": 4814080,
+        "input": 4949487,
+        "output": 31474,
+        "reasoning_output": 7903,
+        "total": 4980961
+      },
+      "wall_seconds": 7354.15357708931
+    },
+    "coordinator": {
+      "budget_warnings": [],
+      "cache_hit_ratio": 0.9834430503389479,
+      "collection_since": "2026-11-10T18:19:14+08:00",
+      "event_counts": {
+        "assignment": 7,
+        "commit": 2,
+        "completion": 7,
+        "owner_wait": 6,
+        "retry": 1,
+        "review_finding": 2,
+        "start": 7,
+        "test_result": 14
+      },
+      "item_metrics_status": "observed within collection bounds",
+      "model_context": {
+        "effort": "high",
+        "model": "gpt-6.1-sol"
+      },
+      "observed_command_count": 235,
+      "observed_command_duration_seconds": 1862.8301399,
+      "observed_subagent_activity_count": 61,
+      "quality": {
+        "failed_checks": 0,
+        "missing_requirement_evidence": [],
+        "open_review_findings": 0,
+        "quality_evidence_available": true,
+        "repair_limit_reached": false,
+        "repair_limit_violation": false,
+        "requirement_evidence_policy": "a failure clears all passes for the same task/run/check; later requirement passes accumulate independently",
+        "retry_evidence_missing": false,
+        "review_limit_reached": false,
+        "review_limit_violation": false
+      },
+      "reasoning_output_ratio": 0.31166897204879934,
+      "reasoning_total_ratio": 0.0005853609466826882,
+      "scope_violations": 0,
+      "summed_agent_active_seconds": 9494.866103172302,
+      "summed_dependency_wait_seconds": null,
+      "summed_owner_wait_seconds": 10011.84836268425,
+      "tokens": {
+        "cache_write": 0,
+        "cached_input": 83880576,
+        "input": 85292764,
+        "output": 160494,
+        "reasoning_output": 50021,
+        "total": 85453258
+      },
+      "wall_seconds": 19506.970933914185
+    },
+    "design-writer": {
+      "budget_warnings": [],
+      "cache_hit_ratio": 0.9382036845508436,
+      "collection_since": "2026-11-10T18:50:02+08:00",
+      "event_counts": {
+        "assignment": 1,
+        "completion": 1,
+        "start": 1
+      },
+      "item_metrics_status": "observed within collection bounds",
+      "model_context": {
+        "effort": "high",
+        "model": "gpt-6.1-sol"
+      },
+      "observed_command_count": 20,
+      "observed_command_duration_seconds": 5.5123927,
+      "observed_subagent_activity_count": 4,
+      "quality": {
+        "failed_checks": null,
+        "missing_requirement_evidence": [],
+        "open_review_findings": null,
+        "quality_evidence_available": false,
+        "repair_limit_reached": false,
+        "repair_limit_violation": false,
+        "requirement_evidence_policy": "a failure clears all passes for the same task/run/check; later requirement passes accumulate independently",
+        "retry_evidence_missing": false,
+        "review_limit_reached": false,
+        "review_limit_violation": false
+      },
+      "reasoning_output_ratio": 0.24951020666118942,
+      "reasoning_total_ratio": 0.0030238021018028694,
+      "scope_violations": 0,
+      "summed_agent_active_seconds": 390.18453788757324,
+      "summed_dependency_wait_seconds": null,
+      "summed_owner_wait_seconds": null,
+      "tokens": {
+        "cache_write": 0,
+        "cached_input": 1210112,
+        "input": 1289818,
+        "output": 15823,
+        "reasoning_output": 3948,
+        "total": 1305641
+      },
+      "wall_seconds": 390.18453788757324
+    },
+    "frontend-builder": {
+      "budget_warnings": [],
+      "cache_hit_ratio": 0.9729581782776089,
+      "collection_since": "2026-11-10T21:41:55+08:00",
+      "event_counts": {
+        "assignment": 1,
+        "completion": 1,
+        "start": 1
+      },
+      "item_metrics_status": "observed within collection bounds",
+      "model_context": {
+        "effort": "high",
+        "model": "gpt-6.1-sol"
+      },
+      "observed_command_count": 37,
+      "observed_command_duration_seconds": 49.2866039,
+      "observed_subagent_activity_count": 7,
+      "quality": {
+        "failed_checks": null,
+        "missing_requirement_evidence": [],
+        "open_review_findings": null,
+        "quality_evidence_available": false,
+        "repair_limit_reached": false,
+        "repair_limit_violation": false,
+        "requirement_evidence_policy": "a failure clears all passes for the same task/run/check; later requirement passes accumulate independently",
+        "retry_evidence_missing": false,
+        "review_limit_reached": false,
+        "review_limit_violation": false
+      },
+      "reasoning_output_ratio": 0.3557862750063307,
+      "reasoning_total_ratio": 0.0027027609328122487,
+      "scope_violations": 0,
+      "summed_agent_active_seconds": 7345.287169933319,
+      "summed_dependency_wait_seconds": null,
+      "summed_owner_wait_seconds": null,
+      "tokens": {
+        "cache_write": 0,
+        "cached_input": 5019392,
+        "input": 5158898,
+        "output": 39490,
+        "reasoning_output": 14050,
+        "total": 5198388
+      },
+      "wall_seconds": 7345.287169933319
+    },
+    "functional-final-review": {
+      "budget_warnings": [
+        "tokens_soft_budget_reached",
+        "elapsed_seconds_soft_budget_reached"
+      ],
+      "cache_hit_ratio": 0.8411496636622264,
+      "collection_since": "2026-11-10T15:30:25.979Z",
+      "event_counts": {
+        "assignment": 1,
+        "completion": 1,
+        "review_finding": 1,
+        "start": 1
+      },
+      "item_metrics_status": "observed within collection bounds",
+      "model_context": {
+        "effort": "high",
+        "model": "gpt-6.1-sol"
+      },
+      "observed_command_count": 11,
+      "observed_command_duration_seconds": 5.402957,
+      "observed_subagent_activity_count": 3,
+      "quality": {
+        "failed_checks": null,
+        "missing_requirement_evidence": [],
+        "open_review_findings": 0,
+        "quality_evidence_available": true,
+        "repair_limit_reached": false,
+        "repair_limit_violation": false,
+        "requirement_evidence_policy": "a failure clears all passes for the same task/run/check; later requirement passes accumulate independently",
+        "retry_evidence_missing": false,
+        "review_limit_reached": false,
+        "review_limit_violation": false
+      },
+      "reasoning_output_ratio": 0.20737039350405997,
+      "reasoning_total_ratio": 0.0007037797423784575,
+      "scope_violations": 0,
+      "summed_agent_active_seconds": 436.63347482681274,
+      "summed_dependency_wait_seconds": null,
+      "summed_owner_wait_seconds": null,
+      "tokens": {
+        "cache_write": 0,
+        "cached_input": 790912,
+        "input": 940275,
+        "output": 3202,
+        "reasoning_output": 664,
+        "total": 943477
+      },
+      "wall_seconds": 436.63347482681274
+    },
+    "mission-writer": {
+      "budget_warnings": [],
+      "cache_hit_ratio": 0.9009493577081755,
+      "collection_since": "2026-11-10T18:20:47+08:00",
+      "event_counts": {
+        "assignment": 1,
+        "completion": 1,
+        "start": 1
+      },
+      "item_metrics_status": "observed within collection bounds",
+      "model_context": {
+        "effort": "high",
+        "model": "gpt-6.1-sol"
+      },
+      "observed_command_count": 10,
+      "observed_command_duration_seconds": 2.5613485000000003,
+      "observed_subagent_activity_count": 1,
+      "quality": {
+        "failed_checks": null,
+        "missing_requirement_evidence": [],
+        "open_review_findings": null,
+        "quality_evidence_available": false,
+        "repair_limit_reached": false,
+        "repair_limit_violation": false,
+        "requirement_evidence_policy": "a failure clears all passes for the same task/run/check; later requirement passes accumulate independently",
+        "retry_evidence_missing": false,
+        "review_limit_reached": false,
+        "review_limit_violation": false
+      },
+      "reasoning_output_ratio": 0.09239598278335724,
+      "reasoning_total_ratio": 0.0008596340415080437,
+      "scope_violations": 0,
+      "summed_agent_active_seconds": 154.26723504066467,
+      "summed_dependency_wait_seconds": null,
+      "summed_owner_wait_seconds": null,
+      "tokens": {
+        "cache_write": 0,
+        "cached_input": 334336,
+        "input": 371093,
+        "output": 3485,
+        "reasoning_output": 322,
+        "total": 374578
+      },
+      "wall_seconds": 154.26723504066467
+    },
+    "prd-writer": {
+      "budget_warnings": [],
+      "cache_hit_ratio": 0.894283304913196,
+      "collection_since": "2026-11-10T18:44:10+08:00",
+      "event_counts": {
+        "assignment": 1,
+        "completion": 1,
+        "start": 1
+      },
+      "item_metrics_status": "observed within collection bounds",
+      "model_context": {
+        "effort": "high",
+        "model": "gpt-6.1-sol"
+      },
+      "observed_command_count": 16,
+      "observed_command_duration_seconds": 3.7112296,
+      "observed_subagent_activity_count": 1,
+      "quality": {
+        "failed_checks": null,
+        "missing_requirement_evidence": [],
+        "open_review_findings": null,
+        "quality_evidence_available": false,
+        "repair_limit_reached": false,
+        "repair_limit_violation": false,
+        "requirement_evidence_policy": "a failure clears all passes for the same task/run/check; later requirement passes accumulate independently",
+        "retry_evidence_missing": false,
+        "review_limit_reached": false,
+        "review_limit_violation": false
+      },
+      "reasoning_output_ratio": 0.11226252158894647,
+      "reasoning_total_ratio": 0.001984433896980404,
+      "scope_violations": 0,
+      "summed_agent_active_seconds": 277.5648410320282,
+      "summed_dependency_wait_seconds": null,
+      "summed_owner_wait_seconds": null,
+      "tokens": {
+        "cache_write": 0,
+        "cached_input": 431616,
+        "input": 482639,
+        "output": 8685,
+        "reasoning_output": 975,
+        "total": 491324
+      },
+      "wall_seconds": 277.5648410320282
+    },
+    "rtt-writer": {
+      "budget_warnings": [],
+      "cache_hit_ratio": 0.958259376875683,
+      "collection_since": "2026-11-10T18:50:15+08:00",
+      "event_counts": {
+        "assignment": 1,
+        "completion": 1,
+        "dependency_wait": 1,
+        "start": 2
+      },
+      "item_metrics_status": "observed within collection bounds",
+      "model_context": {
+        "effort": "high",
+        "model": "gpt-6.1-sol"
+      },
+      "observed_command_count": 25,
+      "observed_command_duration_seconds": 7.274598,
+      "observed_subagent_activity_count": 3,
+      "quality": {
+        "failed_checks": null,
+        "missing_requirement_evidence": [],
+        "open_review_findings": null,
+        "quality_evidence_available": false,
+        "repair_limit_reached": false,
+        "repair_limit_violation": false,
+        "requirement_evidence_policy": "a failure clears all passes for the same task/run/check; later requirement passes accumulate independently",
+        "retry_evidence_missing": false,
+        "review_limit_reached": false,
+        "review_limit_violation": false
+      },
+      "reasoning_output_ratio": 0.1598129019684272,
+      "reasoning_total_ratio": 0.0013063940020583672,
+      "scope_violations": 0,
+      "summed_agent_active_seconds": 376.195965051651,
+      "summed_dependency_wait_seconds": 204.1203498840332,
+      "summed_owner_wait_seconds": null,
+      "tokens": {
+        "cache_write": 0,
+        "cached_input": 1789696,
+        "input": 1867653,
+        "output": 15393,
+        "reasoning_output": 2460,
+        "total": 1883046
+      },
+      "wall_seconds": 580.3163149356842
+    },
+    "security-final-review": {
+      "budget_warnings": [
+        "tokens_soft_budget_reached",
+        "elapsed_seconds_soft_budget_reached"
+      ],
+      "cache_hit_ratio": 0.7989602925388074,
+      "collection_since": "2026-11-10T15:30:43.536Z",
+      "event_counts": {
+        "assignment": 1,
+        "completion": 1,
+        "review_finding": 1,
+        "start": 1
+      },
+      "item_metrics_status": "observed within collection bounds",
+      "model_context": {
+        "effort": "high",
+        "model": "gpt-6.1-sol"
+      },
+      "observed_command_count": 10,
+      "observed_command_duration_seconds": 3.9238684999999998,
+      "observed_subagent_activity_count": 0,
+      "quality": {
+        "failed_checks": null,
+        "missing_requirement_evidence": [],
+        "open_review_findings": 0,
+        "quality_evidence_available": true,
+        "repair_limit_reached": false,
+        "repair_limit_violation": false,
+        "requirement_evidence_policy": "a failure clears all passes for the same task/run/check; later requirement passes accumulate independently",
+        "retry_evidence_missing": false,
+        "review_limit_reached": false,
+        "review_limit_violation": false
+      },
+      "reasoning_output_ratio": 0.12942843646669816,
+      "reasoning_total_ratio": 0.0005505977200431637,
+      "scope_violations": 0,
+      "summed_agent_active_seconds": 420.816694021225,
+      "summed_dependency_wait_seconds": null,
+      "summed_owner_wait_seconds": null,
+      "tokens": {
+        "cache_write": 0,
+        "cached_input": 395904,
+        "input": 495524,
+        "output": 2117,
+        "reasoning_output": 274,
+        "total": 497641
+      },
+      "wall_seconds": 420.816694021225
+    },
+    "spec-reviewer": {
+      "budget_warnings": [],
+      "cache_hit_ratio": 0.9497783767215526,
+      "collection_since": "2026-11-10T18:59:09+08:00",
+      "event_counts": {
+        "assignment": 2,
+        "completion": 2,
+        "review_finding": 3,
+        "start": 2
+      },
+      "item_metrics_status": "observed within collection bounds",
+      "model_context": {
+        "effort": "high",
+        "model": "gpt-6.1-sol"
+      },
+      "observed_command_count": 26,
+      "observed_command_duration_seconds": 8.3474848,
+      "observed_subagent_activity_count": 5,
+      "quality": {
+        "failed_checks": null,
+        "missing_requirement_evidence": [],
+        "open_review_findings": 0,
+        "quality_evidence_available": true,
+        "repair_limit_reached": false,
+        "repair_limit_violation": false,
+        "requirement_evidence_policy": "a failure clears all passes for the same task/run/check; later requirement passes accumulate independently",
+        "retry_evidence_missing": false,
+        "review_limit_reached": false,
+        "review_limit_violation": false
+      },
+      "reasoning_output_ratio": 0.3327287384119307,
+      "reasoning_total_ratio": 0.0015427448243060336,
+      "scope_violations": 0,
+      "summed_agent_active_seconds": 528.4748990535736,
+      "summed_dependency_wait_seconds": null,
+      "summed_owner_wait_seconds": null,
+      "tokens": {
+        "cache_write": 0,
+        "cached_input": 2023424,
+        "input": 2130417,
+        "output": 9924,
+        "reasoning_output": 3302,
+        "total": 2140341
+      },
+      "wall_seconds": 529.0112280845642
+    },
+    "standards-final-review": {
+      "budget_warnings": [
+        "tokens_soft_budget_reached",
+        "elapsed_seconds_soft_budget_reached"
+      ],
+      "cache_hit_ratio": 0.8001069053461203,
+      "collection_since": "2026-11-10T15:30:34.667Z",
+      "event_counts": {
+        "assignment": 1,
+        "completion": 1,
+        "review_finding": 1,
+        "start": 1
+      },
+      "item_metrics_status": "observed within collection bounds",
+      "model_context": {
+        "effort": "high",
+        "model": "gpt-6.1-sol"
+      },
+      "observed_command_count": 11,
+      "observed_command_duration_seconds": 4.7792805000000005,
+      "observed_subagent_activity_count": 1,
+      "quality": {
+        "failed_checks": null,
+        "missing_requirement_evidence": [],
+        "open_review_findings": 0,
+        "quality_evidence_available": true,
+        "repair_limit_reached": false,
+        "repair_limit_violation": false,
+        "requirement_evidence_policy": "a failure clears all passes for the same task/run/check; later requirement passes accumulate independently",
+        "retry_evidence_missing": false,
+        "review_limit_reached": false,
+        "review_limit_violation": false
+      },
+      "reasoning_output_ratio": 0.15791701947502118,
+      "reasoning_total_ratio": 0.0005284873078034764,
+      "scope_violations": 0,
+      "summed_agent_active_seconds": 428.82868003845215,
+      "summed_dependency_wait_seconds": null,
+      "summed_owner_wait_seconds": null,
+      "tokens": {
+        "cache_write": 0,
+        "cached_input": 562816,
+        "input": 703426,
+        "output": 2362,
+        "reasoning_output": 373,
+        "total": 705788
+      },
+      "wall_seconds": 428.82868003845215
+    }
+  },
+  "budget_warnings": [
+    "tokens_soft_budget_reached",
+    "elapsed_seconds_soft_budget_reached"
+  ],
+  "collector": {
+    "bytes_read": 17465460,
+    "calls": 6,
+    "seconds": 0.13679509998473804,
+    "session_bytes_processed": 17254260
+  },
+  "diagnostics": {
+    "legacy_cumulative_tokens_unsupported_v1": 653,
+    "unknown_record_schema": 149
+  },
+  "feature": "MP4-D2-F01-grading",
+  "generated_at": "2026-11-10T15:45:25.588530+00:00",
+  "measurement_policy": "response_usage_v1; cached_input and reasoning_output are subsets; legacy cumulative unsupported",
+  "overall": {
+    "cache_hit_ratio": 0.976480246204289,
+    "known_total_token_lower_bound": 109903787,
+    "observed_responses": 648,
+    "pending_session_bytes": 0,
+    "quality": {
+      "failed_checks": 0,
+      "missing_requirement_evidence": [
+        "backend-build:GRD-FR-01",
+        "backend-build:GRD-FR-03",
+        "backend-build:GRD-FR-04",
+        "backend-build:GRD-FR-05",
+        "backend-build:GRD-FR-06",
+        "backend-build:GRD-FR-07",
+        "backend-build:GRD-NFR-01",
+        "backend-build:GRD-NFR-02",
+        "backend-build:GRD-NFR-03",
+        "frontend-build:GRD-FR-01",
+        "frontend-build:GRD-FR-02",
+        "frontend-build:GRD-FR-03",
+        "frontend-build:GRD-FR-04",
+        "frontend-build:GRD-FR-05",
+        "frontend-build:GRD-FR-06",
+        "frontend-build:GRD-FR-07",
+        "frontend-build:GRD-NFR-01",
+        "frontend-build:GRD-NFR-02",
+        "frontend-build:GRD-NFR-03",
+        "acceptance:GRD-FR-01",
+        "acceptance:GRD-FR-03",
+        "acceptance:GRD-FR-04",
+        "acceptance:GRD-FR-05",
+        "acceptance:GRD-FR-06",
+        "acceptance:GRD-FR-07",
+        "acceptance:GRD-NFR-01",
+        "acceptance:GRD-NFR-02",
+        "acceptance:GRD-NFR-03"
+      ],
+      "open_review_findings": 0,
+      "quality_evidence_available": true,
+      "repair_limit_reached": false,
+      "repair_limit_violation": false,
+      "requirement_evidence_policy": "a failure clears all passes for the same task/run/check; later requirement passes accumulate independently",
+      "retry_evidence_missing": false,
+      "review_limit_reached": false,
+      "review_limit_violation": false
+    },
+    "reasoning_output_ratio": 0.27617828308197445,
+    "reasoning_total_ratio": 0.0008204448860347278,
+    "tokens": {
+      "cache_write": 0,
+      "cached_input": 107000064,
+      "input": 109577295,
+      "output": 326492,
+      "reasoning_output": 90170,
+      "total": 109903787
+    },
+    "wall_seconds": 19506.970933914185
+  },
+  "runs": [
+    {
+      "active_seconds": 7336.4214079380035,
+      "agent": "acceptance-author",
+      "dependency_wait_seconds": null,
+      "open_interval": null,
+      "owner_wait_seconds": null,
+      "quality": {
+        "failed_checks": 0,
+        "missing_requirement_evidence": [],
+        "open_review_findings": null,
+        "quality_evidence_available": true,
+        "repair_limit_reached": false,
+        "repair_limit_violation": false,
+        "requirement_evidence_policy": "a failure clears all passes for the same task/run/check; later requirement passes accumulate independently",
+        "retry_evidence_missing": false,
+        "review_limit_reached": false,
+        "review_limit_violation": false
+      },
+      "run": "grading-implementation-v11",
+      "task": "acceptance",
+      "token_status": "unavailable: no explicit response-to-run mapping",
+      "tokens": null,
+      "wall_seconds": 7336.4214079380035,
+      "warnings": []
+    },
+    {
+      "active_seconds": 7354.15357708931,
+      "agent": "backend-builder",
+      "dependency_wait_seconds": null,
+      "open_interval": null,
+      "owner_wait_seconds": null,
+      "quality": {
+        "failed_checks": 0,
+        "missing_requirement_evidence": [],
+        "open_review_findings": null,
+        "quality_evidence_available": true,
+        "repair_limit_reached": false,
+        "repair_limit_violation": false,
+        "requirement_evidence_policy": "a failure clears all passes for the same task/run/check; later requirement passes accumulate independently",
+        "retry_evidence_missing": false,
+        "review_limit_reached": false,
+        "review_limit_violation": false
+      },
+      "run": "grading-implementation-v11",
+      "task": "backend-build",
+      "token_status": "unavailable: no explicit response-to-run mapping",
+      "tokens": null,
+      "wall_seconds": 7354.15357708931,
+      "warnings": []
+    },
+    {
+      "active_seconds": 7420.970933914185,
+      "agent": "coordinator",
+      "dependency_wait_seconds": null,
+      "open_interval": null,
+      "owner_wait_seconds": null,
+      "quality": {
+        "failed_checks": 0,
+        "missing_requirement_evidence": [],
+        "open_review_findings": null,
+        "quality_evidence_available": true,
+        "repair_limit_reached": false,
+        "repair_limit_violation": false,
+        "requirement_evidence_policy": "a failure clears all passes for the same task/run/check; later requirement passes accumulate independently",
+        "retry_evidence_missing": false,
+        "review_limit_reached": false,
+        "review_limit_violation": false
+      },
+      "run": "grading-implementation-v11",
+      "task": "planning-coordination",
+      "token_status": "unavailable: no explicit response-to-run mapping",
+      "tokens": null,
+      "wall_seconds": 7420.970933914185,
+      "warnings": []
+    },
+    {
+      "active_seconds": 1118.3901751041412,
+      "agent": "coordinator",
+      "dependency_wait_seconds": null,
+      "open_interval": null,
+      "owner_wait_seconds": 8435.609824895859,
+      "quality": {
+        "failed_checks": 0,
+        "missing_requirement_evidence": [],
+        "open_review_findings": 0,
+        "quality_evidence_available": true,
+        "repair_limit_reached": false,
+        "repair_limit_violation": false,
+        "requirement_evidence_policy": "a failure clears all passes for the same task/run/check; later requirement passes accumulate independently",
+        "retry_evidence_missing": false,
+        "review_limit_reached": false,
+        "review_limit_violation": false
+      },
+      "run": "grading-package-v1",
+      "task": "planning-coordination",
+      "token_status": "unavailable: no explicit response-to-run mapping",
+      "tokens": null,
+      "wall_seconds": 9554.0,
+      "warnings": []
+    },
+    {
+      "active_seconds": 322.82007002830505,
+      "agent": "coordinator",
+      "dependency_wait_seconds": null,
+      "open_interval": null,
+      "owner_wait_seconds": 32.179929971694946,
+      "quality": {
+        "failed_checks": 0,
+        "missing_requirement_evidence": [],
+        "open_review_findings": null,
+        "quality_evidence_available": true,
+        "repair_limit_reached": false,
+        "repair_limit_violation": false,
+        "requirement_evidence_policy": "a failure clears all passes for the same task/run/check; later requirement passes accumulate independently",
+        "retry_evidence_missing": false,
+        "review_limit_reached": false,
+        "review_limit_violation": false
+      },
+      "run": "grading-prd-v1",
+      "task": "planning-coordination",
+      "token_status": "unavailable: no explicit response-to-run mapping",
+      "tokens": null,
+      "wall_seconds": 355.0,
+      "warnings": []
+    },
+    {
+      "active_seconds": 0.25860095024108887,
+      "agent": "coordinator",
+      "dependency_wait_seconds": null,
+      "open_interval": null,
+      "owner_wait_seconds": 621.2518310546875,
+      "quality": {
+        "failed_checks": 0,
+        "missing_requirement_evidence": [],
+        "open_review_findings": null,
+        "quality_evidence_available": true,
+        "repair_limit_reached": false,
+        "repair_limit_violation": false,
+        "requirement_evidence_policy": "a failure clears all passes for the same task/run/check; later requirement passes accumulate independently",
+        "retry_evidence_missing": false,
+        "review_limit_reached": false,
+        "review_limit_violation": false
+      },
+      "run": "grading-requirements-r1",
+      "task": "planning-coordination",
+      "token_status": "unavailable: no explicit response-to-run mapping",
+      "tokens": null,
+      "wall_seconds": 621.5104320049286,
+      "warnings": []
+    },
+    {
+      "active_seconds": 122.00457096099854,
+      "agent": "coordinator",
+      "dependency_wait_seconds": null,
+      "open_interval": null,
+      "owner_wait_seconds": 108.99542903900146,
+      "quality": {
+        "failed_checks": 0,
+        "missing_requirement_evidence": [],
+        "open_review_findings": null,
+        "quality_evidence_available": true,
+        "repair_limit_reached": false,
+        "repair_limit_violation": false,
+        "requirement_evidence_policy": "a failure clears all passes for the same task/run/check; later requirement passes accumulate independently",
+        "retry_evidence_missing": false,
+        "review_limit_reached": false,
+        "review_limit_violation": false
+      },
+      "run": "grading-requirements-r2",
+      "task": "planning-coordination",
+      "token_status": "unavailable: no explicit response-to-run mapping",
+      "tokens": null,
+      "wall_seconds": 231.0,
+      "warnings": []
+    },
+    {
+      "active_seconds": 247.50424909591675,
+      "agent": "coordinator",
+      "dependency_wait_seconds": null,
+      "open_interval": null,
+      "owner_wait_seconds": 350.7288508415222,
+      "quality": {
+        "failed_checks": 0,
+        "missing_requirement_evidence": [],
+        "open_review_findings": null,
+        "quality_evidence_available": true,
+        "repair_limit_reached": false,
+        "repair_limit_violation": false,
+        "requirement_evidence_policy": "a failure clears all passes for the same task/run/check; later requirement passes accumulate independently",
+        "retry_evidence_missing": false,
+        "review_limit_reached": false,
+        "review_limit_violation": false
+      },
+      "run": "grading-scope-v1",
+      "task": "planning-coordination",
+      "token_status": "unavailable: no explicit response-to-run mapping",
+      "tokens": null,
+      "wall_seconds": 598.233099937439,
+      "warnings": []
+    },
+    {
+      "active_seconds": 262.917503118515,
+      "agent": "coordinator",
+      "dependency_wait_seconds": null,
+      "open_interval": null,
+      "owner_wait_seconds": 463.082496881485,
+      "quality": {
+        "failed_checks": 0,
+        "missing_requirement_evidence": [],
+        "open_review_findings": null,
+        "quality_evidence_available": true,
+        "repair_limit_reached": false,
+        "repair_limit_violation": false,
+        "requirement_evidence_policy": "a failure clears all passes for the same task/run/check; later requirement passes accumulate independently",
+        "retry_evidence_missing": false,
+        "review_limit_reached": false,
+        "review_limit_violation": false
+      },
+      "run": "grading-snapshot-v11",
+      "task": "planning-coordination",
+      "token_status": "unavailable: no explicit response-to-run mapping",
+      "tokens": null,
+      "wall_seconds": 726.0,
+      "warnings": []
+    },
+    {
+      "active_seconds": 390.18453788757324,
+      "agent": "design-writer",
+      "dependency_wait_seconds": null,
+      "open_interval": null,
+      "owner_wait_seconds": null,
+      "quality": {
+        "failed_checks": null,
+        "missing_requirement_evidence": [],
+        "open_review_findings": null,
+        "quality_evidence_available": false,
+        "repair_limit_reached": false,
+        "repair_limit_violation": false,
+        "requirement_evidence_policy": "a failure clears all passes for the same task/run/check; later requirement passes accumulate independently",
+        "retry_evidence_missing": false,
+        "review_limit_reached": false,
+        "review_limit_violation": false
+      },
+      "run": "grading-design-v1",
+      "task": "design-draft",
+      "token_status": "unavailable: no explicit response-to-run mapping",
+      "tokens": null,
+      "wall_seconds": 390.18453788757324,
+      "warnings": []
+    },
+    {
+      "active_seconds": 7345.287169933319,
+      "agent": "frontend-builder",
+      "dependency_wait_seconds": null,
+      "open_interval": null,
+      "owner_wait_seconds": null,
+      "quality": {
+        "failed_checks": null,
+        "missing_requirement_evidence": [],
+        "open_review_findings": null,
+        "quality_evidence_available": false,
+        "repair_limit_reached": false,
+        "repair_limit_violation": false,
+        "requirement_evidence_policy": "a failure clears all passes for the same task/run/check; later requirement passes accumulate independently",
+        "retry_evidence_missing": false,
+        "review_limit_reached": false,
+        "review_limit_violation": false
+      },
+      "run": "grading-implementation-v11",
+      "task": "frontend-build",
+      "token_status": "unavailable: no explicit response-to-run mapping",
+      "tokens": null,
+      "wall_seconds": 7345.287169933319,
+      "warnings": []
+    },
+    {
+      "active_seconds": 436.63347482681274,
+      "agent": "functional-final-review",
+      "dependency_wait_seconds": null,
+      "open_interval": null,
+      "owner_wait_seconds": null,
+      "quality": {
+        "failed_checks": null,
+        "missing_requirement_evidence": [],
+        "open_review_findings": 0,
+        "quality_evidence_available": true,
+        "repair_limit_reached": false,
+        "repair_limit_violation": false,
+        "requirement_evidence_policy": "a failure clears all passes for the same task/run/check; later requirement passes accumulate independently",
+        "retry_evidence_missing": false,
+        "review_limit_reached": false,
+        "review_limit_violation": false
+      },
+      "run": "grading-final-review",
+      "task": "functional-final-review",
+      "token_status": "unavailable: no explicit response-to-run mapping",
+      "tokens": null,
+      "wall_seconds": 436.63347482681274,
+      "warnings": []
+    },
+    {
+      "active_seconds": 154.26723504066467,
+      "agent": "mission-writer",
+      "dependency_wait_seconds": null,
+      "open_interval": null,
+      "owner_wait_seconds": null,
+      "quality": {
+        "failed_checks": null,
+        "missing_requirement_evidence": [],
+        "open_review_findings": null,
+        "quality_evidence_available": false,
+        "repair_limit_reached": false,
+        "repair_limit_violation": false,
+        "requirement_evidence_policy": "a failure clears all passes for the same task/run/check; later requirement passes accumulate independently",
+        "retry_evidence_missing": false,
+        "review_limit_reached": false,
+        "review_limit_violation": false
+      },
+      "run": "grading-scope-v1",
+      "task": "mission-brief",
+      "token_status": "unavailable: no explicit response-to-run mapping",
+      "tokens": null,
+      "wall_seconds": 154.26723504066467,
+      "warnings": []
+    },
+    {
+      "active_seconds": 277.5648410320282,
+      "agent": "prd-writer",
+      "dependency_wait_seconds": null,
+      "open_interval": null,
+      "owner_wait_seconds": null,
+      "quality": {
+        "failed_checks": null,
+        "missing_requirement_evidence": [],
+        "open_review_findings": null,
+        "quality_evidence_available": false,
+        "repair_limit_reached": false,
+        "repair_limit_violation": false,
+        "requirement_evidence_policy": "a failure clears all passes for the same task/run/check; later requirement passes accumulate independently",
+        "retry_evidence_missing": false,
+        "review_limit_reached": false,
+        "review_limit_violation": false
+      },
+      "run": "grading-prd-v1",
+      "task": "prd-draft",
+      "token_status": "unavailable: no explicit response-to-run mapping",
+      "tokens": null,
+      "wall_seconds": 277.5648410320282,
+      "warnings": []
+    },
+    {
+      "active_seconds": 376.195965051651,
+      "agent": "rtt-writer",
+      "dependency_wait_seconds": 204.1203498840332,
+      "open_interval": null,
+      "owner_wait_seconds": null,
+      "quality": {
+        "failed_checks": null,
+        "missing_requirement_evidence": [],
+        "open_review_findings": null,
+        "quality_evidence_available": false,
+        "repair_limit_reached": false,
+        "repair_limit_violation": false,
+        "requirement_evidence_policy": "a failure clears all passes for the same task/run/check; later requirement passes accumulate independently",
+        "retry_evidence_missing": false,
+        "review_limit_reached": false,
+        "review_limit_violation": false
+      },
+      "run": "grading-rtt-v1",
+      "task": "rtt-draft",
+      "token_status": "unavailable: no explicit response-to-run mapping",
+      "tokens": null,
+      "wall_seconds": 580.3163149356842,
+      "warnings": []
+    },
+    {
+      "active_seconds": 420.816694021225,
+      "agent": "security-final-review",
+      "dependency_wait_seconds": null,
+      "open_interval": null,
+      "owner_wait_seconds": null,
+      "quality": {
+        "failed_checks": null,
+        "missing_requirement_evidence": [],
+        "open_review_findings": 0,
+        "quality_evidence_available": true,
+        "repair_limit_reached": false,
+        "repair_limit_violation": false,
+        "requirement_evidence_policy": "a failure clears all passes for the same task/run/check; later requirement passes accumulate independently",
+        "retry_evidence_missing": false,
+        "review_limit_reached": false,
+        "review_limit_violation": false
+      },
+      "run": "grading-final-review",
+      "task": "security-final-review",
+      "token_status": "unavailable: no explicit response-to-run mapping",
+      "tokens": null,
+      "wall_seconds": 420.816694021225,
+      "warnings": []
+    },
+    {
+      "active_seconds": 416.49740290641785,
+      "agent": "spec-reviewer",
+      "dependency_wait_seconds": null,
+      "open_interval": null,
+      "owner_wait_seconds": null,
+      "quality": {
+        "failed_checks": null,
+        "missing_requirement_evidence": [],
+        "open_review_findings": 0,
+        "quality_evidence_available": true,
+        "repair_limit_reached": false,
+        "repair_limit_violation": false,
+        "requirement_evidence_policy": "a failure clears all passes for the same task/run/check; later requirement passes accumulate independently",
+        "retry_evidence_missing": false,
+        "review_limit_reached": false,
+        "review_limit_violation": false
+      },
+      "run": "grading-spec-v1",
+      "task": "spec-review",
+      "token_status": "unavailable: no explicit response-to-run mapping",
+      "tokens": null,
+      "wall_seconds": 416.49740290641785,
+      "warnings": []
+    },
+    {
+      "active_seconds": 111.97749614715576,
+      "agent": "spec-reviewer",
+      "dependency_wait_seconds": null,
+      "open_interval": null,
+      "owner_wait_seconds": null,
+      "quality": {
+        "failed_checks": null,
+        "missing_requirement_evidence": [],
+        "open_review_findings": 0,
+        "quality_evidence_available": true,
+        "repair_limit_reached": false,
+        "repair_limit_violation": false,
+        "requirement_evidence_policy": "a failure clears all passes for the same task/run/check; later requirement passes accumulate independently",
+        "retry_evidence_missing": false,
+        "review_limit_reached": false,
+        "review_limit_violation": false
+      },
+      "run": "grading-spec-v11",
+      "task": "spec-review",
+      "token_status": "unavailable: no explicit response-to-run mapping",
+      "tokens": null,
+      "wall_seconds": 111.97749614715576,
+      "warnings": []
+    },
+    {
+      "active_seconds": 428.82868003845215,
+      "agent": "standards-final-review",
+      "dependency_wait_seconds": null,
+      "open_interval": null,
+      "owner_wait_seconds": null,
+      "quality": {
+        "failed_checks": null,
+        "missing_requirement_evidence": [],
+        "open_review_findings": 0,
+        "quality_evidence_available": true,
+        "repair_limit_reached": false,
+        "repair_limit_violation": false,
+        "requirement_evidence_policy": "a failure clears all passes for the same task/run/check; later requirement passes accumulate independently",
+        "retry_evidence_missing": false,
+        "review_limit_reached": false,
+        "review_limit_violation": false
+      },
+      "run": "grading-final-review",
+      "task": "standards-final-review",
+      "token_status": "unavailable: no explicit response-to-run mapping",
+      "tokens": null,
+      "wall_seconds": 428.82868003845215,
+      "warnings": []
+    }
+  ],
+  "schema_version": 1,
+  "tasks": {
+    "acceptance": {
+      "budget_warnings": [
+        "tokens_soft_budget_reached",
+        "elapsed_seconds_soft_budget_reached"
+      ],
+      "cache_hit_ratio": 0.9748781275120643,
+      "event_counts": {
+        "assignment": 1,
+        "commit": 1,
+        "completion": 1,
+        "start": 1,
+        "test_result": 2
+      },
+      "item_metrics_status": "observed within collection bounds",
+      "observed_command_count": 44,
+      "observed_command_duration_seconds": 77.5335824,
+      "observed_subagent_activity_count": 10,
+      "quality": {
+        "failed_checks": 0,
+        "missing_requirement_evidence": [
+          "GRD-FR-01",
+          "GRD-FR-03",
+          "GRD-FR-04",
+          "GRD-FR-05",
+          "GRD-FR-06",
+          "GRD-FR-07",
+          "GRD-NFR-01",
+          "GRD-NFR-02",
+          "GRD-NFR-03"
+        ],
+        "open_review_findings": null,
+        "quality_evidence_available": true,
+        "repair_limit_reached": false,
+        "repair_limit_violation": false,
+        "requirement_evidence_policy": "a failure clears all passes for the same task/run/check; later requirement passes accumulate independently",
+        "retry_evidence_missing": false,
+        "review_limit_reached": false,
+        "review_limit_violation": false
+      },
+      "reasoning_output_ratio": 0.17266398378521283,
+      "reasoning_total_ratio": 0.0009913406946873043,
+      "scope_violations": 0,
+      "summed_agent_active_seconds": 7336.4214079380035,
+      "summed_dependency_wait_seconds": null,
+      "summed_owner_wait_seconds": null,
+      "tokens": {
+        "cache_write": 0,
+        "cached_input": 5747200,
+        "input": 5895301,
+        "output": 34043,
+        "reasoning_output": 5878,
+        "total": 5929344
+      },
+      "wall_seconds": 7336.4214079380035
+    },
+    "backend-build": {
+      "budget_warnings": [
+        "tokens_soft_budget_reached",
+        "elapsed_seconds_soft_budget_reached"
+      ],
+      "cache_hit_ratio": 0.9726422152437212,
+      "event_counts": {
+        "assignment": 1,
+        "completion": 1,
+        "start": 1,
+        "test_result": 2
+      },
+      "item_metrics_status": "observed within collection bounds",
+      "observed_command_count": 59,
+      "observed_command_duration_seconds": 131.46094,
+      "observed_subagent_activity_count": 9,
+      "quality": {
+        "failed_checks": 0,
+        "missing_requirement_evidence": [
+          "GRD-FR-01",
+          "GRD-FR-03",
+          "GRD-FR-04",
+          "GRD-FR-05",
+          "GRD-FR-06",
+          "GRD-FR-07",
+          "GRD-NFR-01",
+          "GRD-NFR-02",
+          "GRD-NFR-03"
+        ],
+        "open_review_findings": null,
+        "quality_evidence_available": true,
+        "repair_limit_reached": false,
+        "repair_limit_violation": false,
+        "requirement_evidence_policy": "a failure clears all passes for the same task/run/check; later requirement passes accumulate independently",
+        "retry_evidence_missing": false,
+        "review_limit_reached": false,
+        "review_limit_violation": false
+      },
+      "reasoning_output_ratio": 0.2510961428480651,
+      "reasoning_total_ratio": 0.0015866416139375514,
+      "scope_violations": 0,
+      "summed_agent_active_seconds": 7354.15357708931,
+      "summed_dependency_wait_seconds": null,
+      "summed_owner_wait_seconds": null,
+      "tokens": {
+        "cache_write": 0,
+        "cached_input": 4814080,
+        "input": 4949487,
+        "output": 31474,
+        "reasoning_output": 7903,
+        "total": 4980961
+      },
+      "wall_seconds": 7354.15357708931
+    },
+    "design-draft": {
+      "budget_warnings": [
+        "tokens_soft_budget_reached",
+        "elapsed_seconds_soft_budget_reached"
+      ],
+      "cache_hit_ratio": 0.9382036845508436,
+      "event_counts": {
+        "assignment": 1,
+        "completion": 1,
+        "start": 1
+      },
+      "item_metrics_status": "observed within collection bounds",
+      "observed_command_count": 20,
+      "observed_command_duration_seconds": 5.5123927,
+      "observed_subagent_activity_count": 4,
+      "quality": {
+        "failed_checks": null,
+        "missing_requirement_evidence": [],
+        "open_review_findings": null,
+        "quality_evidence_available": false,
+        "repair_limit_reached": false,
+        "repair_limit_violation": false,
+        "requirement_evidence_policy": "a failure clears all passes for the same task/run/check; later requirement passes accumulate independently",
+        "retry_evidence_missing": false,
+        "review_limit_reached": false,
+        "review_limit_violation": false
+      },
+      "reasoning_output_ratio": 0.24951020666118942,
+      "reasoning_total_ratio": 0.0030238021018028694,
+      "scope_violations": 0,
+      "summed_agent_active_seconds": 390.18453788757324,
+      "summed_dependency_wait_seconds": null,
+      "summed_owner_wait_seconds": null,
+      "tokens": {
+        "cache_write": 0,
+        "cached_input": 1210112,
+        "input": 1289818,
+        "output": 15823,
+        "reasoning_output": 3948,
+        "total": 1305641
+      },
+      "wall_seconds": 390.18453788757324
+    },
+    "frontend-build": {
+      "budget_warnings": [
+        "tokens_soft_budget_reached",
+        "elapsed_seconds_soft_budget_reached"
+      ],
+      "cache_hit_ratio": 0.9729581782776089,
+      "event_counts": {
+        "assignment": 1,
+        "completion": 1,
+        "start": 1
+      },
+      "item_metrics_status": "observed within collection bounds",
+      "observed_command_count": 37,
+      "observed_command_duration_seconds": 49.2866039,
+      "observed_subagent_activity_count": 7,
+      "quality": {
+        "failed_checks": null,
+        "missing_requirement_evidence": [
+          "GRD-FR-01",
+          "GRD-FR-02",
+          "GRD-FR-03",
+          "GRD-FR-04",
+          "GRD-FR-05",
+          "GRD-FR-06",
+          "GRD-FR-07",
+          "GRD-NFR-01",
+          "GRD-NFR-02",
+          "GRD-NFR-03"
+        ],
+        "open_review_findings": null,
+        "quality_evidence_available": false,
+        "repair_limit_reached": false,
+        "repair_limit_violation": false,
+        "requirement_evidence_policy": "a failure clears all passes for the same task/run/check; later requirement passes accumulate independently",
+        "retry_evidence_missing": false,
+        "review_limit_reached": false,
+        "review_limit_violation": false
+      },
+      "reasoning_output_ratio": 0.3557862750063307,
+      "reasoning_total_ratio": 0.0027027609328122487,
+      "scope_violations": 0,
+      "summed_agent_active_seconds": 7345.287169933319,
+      "summed_dependency_wait_seconds": null,
+      "summed_owner_wait_seconds": null,
+      "tokens": {
+        "cache_write": 0,
+        "cached_input": 5019392,
+        "input": 5158898,
+        "output": 39490,
+        "reasoning_output": 14050,
+        "total": 5198388
+      },
+      "wall_seconds": 7345.287169933319
+    },
+    "functional-final-review": {
+      "budget_warnings": [
+        "tokens_soft_budget_reached",
+        "elapsed_seconds_soft_budget_reached"
+      ],
+      "cache_hit_ratio": 0.8411496636622264,
+      "event_counts": {
+        "assignment": 1,
+        "completion": 1,
+        "review_finding": 1,
+        "start": 1
+      },
+      "item_metrics_status": "observed within collection bounds",
+      "observed_command_count": 11,
+      "observed_command_duration_seconds": 5.402957,
+      "observed_subagent_activity_count": 3,
+      "quality": {
+        "failed_checks": null,
+        "missing_requirement_evidence": [],
+        "open_review_findings": 0,
+        "quality_evidence_available": true,
+        "repair_limit_reached": false,
+        "repair_limit_violation": false,
+        "requirement_evidence_policy": "a failure clears all passes for the same task/run/check; later requirement passes accumulate independently",
+        "retry_evidence_missing": false,
+        "review_limit_reached": false,
+        "review_limit_violation": false
+      },
+      "reasoning_output_ratio": 0.20737039350405997,
+      "reasoning_total_ratio": 0.0007037797423784575,
+      "scope_violations": 0,
+      "summed_agent_active_seconds": 436.63347482681274,
+      "summed_dependency_wait_seconds": null,
+      "summed_owner_wait_seconds": null,
+      "tokens": {
+        "cache_write": 0,
+        "cached_input": 790912,
+        "input": 940275,
+        "output": 3202,
+        "reasoning_output": 664,
+        "total": 943477
+      },
+      "wall_seconds": 436.63347482681274
+    },
+    "mission-brief": {
+      "budget_warnings": [
+        "tokens_soft_budget_reached",
+        "elapsed_seconds_soft_budget_reached"
+      ],
+      "cache_hit_ratio": 0.9009493577081755,
+      "event_counts": {
+        "assignment": 1,
+        "completion": 1,
+        "start": 1
+      },
+      "item_metrics_status": "observed within collection bounds",
+      "observed_command_count": 10,
+      "observed_command_duration_seconds": 2.5613485000000003,
+      "observed_subagent_activity_count": 1,
+      "quality": {
+        "failed_checks": null,
+        "missing_requirement_evidence": [],
+        "open_review_findings": null,
+        "quality_evidence_available": false,
+        "repair_limit_reached": false,
+        "repair_limit_violation": false,
+        "requirement_evidence_policy": "a failure clears all passes for the same task/run/check; later requirement passes accumulate independently",
+        "retry_evidence_missing": false,
+        "review_limit_reached": false,
+        "review_limit_violation": false
+      },
+      "reasoning_output_ratio": 0.09239598278335724,
+      "reasoning_total_ratio": 0.0008596340415080437,
+      "scope_violations": 0,
+      "summed_agent_active_seconds": 154.26723504066467,
+      "summed_dependency_wait_seconds": null,
+      "summed_owner_wait_seconds": null,
+      "tokens": {
+        "cache_write": 0,
+        "cached_input": 334336,
+        "input": 371093,
+        "output": 3485,
+        "reasoning_output": 322,
+        "total": 374578
+      },
+      "wall_seconds": 154.26723504066467
+    },
+    "planning-coordination": {
+      "budget_warnings": [
+        "tokens_soft_budget_reached",
+        "elapsed_seconds_soft_budget_reached"
+      ],
+      "cache_hit_ratio": 0.9834430503389479,
+      "event_counts": {
+        "assignment": 7,
+        "commit": 2,
+        "completion": 7,
+        "owner_wait": 6,
+        "retry": 1,
+        "review_finding": 2,
+        "start": 7,
+        "test_result": 14
+      },
+      "item_metrics_status": "observed within collection bounds",
+      "observed_command_count": 235,
+      "observed_command_duration_seconds": 1862.8301399,
+      "observed_subagent_activity_count": 61,
+      "quality": {
+        "failed_checks": 0,
+        "missing_requirement_evidence": [],
+        "open_review_findings": 0,
+        "quality_evidence_available": true,
+        "repair_limit_reached": false,
+        "repair_limit_violation": false,
+        "requirement_evidence_policy": "a failure clears all passes for the same task/run/check; later requirement passes accumulate independently",
+        "retry_evidence_missing": false,
+        "review_limit_reached": false,
+        "review_limit_violation": false
+      },
+      "reasoning_output_ratio": 0.31166897204879934,
+      "reasoning_total_ratio": 0.0005853609466826882,
+      "scope_violations": 0,
+      "summed_agent_active_seconds": 9494.866103172302,
+      "summed_dependency_wait_seconds": null,
+      "summed_owner_wait_seconds": 10011.84836268425,
+      "tokens": {
+        "cache_write": 0,
+        "cached_input": 83880576,
+        "input": 85292764,
+        "output": 160494,
+        "reasoning_output": 50021,
+        "total": 85453258
+      },
+      "wall_seconds": 19506.970933914185
+    },
+    "prd-draft": {
+      "budget_warnings": [
+        "tokens_soft_budget_reached",
+        "elapsed_seconds_soft_budget_reached"
+      ],
+      "cache_hit_ratio": 0.894283304913196,
+      "event_counts": {
+        "assignment": 1,
+        "completion": 1,
+        "start": 1
+      },
+      "item_metrics_status": "observed within collection bounds",
+      "observed_command_count": 16,
+      "observed_command_duration_seconds": 3.7112296,
+      "observed_subagent_activity_count": 1,
+      "quality": {
+        "failed_checks": null,
+        "missing_requirement_evidence": [],
+        "open_review_findings": null,
+        "quality_evidence_available": false,
+        "repair_limit_reached": false,
+        "repair_limit_violation": false,
+        "requirement_evidence_policy": "a failure clears all passes for the same task/run/check; later requirement passes accumulate independently",
+        "retry_evidence_missing": false,
+        "review_limit_reached": false,
+        "review_limit_violation": false
+      },
+      "reasoning_output_ratio": 0.11226252158894647,
+      "reasoning_total_ratio": 0.001984433896980404,
+      "scope_violations": 0,
+      "summed_agent_active_seconds": 277.5648410320282,
+      "summed_dependency_wait_seconds": null,
+      "summed_owner_wait_seconds": null,
+      "tokens": {
+        "cache_write": 0,
+        "cached_input": 431616,
+        "input": 482639,
+        "output": 8685,
+        "reasoning_output": 975,
+        "total": 491324
+      },
+      "wall_seconds": 277.5648410320282
+    },
+    "rtt-draft": {
+      "budget_warnings": [
+        "tokens_soft_budget_reached",
+        "elapsed_seconds_soft_budget_reached"
+      ],
+      "cache_hit_ratio": 0.958259376875683,
+      "event_counts": {
+        "assignment": 1,
+        "completion": 1,
+        "dependency_wait": 1,
+        "start": 2
+      },
+      "item_metrics_status": "observed within collection bounds",
+      "observed_command_count": 25,
+      "observed_command_duration_seconds": 7.274598,
+      "observed_subagent_activity_count": 3,
+      "quality": {
+        "failed_checks": null,
+        "missing_requirement_evidence": [],
+        "open_review_findings": null,
+        "quality_evidence_available": false,
+        "repair_limit_reached": false,
+        "repair_limit_violation": false,
+        "requirement_evidence_policy": "a failure clears all passes for the same task/run/check; later requirement passes accumulate independently",
+        "retry_evidence_missing": false,
+        "review_limit_reached": false,
+        "review_limit_violation": false
+      },
+      "reasoning_output_ratio": 0.1598129019684272,
+      "reasoning_total_ratio": 0.0013063940020583672,
+      "scope_violations": 0,
+      "summed_agent_active_seconds": 376.195965051651,
+      "summed_dependency_wait_seconds": 204.1203498840332,
+      "summed_owner_wait_seconds": null,
+      "tokens": {
+        "cache_write": 0,
+        "cached_input": 1789696,
+        "input": 1867653,
+        "output": 15393,
+        "reasoning_output": 2460,
+        "total": 1883046
+      },
+      "wall_seconds": 580.3163149356842
+    },
+    "security-final-review": {
+      "budget_warnings": [
+        "tokens_soft_budget_reached",
+        "elapsed_seconds_soft_budget_reached"
+      ],
+      "cache_hit_ratio": 0.7989602925388074,
+      "event_counts": {
+        "assignment": 1,
+        "completion": 1,
+        "review_finding": 1,
+        "start": 1
+      },
+      "item_metrics_status": "observed within collection bounds",
+      "observed_command_count": 10,
+      "observed_command_duration_seconds": 3.9238684999999998,
+      "observed_subagent_activity_count": 0,
+      "quality": {
+        "failed_checks": null,
+        "missing_requirement_evidence": [],
+        "open_review_findings": 0,
+        "quality_evidence_available": true,
+        "repair_limit_reached": false,
+        "repair_limit_violation": false,
+        "requirement_evidence_policy": "a failure clears all passes for the same task/run/check; later requirement passes accumulate independently",
+        "retry_evidence_missing": false,
+        "review_limit_reached": false,
+        "review_limit_violation": false
+      },
+      "reasoning_output_ratio": 0.12942843646669816,
+      "reasoning_total_ratio": 0.0005505977200431637,
+      "scope_violations": 0,
+      "summed_agent_active_seconds": 420.816694021225,
+      "summed_dependency_wait_seconds": null,
+      "summed_owner_wait_seconds": null,
+      "tokens": {
+        "cache_write": 0,
+        "cached_input": 395904,
+        "input": 495524,
+        "output": 2117,
+        "reasoning_output": 274,
+        "total": 497641
+      },
+      "wall_seconds": 420.816694021225
+    },
+    "spec-review": {
+      "budget_warnings": [
+        "tokens_soft_budget_reached",
+        "elapsed_seconds_soft_budget_reached"
+      ],
+      "cache_hit_ratio": 0.9497783767215526,
+      "event_counts": {
+        "assignment": 2,
+        "completion": 2,
+        "review_finding": 3,
+        "start": 2
+      },
+      "item_metrics_status": "observed within collection bounds",
+      "observed_command_count": 26,
+      "observed_command_duration_seconds": 8.3474848,
+      "observed_subagent_activity_count": 5,
+      "quality": {
+        "failed_checks": null,
+        "missing_requirement_evidence": [],
+        "open_review_findings": 0,
+        "quality_evidence_available": true,
+        "repair_limit_reached": false,
+        "repair_limit_violation": false,
+        "requirement_evidence_policy": "a failure clears all passes for the same task/run/check; later requirement passes accumulate independently",
+        "retry_evidence_missing": false,
+        "review_limit_reached": false,
+        "review_limit_violation": false
+      },
+      "reasoning_output_ratio": 0.3327287384119307,
+      "reasoning_total_ratio": 0.0015427448243060336,
+      "scope_violations": 0,
+      "summed_agent_active_seconds": 528.4748990535736,
+      "summed_dependency_wait_seconds": null,
+      "summed_owner_wait_seconds": null,
+      "tokens": {
+        "cache_write": 0,
+        "cached_input": 2023424,
+        "input": 2130417,
+        "output": 9924,
+        "reasoning_output": 3302,
+        "total": 2140341
+      },
+      "wall_seconds": 529.0112280845642
+    },
+    "standards-final-review": {
+      "budget_warnings": [
+        "tokens_soft_budget_reached",
+        "elapsed_seconds_soft_budget_reached"
+      ],
+      "cache_hit_ratio": 0.8001069053461203,
+      "event_counts": {
+        "assignment": 1,
+        "completion": 1,
+        "review_finding": 1,
+        "start": 1
+      },
+      "item_metrics_status": "observed within collection bounds",
+      "observed_command_count": 11,
+      "observed_command_duration_seconds": 4.7792805000000005,
+      "observed_subagent_activity_count": 1,
+      "quality": {
+        "failed_checks": null,
+        "missing_requirement_evidence": [],
+        "open_review_findings": 0,
+        "quality_evidence_available": true,
+        "repair_limit_reached": false,
+        "repair_limit_violation": false,
+        "requirement_evidence_policy": "a failure clears all passes for the same task/run/check; later requirement passes accumulate independently",
+        "retry_evidence_missing": false,
+        "review_limit_reached": false,
+        "review_limit_violation": false
+      },
+      "reasoning_output_ratio": 0.15791701947502118,
+      "reasoning_total_ratio": 0.0005284873078034764,
+      "scope_violations": 0,
+      "summed_agent_active_seconds": 428.82868003845215,
+      "summed_dependency_wait_seconds": null,
+      "summed_owner_wait_seconds": null,
+      "tokens": {
+        "cache_write": 0,
+        "cached_input": 562816,
+        "input": 703426,
+        "output": 2362,
+        "reasoning_output": 373,
+        "total": 705788
+      },
+      "wall_seconds": 428.82868003845215
+    }
+  },
+  "tool_count": null,
+  "tool_duration_seconds": null,
+  "tool_metrics_status": "unavailable: no verified tool lifecycle correlation"
+}
