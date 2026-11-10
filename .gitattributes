@@ -3,3 +3,7 @@
 
 # Preserve byte-for-byte synthetic evidence across Windows and Unix checkouts.
 workflow/evaluations/royden/pilot/artifacts/** -text whitespace=cr-at-eol
+
+# Preserve the shared collector's exact Windows grading checkpoint bytes.
+workflow/evaluations/royden/MP4-D2-F01-grading/monitoring/report.json -text whitespace=cr-at-eol
+workflow/evaluations/royden/MP4-D2-F01-grading/monitoring/report.md -text whitespace=cr-at-eol
