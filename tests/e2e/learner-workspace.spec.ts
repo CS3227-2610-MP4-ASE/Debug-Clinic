@@ -4,6 +4,7 @@ import {
   fillPythonCode,
 } from "../support/python-editor.js";
 import { expect, test } from "@playwright/test";
+import { LearnerAttemptWriteSchema } from "@debugclinic/contracts";
 import { f01Learner } from "../support/f01-fixtures.js";
 import { mockEmptyLearnerAssistantState } from "../support/learner-assistant-fixture.js";
 import { mockAwaitingLearnerGrade } from "../support/learner-grade-fixture.js";
@@ -19,6 +20,83 @@ const question = {
   buggyCode: "def total(values):\n    return sum(values[:-1])\n",
   expectedBehavior: "total([3, 5]) returns 8.",
 };
+
+test("empty reasoning explains how to complete the attempt before saving or submitting", async ({
+  page,
+}) => {
+  await page.route("**/api/v1/me", (route) =>
+    route.fulfill({ json: { user: f01Learner } }),
+  );
+  await page.route("**/api/v1/learner/questions/workspace-case", (route) =>
+    route.fulfill({ json: { question } }),
+  );
+  const writes: unknown[] = [];
+  await page.route(
+    "**/api/v1/learner/questions/workspace-case/attempt**",
+    (route) => {
+      if (route.request().method() === "GET")
+        return route.fulfill({ json: { attempt: null } });
+      const input = route.request().postDataJSON();
+      writes.push(input);
+      const parsed = LearnerAttemptWriteSchema.safeParse(input);
+      if (!parsed.success)
+        return route.fulfill({
+          status: 400,
+          json: {
+            error: {
+              code: "BAD_REQUEST",
+              message: "The request was invalid",
+              requestId: "invalid-attempt-fixture",
+              mutationOutcome: "NOT_APPLIED",
+              details: parsed.error.issues.map((issue) => ({
+                path: issue.path.join("."),
+                message: issue.message,
+              })),
+            },
+          },
+        });
+      return route.fulfill({
+        json: {
+          attempt: {
+            id: "attempt-1",
+            code: parsed.data.code,
+            reasoning: parsed.data.reasoning,
+            status: "FINAL_SUBMITTED",
+            revision: 0,
+            submittedAt: "2026-11-06T12:00:00.000Z",
+          },
+        },
+      });
+    },
+  );
+  await mockEmptyLearnerAssistantState(page, question.id, question.versionId);
+  await mockAwaitingLearnerGrade(page);
+  let confirmations = 0;
+  page.on("dialog", (dialog) => {
+    confirmations += 1;
+    void dialog.accept();
+  });
+  await page.goto("/learner/questions/workspace-case");
+  const reasoning = page.getByRole("textbox", {
+    name: "Explain your reasoning",
+  });
+  await page.getByRole("button", { name: "Save draft" }).click();
+  await expect(page.getByRole("alert")).toContainText("Explain your reasoning");
+  await reasoning.fill("   ");
+  await page.getByRole("button", { name: "Submit final attempt" }).click();
+  await expect(page.getByRole("alert")).toContainText("Explain your reasoning");
+  expect(writes).toHaveLength(0);
+  expect(confirmations).toBe(0);
+  await expectPythonCode(
+    page.getByRole("textbox", { name: "Your Python 3 code" }),
+    question.buggyCode,
+  );
+  await reasoning.fill("The slice omits the final element.");
+  await page.getByRole("button", { name: "Submit final attempt" }).click();
+  await expect(page.getByRole("alert")).toContainText("read-only");
+  expect(writes).toHaveLength(1);
+  expect(confirmations).toBe(1);
+});
 
 test("search opens an attempt, saves it, confirms final submission and retains the search", async ({
   page,

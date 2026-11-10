@@ -14,6 +14,7 @@ import type {
   LearnerAttemptWrite,
   PublishedQuestion,
 } from "@debugclinic/contracts";
+import { LearnerAttemptWriteSchema } from "@debugclinic/contracts";
 import { useCallback, useEffect, useId, useRef, useState } from "react";
 import { Link as RouterLink, useLocation, useParams } from "react-router-dom";
 import { useAuth } from "../auth/AuthProvider.js";
@@ -247,6 +248,30 @@ export function PublishedQuestionPage() {
       ...local,
       expectedRevision: attempt?.revision ?? null,
     };
+    const validation = LearnerAttemptWriteSchema.safeParse(input);
+    if (!validation.success) {
+      setError(
+        validation.error.issues
+          .map((issue) => {
+            const label =
+              issue.path[0] === "reasoning"
+                ? "Explain your reasoning"
+                : issue.path[0] === "code"
+                  ? "Your Python 3 code"
+                  : "Attempt";
+            return `${label}: ${issue.message}`;
+          })
+          .join("; "),
+      );
+      return;
+    }
+    if (
+      submit &&
+      !window.confirm(
+        "Submit this final attempt? You cannot edit it afterward.",
+      )
+    )
+      return;
     setSaving(true);
     setError(null);
     setRecoveryNotice(null);
@@ -566,14 +591,7 @@ export function PublishedQuestionPage() {
             onReasoningChange={editReasoning}
             onOutputChange={setRunOutput}
             onSave={() => void persist(false)}
-            onSubmit={() => {
-              if (
-                window.confirm(
-                  "Submit this final attempt? You cannot edit it afterward.",
-                )
-              )
-                void persist(true);
-            }}
+            onSubmit={() => void persist(true)}
           />
         </Box>
       )}

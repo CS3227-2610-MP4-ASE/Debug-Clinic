@@ -104,3 +104,26 @@ root. The monitor run ID is `grading-pr-base-20261111`. The PR targets
 - The owner authorized the grading branch push on 2026-11-11, then reported the conflict against their selected PR base. The correction updates that same grading branch. PR publication, merging the PR and deployment retain separate authorization.
 - Preserve existing Developer 2 artifacts and keep raw telemetry outside Git. Later provide Developer 1 a concise grading integration handoff using shared contracts and permitted evidence, without private SDD artifacts.
 - Local integrated implementation and planned automated verification are complete. The code checkpoint is `f7ed08b73dfcff05b9bca009b880ca202f089589`. Delivery documentation records the residual manual and remote evidence. The next external action requires its separate owner authorization.
+
+## Preview submission validation repair — 2026-11-11
+
+The owner reported a generic invalid-request alert on PR 17's learner question
+page. A synthetic browser reproduction with empty reasoning produced the exact
+alert. Real local HTTP checks confirmed the existing nonblank reasoning rule
+rejects both save and final submit with 400/NOT_APPLIED and field details. The
+client now validates the shared contract before confirmation or mutation and
+labels the missing field. The reasoning field visibly states its requirement.
+Existing wire contracts, persistence and authentication behavior are unchanged.
+
+Node 24 verification passed: 44 desktop/mobile workspace, acceptance and recovery
+browser cases; 5 attempt HTTP tests; 19 frontend tests; typecheck; scoped lint;
+formatting; and the production frontend build. Browser responses were synthetic,
+while HTTP tests exercised the actual app boundary with an injected service.
+The new regression was observed failing with the reported alert before repair.
+Generic read-only agent `/root/submit_validation_review`, dispatched with a fresh
+scoped packet against base `021e38a0649ba597e75c100b28de80dd6eb5540b`, returned
+separate functional and standards pass verdicts with no actionable findings.
+The deployed preview could not be read through the web tool; authenticated live
+submission and remote deployment remain unverified. Monitor run:
+`grading-submit-validation-20261111`. This repair continues the existing owner
+implementation and grading-branch push authorization.
