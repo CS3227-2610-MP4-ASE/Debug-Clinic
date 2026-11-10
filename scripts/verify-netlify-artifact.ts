@@ -8,7 +8,7 @@ import { readEnv } from "../apps/backend/src/config/env.js";
 import { createPrismaClient } from "../apps/backend/src/db/client.js";
 
 // Invoke an extracted Netlify packager artifact, never the source handler.
-// This deliberately uses no SMTP/Google credentials and creates only its own user.
+// This deliberately uses no SMTP/Google credentials and owns its synthetic data.
 function verifiedEnvironment(): NodeJS.ProcessEnv {
   if (process.versions.node.split(".")[0] !== "24")
     throw new Error("Use Node 24 for packaged-function verification");
@@ -62,6 +62,7 @@ type WebHandler = (request: Request) => Promise<Response>;
 async function smoke(artifact: string): Promise<number> {
   const email = `package-${randomUUID()}@example.test`;
   const learnerEmail = `package-learner-${randomUUID()}@example.test`;
+  const foreignEmail = `package-foreign-${randomUUID()}@example.test`;
   let step = "load packaged ESM export";
   try {
     const loaded: unknown = await import(pathToFileURL(artifact).href);
@@ -77,10 +78,11 @@ async function smoke(artifact: string): Promise<number> {
       path: string,
       body?: object | string,
       cookie?: string,
+      method = body === undefined ? "GET" : "POST",
     ): Promise<Response> =>
       handler(
         new Request(`http://127.0.0.1:5173${path}`, {
-          method: body === undefined ? "GET" : "POST",
+          method,
           headers: {
             origin: "http://127.0.0.1:5173",
             ...(body === undefined
@@ -132,7 +134,10 @@ async function smoke(artifact: string): Promise<number> {
       200,
     );
     step = "wrong-role denial";
-    expectStatus(await request("/api/v1/ai/hint-preview", {}, cookie), 403);
+    expectStatus(
+      await request("/api/v1/learner/dashboard", undefined, cookie),
+      403,
+    );
     step = "instructor generation in packaged composition";
     const generated = await request(
       "/api/v1/instructor/questions/generate",
@@ -254,6 +259,24 @@ async function smoke(artifact: string): Promise<number> {
       publicBody.question["versionId"] !== publication.question.versionId
     )
       throw new Error("Incorrect packaged public projection");
+    step = "packaged final submission";
+    const code = "def total(values):\n    return sum(values)\n";
+    const reasoning = "Include every element.\n\nThe empty sum is zero.";
+    const final = await request(
+      `/api/v1/learner/questions/${encodeURIComponent(publication.question.id)}/attempt/submit`,
+      { code, reasoning, expectedRevision: null },
+      learnerCookie,
+    );
+    expectStatus(final, 200);
+    const { attempt } = (await final.json()) as {
+      attempt: { id: string; status: string; code: string; reasoning: string };
+    };
+    if (
+      attempt.status !== "FINAL_SUBMITTED" ||
+      attempt.code !== code ||
+      attempt.reasoning !== reasoning
+    )
+      throw new Error("Incorrect packaged final snapshot");
     step = "packaged archive and subsequent learner denial";
     const removed = await request(
       `/api/v1/instructor/questions/${encodeURIComponent(publication.question.id)}/remove`,
@@ -292,6 +315,76 @@ async function smoke(artifact: string): Promise<number> {
       )
     )
       throw new Error("Archived question remains publicly listed");
+    step = "packaged grading queue and archive detail";
+    const submissionsPath = "/api/v1/instructor/submissions";
+    const attemptId = encodeURIComponent(attempt.id);
+    const queued = await request(submissionsPath, undefined, cookie);
+    expectStatus(queued, 200);
+    const queue = (await queued.json()) as {
+      items: { attemptId: string; grade: unknown }[];
+    };
+    if (
+      !queue.items.some(
+        (item) => item.attemptId === attempt.id && item.grade === null,
+      )
+    )
+      throw new Error("Packaged queue omitted the archived final");
+    const gradingPath = `${submissionsPath}/${attemptId}`;
+    const submission = await request(gradingPath, undefined, cookie);
+    expectStatus(submission, 200);
+    const detail = (await submission.json()) as {
+      submission: {
+        attemptId: string;
+        code: string;
+        reasoning: string;
+        grade: unknown;
+      };
+    };
+    if (
+      detail.submission.attemptId !== attempt.id ||
+      detail.submission.code !== code ||
+      detail.submission.reasoning !== reasoning ||
+      detail.submission.grade !== null
+    )
+      throw new Error("Packaged instructor snapshot differs");
+    step = "packaged owner grade save";
+    const savedGrade = await request(
+      `${gradingPath}/grade`,
+      { score: 8, expectedRevision: null },
+      cookie,
+      "PUT",
+    );
+    expectStatus(savedGrade, 200);
+    const savedScore = (await savedGrade.json()) as {
+      grade: { score: number; revision: number };
+    };
+    if (savedScore.grade.score !== 8 || savedScore.grade.revision !== 1)
+      throw new Error("Incorrect packaged saved grade");
+    step = "packaged private learner grade read";
+    const resultPath = `/api/v1/learner/submissions/${attemptId}/grade`;
+    const result = await request(resultPath, undefined, learnerCookie);
+    expectStatus(result, 200);
+    const compact = (await result.json()) as { grade: Record<string, unknown> };
+    if (
+      Object.keys(compact.grade).length !== 1 ||
+      compact.grade["score"] !== 8 ||
+      result.headers.get("cache-control") !== "private, no-store"
+    )
+      throw new Error("Incorrect packaged learner grade projection");
+    step = "packaged foreign learner denial";
+    const foreignSignup = await request("/api/auth/sign-up/email", {
+      name: "Packaged foreign learner",
+      email: foreignEmail,
+      password: randomUUID(),
+      registrationRole: "LEARNER",
+    });
+    expectStatus(foreignSignup, 200);
+    const foreignCookie = foreignSignup.headers
+      .getSetCookie()
+      .map((value) => value.split(";", 1)[0])
+      .join("; ");
+    if (!foreignCookie) throw new Error("Missing foreign learner cookie");
+    expectStatus(await request(resultPath, undefined, foreignCookie), 404);
     step = "signout";
     expectStatus(await request("/api/auth/sign-out", {}, cookie), 200);
     step = "revoked-cookie denial";
@@ -323,12 +416,30 @@ async function smoke(artifact: string): Promise<number> {
     // Construct cleanup access after exercising the artifact, so its startup
     // cannot accidentally reuse a source-created global Prisma client.
     const database = createPrismaClient(readEnv());
-    await database.aiUsageEvent.deleteMany({ where: { user: { email } } });
-    await database.exercise.deleteMany({ where: { author: { email } } });
-    await database.user.deleteMany({
-      where: { email: { in: [email, learnerEmail] } },
-    });
-    await database.$disconnect();
+    try {
+      const [gradeTable] = await database.$queryRaw<
+        Array<{ present: boolean }>
+      >`
+        SELECT to_regclass('"AttemptGrade"') IS NOT NULL AS present
+      `;
+      if (gradeTable?.present)
+        await database.$executeRaw`
+          DELETE FROM "AttemptGrade" WHERE "attemptId" IN (
+            SELECT a."id" FROM "Attempt" a JOIN "User" u ON u."id" = a."learnerId"
+            WHERE u."email" = ${learnerEmail}
+          )
+        `;
+      await database.aiUsageEvent.deleteMany({ where: { user: { email } } });
+      await database.attempt.deleteMany({
+        where: { learner: { email: learnerEmail } },
+      });
+      await database.exercise.deleteMany({ where: { author: { email } } });
+      await database.user.deleteMany({
+        where: { email: { in: [email, learnerEmail, foreignEmail] } },
+      });
+    } finally {
+      await database.$disconnect();
+    }
   }
 }
 

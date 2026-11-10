@@ -175,7 +175,7 @@ test("B04/B07/B09/B11/B25/B28 real saved and direct publication, learner privacy
     );
     await expect(
       learner.getByRole("button", { name: "Get Hint", exact: true }),
-    ).toHaveCount(0);
+    ).toBeVisible();
     await expect(
       learner.getByText(/Results are local feedback, not official grading/),
     ).toBeVisible();

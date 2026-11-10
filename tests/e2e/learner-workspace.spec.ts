@@ -6,6 +6,7 @@ import {
 import { expect, test } from "@playwright/test";
 import { f01Learner } from "../support/f01-fixtures.js";
 import { mockEmptyLearnerAssistantState } from "../support/learner-assistant-fixture.js";
+import { mockAwaitingLearnerGrade } from "../support/learner-grade-fixture.js";
 
 const question = {
   id: "workspace-case",
@@ -88,6 +89,7 @@ test("search opens an attempt, saves it, confirms final submission and retains t
     },
   );
   await mockEmptyLearnerAssistantState(page, question.id, question.versionId);
+  await mockAwaitingLearnerGrade(page);
 
   await page.goto("/learner/questions?q=initial");
   await expect(page).toHaveURL(/\/learner\/question\?q=initial/);

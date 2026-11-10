@@ -15,7 +15,15 @@ export function InstructorDashboardPage() {
         Prepare a beginner Python debugging question, review and edit the
         preview, then save a private draft or publish the reviewed question.
       </Typography>
-      <Stack direction={{ xs: "column", sm: "row" }} gap={2}>
+      <Stack
+        direction={{ xs: "column", sm: "row" }}
+        gap={2}
+        useFlexGap
+        flexWrap="wrap"
+      >
+        <Button component={RouterLink} to="/instructor/submissions">
+          Submissions
+        </Button>
         <Button
           component={RouterLink}
           to="/instructor/questions?status=PUBLISHED"

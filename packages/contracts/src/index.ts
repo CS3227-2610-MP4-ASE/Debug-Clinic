@@ -2,6 +2,7 @@ import { z } from "zod";
 import { DraftIdSchema, RevisionSchema } from "./primitives.js";
 import { storageMessage, storageText } from "./storage-text.js";
 export { DraftIdSchema, RevisionSchema } from "./primitives.js";
+export * from "./grading.js";
 export {
   AssistantActionSchema,
   AssistantClearRequestSchema,

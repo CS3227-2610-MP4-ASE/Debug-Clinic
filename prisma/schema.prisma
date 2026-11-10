@@ -187,6 +187,7 @@ model Attempt {
   exerciseVersion   ExerciseVersion @relation(fields: [exerciseVersionId], references: [id], onDelete: Restrict)
   feedback          AiFeedback[]
   review            Review?
+  grade             AttemptGrade?
   aiUsage           AiUsageEvent[]
   createdAt         DateTime        @default(now())
   updatedAt         DateTime        @updatedAt
@@ -196,6 +197,16 @@ model Attempt {
   @@unique([learnerId, exerciseVersionId])
   @@index([learnerId, status])
   @@index([exerciseVersionId, createdAt])
+}
+
+model AttemptGrade {
+  attemptId String   @id
+  score     Int
+  revision  Int
+  savedAt   DateTime
+  attempt   Attempt  @relation(fields: [attemptId], references: [id], onDelete: Restrict)
+
+  @@index([savedAt, attemptId])
 }
 
 model AiFeedback {

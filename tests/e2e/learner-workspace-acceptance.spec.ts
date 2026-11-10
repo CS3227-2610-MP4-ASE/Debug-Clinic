@@ -7,6 +7,7 @@ import {
 import { expect, test, type Page } from "@playwright/test";
 import { f01Learner } from "../support/f01-fixtures.js";
 import { mockEmptyLearnerAssistantState } from "../support/learner-assistant-fixture.js";
+import { mockAwaitingLearnerGrade } from "../support/learner-grade-fixture.js";
 
 const question = {
   id: "independent-workspace",
@@ -51,6 +52,7 @@ async function fixture(page: Page) {
     route.fulfill({ json: { attempt: null } }),
   );
   await mockEmptyLearnerAssistantState(page, question.id, question.versionId);
+  await mockAwaitingLearnerGrade(page);
 }
 async function open(page: Page) {
   await page.goto(`/learner/questions/${question.id}`);

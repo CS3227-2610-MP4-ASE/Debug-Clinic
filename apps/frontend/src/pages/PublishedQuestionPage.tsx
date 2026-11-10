@@ -17,10 +17,12 @@ import type {
 import { useCallback, useEffect, useId, useRef, useState } from "react";
 import { Link as RouterLink, useLocation, useParams } from "react-router-dom";
 import { useAuth } from "../auth/AuthProvider.js";
+import { GradingAdmission } from "../auth/GradingAdmission.js";
 import { QuestionError } from "../lib/instructor-questions.js";
 import { useUnsavedWork } from "../components/UnsavedWork.js";
 import { LearnerWorkspace } from "../components/LearnerWorkspace.js";
 import { LearnerAssistantPanel } from "../components/LearnerAssistantPanel.js";
+import { LearnerGradePanel } from "../components/LearnerGradePanel.js";
 import {
   getLearnerAttempt,
   getPublishedQuestion,
@@ -395,6 +397,13 @@ export function PublishedQuestionPage() {
           Final submission received. This attempt is read-only.
         </Alert>
       )}
+      {!pending &&
+        question?.id === id &&
+        attempt?.status === "FINAL_SUBMITTED" && (
+          <GradingAdmission key={attempt.id} role="LEARNER" embedded>
+            <LearnerGradePanel attemptId={attempt.id} />
+          </GradingAdmission>
+        )}
       {question && (
         <Box
           sx={{

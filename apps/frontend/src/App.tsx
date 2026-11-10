@@ -9,6 +9,12 @@ import { GenerateQuestionPage } from "./pages/GenerateQuestionPage.js";
 import { InstructorDraftsPage } from "./pages/InstructorDraftsPage.js";
 import { InstructorQuestionPage } from "./pages/InstructorQuestionPage.js";
 import { InstructorQuestionsPage } from "./pages/InstructorQuestionsPage.js";
+import { InstructorSubmissionPage } from "./pages/InstructorSubmissionPage.js";
+import { LearnerSubmissionPage } from "./pages/LearnerSubmissionPage.js";
+import {
+  InstructorSubmissionsPage,
+  LearnerSubmissionsPage,
+} from "./pages/SubmissionLists.js";
 import { PublishedQuestionsPage } from "./pages/PublishedQuestionsPage.js";
 import { PublishedQuestionPage } from "./pages/PublishedQuestionPage.js";
 import { LearnerDashboardPage } from "./pages/LearnerDashboardPage.js";
@@ -60,6 +66,26 @@ export function App() {
         <Route path="/auth/complete" element={<AuthCompletionPage />} />
         <Route path="/auth/error" element={<AuthErrorPage />} />
         <Route path="/forbidden" element={<ForbiddenPage />} />
+        <Route element={<RoleRoute role="LEARNER" grading />}>
+          <Route
+            path="/learner/submissions"
+            element={<LearnerSubmissionsPage />}
+          />
+          <Route
+            path="/learner/submissions/:attemptId"
+            element={<LearnerSubmissionPage />}
+          />
+        </Route>
+        <Route element={<RoleRoute role="INSTRUCTOR" grading />}>
+          <Route
+            path="/instructor/submissions"
+            element={<InstructorSubmissionsPage />}
+          />
+          <Route
+            path="/instructor/submissions/:attemptId"
+            element={<InstructorSubmissionPage />}
+          />
+        </Route>
         <Route element={<RoleRoute role="LEARNER" />}>
           <Route path="/learner" element={<LearnerDashboardPage />} />
           <Route

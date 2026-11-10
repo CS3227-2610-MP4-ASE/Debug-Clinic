@@ -9,6 +9,7 @@ import { deploymentEnvironment } from "../../apps/backend/src/config/deployment.
 import { createPrismaClient } from "../../apps/backend/src/db/client.js";
 import { createInstructorDrafts } from "../../apps/backend/src/exercises/instructor-drafts.js";
 import { createInstructorQuestions } from "../../apps/backend/src/exercises/instructor-questions.js";
+import { createGrading } from "../../apps/backend/src/exercises/grading.js";
 import { createLearnerAttempts } from "../../apps/backend/src/exercises/learner-attempts.js";
 import { createLearnerAssistant } from "../../apps/backend/src/exercises/learner-assistant.js";
 import { createLearnerDashboard } from "../../apps/backend/src/exercises/learner-dashboard.js";
@@ -26,6 +27,7 @@ const app = createApp({
   auth,
   instructorQuestions: createInstructorQuestions({ prisma, logger }),
   learnerAttempts: createLearnerAttempts(prisma),
+  grading: createGrading(prisma),
   learnerAssistant: createLearnerAssistant(prisma, aiProvider),
   learnerDashboard: createLearnerDashboard(prisma),
   instructorDrafts: createInstructorDrafts({
