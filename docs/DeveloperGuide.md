@@ -146,7 +146,7 @@ govern browsing and new attempts.
 | `PUT /instructor/submissions/:attemptId/grade` | Strict JSON `{ score, expectedRevision }`. A first save uses `null`, corrections use the last reviewed revision.            |
 | `GET /learner/submissions`                     | Own finals newest first, with grading status.                                                                               |
 | `GET /learner/submissions/:attemptId`          | Private final answer and score, including an archived question.                                                             |
-| `GET /learner/submissions/:attemptId/grade`    | Compact `{ grade: null                                                                                                      | { score } }` projection for automatic refresh. |
+| `GET /learner/submissions/:attemptId/grade`    | Compact `{ grade: null \| { score } }` projection for automatic refresh.                                                    |
 
 Lists use 50-item keyset pages with timestamp and attempt-ID tie breakers.
 The service locks the ownership-qualified attempt in a transaction before
