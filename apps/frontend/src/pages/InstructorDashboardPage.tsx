@@ -12,8 +12,8 @@ export function InstructorDashboardPage() {
         Instructor workspace
       </Typography>
       <Typography variant="h6" color="text.secondary" fontWeight={400}>
-        Prepare a beginner Python debugging question, review and edit the
-        preview, then save a private draft or publish the reviewed question.
+        Prepare a debugging question on a specific Python topic, review and edit
+        the preview, then save a private draft or publish the reviewed question.
       </Typography>
       <Stack
         direction={{ xs: "column", sm: "row" }}

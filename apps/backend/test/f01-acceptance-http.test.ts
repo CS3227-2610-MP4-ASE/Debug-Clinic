@@ -1,13 +1,20 @@
 import request from "supertest";
 import { describe, expect, it, vi } from "vitest";
+import { SocLlmProvider, type AiProvider } from "../src/ai/provider.js";
 import { createApp, type CreateAppOptions } from "../src/app.js";
 import { readEnv } from "../src/config/env.js";
+import type { DebugClinicPrisma } from "../src/db/client.js";
+import { createInstructorDrafts } from "../src/exercises/instructor-drafts.js";
+import { createLogger } from "../src/lib/logger.js";
 import {
   f01Draft,
   f01Generation,
   f01Learner,
+  f01ObsoleteOutputs,
   f01Origin,
+  f01Output,
   f01Owner,
+  f01Refusals,
   f01Saved,
   f01Topic,
 } from "../../../tests/support/f01-fixtures.js";
@@ -23,7 +30,11 @@ const config = readEnv({
   AI_PROVIDER: "fake",
   LOG_LEVEL: "silent",
 });
-function setup(inject = true, productionLimit = false) {
+function setup(
+  inject = true,
+  productionLimit = false,
+  instructorDrafts?: CreateAppOptions["instructorDrafts"],
+) {
   // Module injection is a declared public boundary, not a persistence substitute.
   const module = {
     generate: vi.fn().mockResolvedValue({
@@ -49,7 +60,7 @@ function setup(inject = true, productionLimit = false) {
           ? f01Learner
           : null,
     profileUpdater: async () => f01Owner,
-    ...(inject ? { instructorDrafts: module } : {}),
+    ...(inject ? { instructorDrafts: instructorDrafts ?? module } : {}),
   };
   return { app: createApp(options), module };
 }
@@ -63,6 +74,151 @@ const operations = [
   ["get", "/api/v1/instructor/drafts", undefined],
   ["get", "/api/v1/instructor/drafts/f01-saved", undefined],
 ] as const;
+
+function setupGeneration(provider: AiProvider, providerConfig = config) {
+  const usage = vi.fn().mockResolvedValue({
+    id: f01Generation.id,
+    createdAt: new Date(f01Generation.generatedAt),
+  });
+  const transaction = vi.fn();
+  const prisma = {
+    aiUsageEvent: { create: usage },
+    $transaction: transaction,
+  } as unknown as DebugClinicPrisma;
+  const drafts = createInstructorDrafts({
+    config: providerConfig,
+    logger: createLogger(providerConfig),
+    prisma,
+    provider,
+  });
+  const { app } = setup(true, false, drafts);
+  return {
+    submit: (topic: string) =>
+      request(app)
+        .post("/api/v1/instructor/questions/generate")
+        .set("Authorization", "Bearer owner")
+        .set("Origin", f01Origin)
+        .send({ topic }),
+    usage,
+    transaction,
+  };
+}
+
+describe("F01 generation HTTP responses", () => {
+  it("returns exactly the six-field preview and server provenance for a specific topic", async () => {
+    const generateQuestion = vi.fn().mockResolvedValue({
+      output: f01Output,
+      inputTokens: null,
+      outputTokens: null,
+    });
+    const { submit, usage, transaction } = setupGeneration({
+      generateQuestion,
+      generateHint: vi.fn(),
+    });
+    const topic = "Summing a list with a Python for loop";
+    const response = await submit(`  ${topic}  `).expect(200);
+    expect(response.body).toEqual({
+      topic,
+      draft: f01Draft,
+      generation: f01Generation,
+    });
+    expect(generateQuestion).toHaveBeenCalledExactlyOnceWith({ topic });
+    expect(usage).toHaveBeenCalledOnce();
+    expect(transaction).not.toHaveBeenCalled();
+  });
+
+  it.each(f01Refusals)(
+    "returns fixed guidance for $topic",
+    async ({ topic, reason, message }) => {
+      const generateQuestion = vi.fn().mockResolvedValue({
+        output: { schemaVersion: "f01-question-v2", kind: "rejected", reason },
+        inputTokens: null,
+        outputTokens: null,
+      });
+      const { submit, usage, transaction } = setupGeneration({
+        generateQuestion,
+        generateHint: vi.fn(),
+      });
+      const response = await submit(topic).expect(400);
+      expect(response.body).toEqual({
+        error: {
+          code: "BAD_REQUEST",
+          message: "Please choose a supported Python topic",
+          mutationOutcome: "NOT_APPLIED",
+          requestId: expect.any(String),
+          details: [{ path: "topic", message }],
+        },
+      });
+      expect(generateQuestion).toHaveBeenCalledExactlyOnceWith({ topic });
+      expect(usage).toHaveBeenCalledExactlyOnceWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            status: "REJECTED",
+            errorCode: "TOPIC_REJECTED",
+          }),
+        }),
+      );
+      expect(transaction).not.toHaveBeenCalled();
+    },
+  );
+
+  for (const boundary of ["normalized result", "SoC adapter"] as const) {
+    const socConfig = {
+      ...config,
+      aiProvider: "soc" as const,
+      socLlmEndpoint: "https://provider.example.test/chat/completions",
+      socLlmModel: "f01-synthetic-model",
+      socLlmApiKey: "f01-synthetic-key",
+      aiMaxRetries: 3,
+    };
+    it.each(f01ObsoleteOutputs)(
+      `rejects %s from the ${boundary} as safe503`,
+      async (_name, output) => {
+        const generateQuestion = vi.fn().mockResolvedValue({
+          output,
+          inputTokens: null,
+          outputTokens: null,
+        });
+        const transport = vi.fn<typeof fetch>().mockResolvedValue(
+          Response.json({
+            choices: [{ message: { content: JSON.stringify(output) } }],
+          }),
+        );
+        const { submit, usage, transaction } =
+          boundary === "SoC adapter"
+            ? setupGeneration(
+                new SocLlmProvider(socConfig, transport),
+                socConfig,
+              )
+            : setupGeneration({ generateQuestion, generateHint: vi.fn() });
+        const response = await submit(f01Topic).expect(503);
+        expect(response.body).toEqual({
+          error: {
+            code: "DEPENDENCY_UNAVAILABLE",
+            message:
+              "Question generation is temporarily unavailable; try again",
+            mutationOutcome: "NOT_APPLIED",
+            requestId: expect.any(String),
+          },
+        });
+        expect(
+          boundary === "SoC adapter" ? transport : generateQuestion,
+        ).toHaveBeenCalledOnce();
+        expect(usage).toHaveBeenCalledExactlyOnceWith(
+          expect.objectContaining({
+            data: expect.objectContaining({
+              status: "FAILED",
+              errorCode: "GENERATION_FAILED",
+              inputTokens: null,
+              outputTokens: null,
+            }),
+          }),
+        );
+        expect(transaction).not.toHaveBeenCalled();
+      },
+    );
+  }
+});
 
 describe("F01 independent public HTTP policy", () => {
   for (const path of [

@@ -90,9 +90,18 @@ dashboard. If you have unsaved learner edits, choose **Stay** to keep working or
 
 ## Preparing an instructor draft
 
-Choose **New question** in the instructor workspace and enter a beginner Python topic, then select
-**Generate**. A successful response shows one unsaved preview with six editable
-fields: title, problem statement, buggy Python code, expected behavior, bug
+In the instructor workspace, choose **New question**. Enter a specific
+concept or task in **Python topic**, then select **Generate**.
+
+- Simple example — `Summing a list with a Python for loop`
+- Advanced example — `Python descriptors that store a separate value for each instance`
+
+If your topic is too vague, name the Python feature and the behavior you
+want students to debug. For example, narrow “Python” to “Summing a list
+with a Python for loop.”
+
+A successful response shows one unsaved preview with six editable fields:
+title, problem statement, buggy Python code, expected behavior, bug
 explanation and corrected solution. The original topic stays read-only after
 generation. **New question** starts again after any discard warning.
 

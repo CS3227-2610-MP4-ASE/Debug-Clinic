@@ -66,9 +66,9 @@ describe("F01 pre-push regressions", () => {
       "synthetic-instructor",
       "Python loop accumulators",
     );
-    expect(result.generation.promptVersion).toBe("soc-question-v2");
+    expect(result.generation.promptVersion).toBe("soc-question-v3");
     expect(create.mock.calls[0]?.[0].data.promptVersion).toBe(
-      "soc-question-v2",
+      "soc-question-v3",
     );
   });
 });

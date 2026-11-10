@@ -8,7 +8,7 @@
 - Requested feature ID: `MP4-D2-F01`. Artifact and monitor key: `MP4-D2-F01-grading`, because the historical `MP4-D2-F01` package and ledger belong to question generation. Grading requirement IDs use `GRD` and the package lives under `docs/features/MP4-D2-F01-grading/`.
 - Local draft root: `C:/Users/royde/Desktop/NUS/Sem 5/CS3227/MP4/Dev2-local-SDD/`. Verified external backup: `C:/Users/royde/Desktop/NUS/Sem 5/CS3227/MP4/Dev2-local-SDD-backups/2026-11-10/MP4-D2-F01-grading/package-approved-v1.1/`.
 - Reviewed source checkout: `C:/Users/royde/Desktop/NUS/Sem 5/CS3227/MP4/Debug-Clinic`, clean at `royden/mp4-agent-workflow`, `e4483dd958d7100b066b75e4d48179d356f4c6a3`. [GitHub master](https://github.com/CS3227-2610-MP4-ASE/Debug-Clinic/commit/e244e3e4c138ea2d6ab912c9d06075042a34434a) was rechecked and fetched as `origin/master` at `e244e3e4c138ea2d6ab912c9d06075042a34434a`. The four intervening commits affect documentation and GitHub Pages only.
-- Feature worktree: `C:/Users/royde/Desktop/NUS/Sem 5/CS3227/MP4/Debug-Clinic-grading`, branch `royden/mp4-d2-f01-grading`, parent `e244e3e4c138ea2d6ab912c9d06075042a34434a`, eventual PR target `master`. Approved snapshot `d4b6f29362660b5dd2804889cff247fa295538ed`, integrated code/test checkpoint `f7ed08b73dfcff05b9bca009b880ca202f089589`.
+- Feature worktree: `C:/Users/royde/Desktop/NUS/Sem 5/CS3227/MP4/Debug-Clinic-grading`, branch `royden/mp4-d2-f01-grading`. Original master parent `e244e3e4c138ea2d6ab912c9d06075042a34434a`. On 2026-11-11 the owner selected `royden/f01-topic-difficulty` as the PR base, at `0ec2dd136269c93dad0c5b651fa43468c1d4342b`. Approved grading snapshot `d4b6f29362660b5dd2804889cff247fa295538ed`, original integrated grading checkpoint `f7ed08b73dfcff05b9bca009b880ca202f089589`.
 
 ## Approval and hash record
 
@@ -76,7 +76,31 @@
 
 ## Delivery gate
 
+### PR base integration on 2026-11-11
+
+The owner selected `royden/f01-topic-difficulty` as the PR base and reported
+GitHub's merge conflict after updating the separate `Debug-Clinic` checkout.
+The remote base was `0ec2dd136269c93dad0c5b651fa43468c1d4342b`, while grading
+was `35b2c52b909a9da4ed96fbba185a46340f4789c7`. Grading already included current
+master `e244e3e`. A `git merge-tree` simulation reproduced exactly one conflict,
+in `tests/e2e/f02-composed.spec.ts`.
+
+The base's test opens the coaching dialog, checks editable chat and private
+solution exclusion, then minimizes it. The grading branch had only checked
+the hint button's visibility. The resolution preserves the base test exactly.
+All grading routes, the dashboard link, separate grading contracts and guide
+sections survived the automatic merges. The base's topic/difficulty changes
+arrive through the merge parent.
+
+Node 24 verification of the combined tree passed the build, typecheck, 577 root
+tests, 19 frontend tests, 150 affected PostgreSQL cases, 80 focused browser tests,
+16 real-session desktop/mobile composed tests, and the locally packaged Netlify
+handler smoke. Lint and formatting passed at the final merge checkpoint. Private
+execution reports use the `runtime/pr-base-*` paths under the existing monitoring
+root. The monitor run ID is `grading-pr-base-20261111`. The PR targets
+`royden/f01-topic-difficulty` from `royden/mp4-d2-f01-grading`.
+
 - Approved snapshot committed at `d4b6f29362660b5dd2804889cff247fa295538ed`. All eight committed blob, worktree and dated backup SHA-256 values match. Eight explicit staged paths, 88 snapshot links and anchors, credential-pattern and whitespace checks passed. Only documentation is in the commit. The `snapshot-v1.1/report.md` checkpoint is local derived evidence under the monitoring directory above.
-- Push, PR publication, merge, and deployment authorization remain separate and absent.
+- The owner authorized the grading branch push on 2026-11-11, then reported the conflict against their selected PR base. The correction updates that same grading branch. PR publication, merging the PR and deployment retain separate authorization.
 - Preserve existing Developer 2 artifacts and keep raw telemetry outside Git. Later provide Developer 1 a concise grading integration handoff using shared contracts and permitted evidence, without private SDD artifacts.
 - Local integrated implementation and planned automated verification are complete. The code checkpoint is `f7ed08b73dfcff05b9bca009b880ca202f089589`. Delivery documentation records the residual manual and remote evidence. The next external action requires its separate owner authorization.

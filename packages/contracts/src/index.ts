@@ -140,24 +140,17 @@ export type QuestionFields = z.infer<typeof QuestionFieldsSchema>;
 export const QuestionOutputSchema = z.discriminatedUnion("kind", [
   z
     .object({
-      schemaVersion: z.literal("f01-question-v1"),
+      schemaVersion: z.literal("f01-question-v2"),
       kind: z.literal("draft"),
       language: z.literal("python"),
-      level: z.literal("beginner-undergraduate"),
       draft: QuestionFieldsSchema,
     })
     .strict(),
   z
     .object({
-      schemaVersion: z.literal("f01-question-v1"),
+      schemaVersion: z.literal("f01-question-v2"),
       kind: z.literal("rejected"),
-      reason: z.enum([
-        "vague",
-        "non_python",
-        "out_of_level",
-        "unrelated",
-        "unsuitable",
-      ]),
+      reason: z.enum(["vague", "non_python", "unrelated", "unsuitable"]),
     })
     .strict(),
 ]);
