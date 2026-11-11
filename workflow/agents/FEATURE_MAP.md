@@ -1,6 +1,6 @@
 # DebugClinic feature and verification map
 
-Maintained against authentication, instructor drafts, F02 publication, the ZH-LWS-02 browser IDE and learner hotfixes on 2026-11-09. Update this map when routes,
+Maintained against authentication, instructor drafts, F02 publication, the ZH-LWS-02 browser IDE, learner hotfixes and manual grading on 2026-11-10. Update this map when routes,
 journeys, API boundaries, or verification prerequisites change. Read route and
 test definitions before choosing a check; this map distinguishes delivered
 foundation from intended future behavior.
@@ -32,6 +32,33 @@ foundation from intended future behavior.
 | Built frontend                                                  | Vite production output; `scripts/verify-built-frontend.ts`                                                                | Real browser loads emitted assets for eight public routes × desktop/mobile with a local anonymous API stub. This catches chunk initialization failures hidden by the dev server                                                         |
 
 ## Existing check routes
+
+Grading adds role dashboard links to `/instructor/submissions[/:attemptId]` and
+`/learner/submissions[/:attemptId]`. The learner's private final view remains
+available after question removal. A compact grade panel also appears on the
+existing published-question page after finalization. Draft attempts never start
+grade polling. The corresponding `/api/v1/{instructor,learner}/submissions`
+routes use separate strict contracts and the `AttemptGrade` relation. Instructor
+PUT saves use revision checking and read-only reconciliation after uncertain
+outcomes.
+
+`apps/backend/test/grading-http.test.ts` checks HTTP policy with explicit service
+and session doubles. `tests/integration/grading-acceptance.test.ts` exercises
+real PostgreSQL and cookies, including owned/foreign finals, archive, queue
+ordering, score/revision limits, races and shared-IP budgets under normal limits.
+`grading-commit-outcome.test.ts` drops actual PostgreSQL BEGIN and COMMIT
+acknowledgements and observes the outcome through grading HTTP and a healthy
+authorized read. `grading-recovery.spec.ts` intercepts strict transport replies
+for form, list and result recovery. `grading-session-privacy.spec.ts` checks
+cross-tab sign-out and session/lifecycle disposal. Its persisted lifecycle events
+are synthetic. `grading-composed.spec.ts` uses real local cookies and PostgreSQL
+for both roles, archive, dropped successful HTTP replies and the 15-second
+visibility bound. Its timing case records a conservative pre-forward-write to
+visible-result interval on one monotonic clock. Keep its timing attachments with
+the observed checkpoint. The packaged-handler verifier also exercises grading.
+All database lanes require the explicit safe loopback test target described
+below. Manual accessibility, actual BFCache, remote CI and deployment evidence
+remain separate.
 
 `f02-session-refresh.spec.ts` gates an intercepted session check while each role
 has loaded multiple pages. It verifies pending/same-identity focus refresh retains

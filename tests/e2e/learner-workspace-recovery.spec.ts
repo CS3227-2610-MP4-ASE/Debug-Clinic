@@ -13,6 +13,7 @@ import type {
 } from "@debugclinic/contracts";
 import { f01Learner } from "../support/f01-fixtures.js";
 import { mockEmptyLearnerAssistantState } from "../support/learner-assistant-fixture.js";
+import { mockAwaitingLearnerGrade } from "../support/learner-grade-fixture.js";
 
 const question = {
   id: "recovery-case",
@@ -85,6 +86,7 @@ async function fixture(
       json: state.user ? { user: state.user } : {},
     }),
   );
+  await mockAwaitingLearnerGrade(page);
   await page.route(`**/api/v1/learner/questions/${question.id}`, (route) =>
     route.fulfill({ json: { question } }),
   );

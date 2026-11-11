@@ -5,6 +5,7 @@ import { existsSync } from "node:fs";
 import { resolve } from "node:path";
 import { f01Learner } from "../support/f01-fixtures.js";
 import { mockEmptyLearnerAssistantState } from "../support/learner-assistant-fixture.js";
+import { mockAwaitingLearnerGrade } from "../support/learner-grade-fixture.js";
 import { PublishedQuestionResponseSchema } from "@debugclinic/contracts";
 import {
   expectPythonCode,
@@ -47,6 +48,7 @@ async function fixture(
       json: state.user ? { user: state.user } : {},
     }),
   );
+  await mockAwaitingLearnerGrade(page);
   await page.route("**/api/v1/learner/dashboard", (route) =>
     route.fulfill({
       json: {

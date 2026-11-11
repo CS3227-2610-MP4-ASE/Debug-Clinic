@@ -5,6 +5,7 @@ import { readEnv } from "./config/env.js";
 import { createPrismaClient } from "./db/client.js";
 import { createInstructorDrafts } from "./exercises/instructor-drafts.js";
 import { createInstructorQuestions } from "./exercises/instructor-questions.js";
+import { createGrading } from "./exercises/grading.js";
 import { createLearnerAttempts } from "./exercises/learner-attempts.js";
 import { createLearnerAssistant } from "./exercises/learner-assistant.js";
 import { createLearnerDashboard } from "./exercises/learner-dashboard.js";
@@ -22,6 +23,7 @@ const app = createApp({
   auth,
   instructorQuestions: createInstructorQuestions({ prisma, logger }),
   learnerAttempts: createLearnerAttempts(prisma),
+  grading: createGrading(prisma),
   learnerAssistant: createLearnerAssistant(prisma, aiProvider),
   learnerDashboard: createLearnerDashboard(prisma),
   instructorDrafts: createInstructorDrafts({

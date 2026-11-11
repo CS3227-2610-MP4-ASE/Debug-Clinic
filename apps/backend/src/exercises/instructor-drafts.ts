@@ -14,6 +14,7 @@ import {
   type DraftListResponse,
   type GenerateQuestionResponse,
   type QuestionGenerationResult,
+  type QuestionOutput,
   type SaveDraftRequest,
   type SavedDraft,
   type SavedDraftResponse,
@@ -82,14 +83,15 @@ function projectDraft(row: SavedRow): SavedDraft | null {
 }
 
 const refusalGuidance = {
-  vague: "Please specify a beginner Python concept, such as lists and loops",
-  non_python:
-    "Please enter a Python topic; other programming languages are not supported",
-  out_of_level: "Please choose a beginner undergraduate Python topic",
-  unrelated: "Please enter a topic about beginner Python programming",
-  unsuitable:
-    "Please choose a specific beginner Python topic suitable for a small debugging exercise",
-} as const;
+  vague:
+    "Please specify a Python concept or narrow the topic to one Python behavior",
+  non_python: "Please enter a Python topic",
+  unrelated: "Please enter a Python programming concept or task",
+  unsuitable: "Please choose a safe, self-contained Python debugging exercise",
+} satisfies Record<
+  Extract<QuestionOutput, { kind: "rejected" }>["reason"],
+  string
+>;
 
 const completeVersion: Prisma.ExerciseVersionWhereInput = {
   version: 1,

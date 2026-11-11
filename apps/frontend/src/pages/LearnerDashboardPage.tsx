@@ -108,15 +108,23 @@ export function LearnerDashboardPage() {
         </Button>
       </Stack>
 
-      <Button
-        component={RouterLink}
-        to="/learner/question"
-        variant="contained"
-        endIcon={<ArrowForward />}
-        sx={{ alignSelf: "flex-start" }}
-      >
-        Browse questions
-      </Button>
+      <Stack direction="row" useFlexGap flexWrap="wrap" gap={1.5}>
+        <Button
+          component={RouterLink}
+          to="/learner/question"
+          variant="contained"
+          endIcon={<ArrowForward />}
+        >
+          Browse questions
+        </Button>
+        <Button
+          component={RouterLink}
+          to="/learner/submissions"
+          variant="outlined"
+        >
+          My submissions
+        </Button>
+      </Stack>
 
       {pending && (
         <Stack

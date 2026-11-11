@@ -1,5 +1,5 @@
 // Coordinator executes this suite serially on the assigned real PostgreSQL only.
-import { randomUUID } from "node:crypto";
+import { createHash, randomUUID } from "node:crypto";
 import { createServer } from "node:http";
 import { PrismaPg } from "@prisma/adapter-pg";
 import request from "supertest";
@@ -29,6 +29,7 @@ import {
   f01FieldLimits,
   f01Origin,
   f01Output,
+  f01Refusals,
   f01Topic,
 } from "../support/f01-fixtures.js";
 
@@ -261,6 +262,84 @@ describe("F01 real PostgreSQL through public HTTP", () => {
     expect(logs.join("")).not.toContain(f01Draft.buggyCode);
     expect(logs.join("")).not.toContain(f01Draft.problemStatement);
   });
+  it("B14/B19 preserves bound v2 provenance when saving or reopening a private draft", async () => {
+    const { app } = fixture();
+    const usage = await prisma.aiUsageEvent.create({
+      data: {
+        userId: owner.id,
+        requestId: randomUUID(),
+        operation: "generate-question",
+        status: "SUCCEEDED",
+        provider: "soc",
+        model: "previous-soc-model",
+        promptVersion: "soc-question-v2",
+        generationTopicDigest: createHash("sha256")
+          .update(f01Topic)
+          .digest("hex"),
+      },
+    });
+    const provenance = {
+      generationId: usage.id,
+      provider: "soc",
+      model: "previous-soc-model",
+      promptVersion: "soc-question-v2",
+      generatedAt: usage.createdAt.toISOString(),
+      association: "instructor-reported",
+    };
+    const previous = await prisma.exercise.create({
+      data: {
+        title: f01Draft.title,
+        description: f01Draft.problemStatement,
+        authorId: owner.id,
+        versions: {
+          create: {
+            version: 1,
+            language: "python",
+            topic: f01Topic,
+            buggyCode: f01Draft.buggyCode,
+            expectedBehavior: f01Draft.expectedBehavior,
+            bugExplanation: f01Draft.bugExplanation,
+            correctedSolution: f01Draft.correctedSolution,
+            generationProvenance: provenance,
+          },
+        },
+      },
+    });
+    await save(app, usage.id, f01Edited, "Python dictionaries").expect(400);
+    expect((await list(app).expect(200)).body.drafts).toMatchObject([
+      { id: previous.id, title: f01Draft.title, topic: f01Topic },
+    ]);
+    expect((await get(app, previous.id).expect(200)).body.draft).toMatchObject({
+      ...f01Draft,
+      provenance,
+    });
+    const saved = (await save(app, usage.id).expect(201)).body.draft;
+    expect(saved.provenance).toEqual(provenance);
+    expect((await get(fixture().app, saved.id).expect(200)).body.draft).toEqual(
+      saved,
+    );
+  });
+  it("B14 legacy successful generation with a null topic digest still saves", async () => {
+    const { app } = fixture();
+    const usage = await prisma.aiUsageEvent.create({
+      data: {
+        userId: owner.id,
+        requestId: randomUUID(),
+        operation: "generate-question",
+        status: "SUCCEEDED",
+        provider: "fake",
+        promptVersion: "fake-question-v1",
+      },
+    });
+    expect(usage.generationTopicDigest).toBeNull();
+    const { draft } = (await save(app, usage.id).expect(201)).body;
+    expect(draft.provenance).toMatchObject({
+      generationId: usage.id,
+      provider: "fake",
+      promptVersion: "fake-question-v1",
+    });
+    expect((await get(app, draft.id).expect(200)).body.draft).toEqual(draft);
+  });
   it("B01/B19 foreign, missing, legacy, non-DRAFT and corrupted provenance are indistinguishable404", async () => {
     const { app } = fixture();
     const id = (await save(app, await generate(app)).expect(201)).body.draft
@@ -356,34 +435,29 @@ describe("F01 real PostgreSQL through public HTTP", () => {
       expect(provider).toHaveBeenCalledWith({ topic });
     });
   }
-  for (const reason of [
-    "vague",
-    "non_python",
-    "out_of_level",
-    "unrelated",
-    "unsuitable",
-  ]) {
-    it(`B06/B11 refusal ${reason} records rejected usage but no draft`, async () => {
+  for (const { topic, reason, message } of f01Refusals) {
+    it(`B06/B11 refusal for "${topic}" records rejected usage but no draft`, async () => {
       const { app, generate: provider } = fixture();
       provider.mockResolvedValue({
-        output: { schemaVersion: "f01-question-v1", kind: "rejected", reason },
+        output: { schemaVersion: "f01-question-v2", kind: "rejected", reason },
         inputTokens: null,
         outputTokens: null,
       });
       const r = await post(app, "/api/v1/instructor/questions/generate", {
-        topic: "stuff",
+        topic,
       }).expect(400);
       expect(r.body.error).toMatchObject({
         code: "BAD_REQUEST",
-        details: [{ path: "topic", message: expect.any(String) }],
+        message: "Please choose a supported Python topic",
+        details: [{ path: "topic", message }],
       });
-      if (reason === "vague")
-        expect(r.body.error.details[0].message).toMatch(/specif|clarif/i);
-      const usage = await prisma.aiUsageEvent.findFirstOrThrow({
+      expect(provider).toHaveBeenCalledExactlyOnceWith({ topic });
+      const usage = await prisma.aiUsageEvent.findMany({
         where: { userId: owner.id },
       });
-      expect(usage.status).toBe("REJECTED");
-      expect(usage.errorCode).toEqual(expect.any(String));
+      expect(usage).toMatchObject([
+        { status: "REJECTED", errorCode: "TOPIC_REJECTED" },
+      ]);
       expect((await list(app).expect(200)).body.drafts).toEqual([]);
     });
   }
@@ -414,6 +488,7 @@ describe("F01 real PostgreSQL through public HTTP", () => {
     for (const event of events)
       expect(event).toMatchObject({
         status: "FAILED",
+        errorCode: "GENERATION_FAILED",
         inputTokens: null,
         outputTokens: null,
         attemptId: null,
@@ -421,6 +496,7 @@ describe("F01 real PostgreSQL through public HTTP", () => {
     expect(logs.join("")).not.toMatch(
       /f01-provider-private-code|Sum every list element|Python lists and for loops/,
     );
+    expect((await list(app).expect(200)).body.drafts).toEqual([]);
   });
   for (const key of [
     "ownerId",
@@ -713,18 +789,30 @@ describe("F01 real PostgreSQL failure integrity", () => {
         sessionResolver: async () => owner,
         profileUpdater: async () => owner,
       });
-      const id = await generate(app);
+      const preview = await post(app, "/api/v1/instructor/questions/generate", {
+        topic: f01Topic,
+      }).expect(200);
+      const id = preview.body.generation.id as string;
+      const origin = {
+        provider: "soc",
+        model: "f01-synthetic-model",
+        promptVersion: "soc-question-v3",
+      };
+      expect(preview.body.generation).toMatchObject(origin);
       const expected = rawCount <= 2147483647 ? rawCount : null;
       expect(
         await prisma.aiUsageEvent.findUniqueOrThrow({ where: { id } }),
       ).toMatchObject({
         inputTokens: expected,
         outputTokens: expected,
-        provider: "soc",
-        model: "f01-synthetic-model",
-        promptVersion: "soc-question-v2",
+        ...origin,
+        generationTopicDigest: createHash("sha256")
+          .update(f01Topic)
+          .digest("hex"),
       });
-      await save(app, id).expect(201);
+      const saved = (await save(app, id).expect(201)).body.draft;
+      expect(saved.provenance).toMatchObject({ generationId: id, ...origin });
+      expect((await get(app, saved.id).expect(200)).body.draft).toEqual(saved);
       expect(transport).toHaveBeenCalledOnce();
     });
   }
@@ -900,7 +988,7 @@ describe("F01 real PostgreSQL failure integrity", () => {
       if (output === "refused")
         provider.mockResolvedValue({
           output: {
-            schemaVersion: "f01-question-v1",
+            schemaVersion: "f01-question-v2",
             kind: "rejected",
             reason: "vague",
           },

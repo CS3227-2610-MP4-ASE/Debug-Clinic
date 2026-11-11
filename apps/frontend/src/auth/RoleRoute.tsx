@@ -4,8 +4,25 @@ import { Navigate, Outlet, useLocation } from "react-router-dom";
 import { useRef } from "react";
 
 import { useAuth } from "./AuthProvider.js";
+import { GradingAdmission } from "./GradingAdmission.js";
 
-export function RoleRoute({ role }: { role: Role }) {
+export function RoleRoute({
+  role,
+  grading = false,
+}: {
+  role: Role;
+  grading?: boolean;
+}) {
+  if (grading)
+    return (
+      <GradingAdmission role={role}>
+        <Outlet />
+      </GradingAdmission>
+    );
+  return <ExistingRoleRoute role={role} />;
+}
+
+function ExistingRoleRoute({ role }: { role: Role }) {
   const { user, isLoading, error, refresh, sessionEpoch } = useAuth();
   const location = useLocation();
   const admitted = useRef<{ id: string; path: string; epoch: number } | null>(

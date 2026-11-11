@@ -123,6 +123,66 @@ Developer 1 owns future functional hint integration; F02 does not create hint
 rows or impose a future hint lifecycle. A future sibling-row prerequisite would
 need a separately approved transaction-level policy rather than a row SQL check.
 
+## Manual grading
+
+The grading service reads immutable `FINAL_SUBMITTED` attempts and stores their
+current numeric score in `AttemptGrade`. The additive migration gives each
+attempt at most one grade, constrains its integer score to 1–10, and constrains
+its revision to a positive 32-bit integer. Existing `Review` rows retain their
+decision and comment independently. A final without an `AttemptGrade` is awaiting
+grading. Grading preserves the original attempt contents and revision.
+
+`apps/backend/src/exercises/grading.ts` applies the session user's ownership
+predicate to each query. Instructors see only finals for questions they authored.
+Learners see only their own finals. These paths follow retained version
+references after question removal. Canonical publication checks continue to
+govern browsing and new attempts.
+
+| Route under `/api/v1`                          | Behavior                                                                                                                    |
+| ---------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
+| `GET /instructor/submissions`                  | Own final queue. `view=awaiting` is the default, with oldest submissions first. `view=graded` uses latest grade save first. |
+| `GET /instructor/submissions/:attemptId`       | Exact submitted answer, question context, learner display name and current grade.                                           |
+| `GET /instructor/submissions/:attemptId/grade` | Current score, revision and save time for reconciliation.                                                                   |
+| `PUT /instructor/submissions/:attemptId/grade` | Strict JSON `{ score, expectedRevision }`. A first save uses `null`, corrections use the last reviewed revision.            |
+| `GET /learner/submissions`                     | Own finals newest first, with grading status.                                                                               |
+| `GET /learner/submissions/:attemptId`          | Private final answer and score, including an archived question.                                                             |
+| `GET /learner/submissions/:attemptId/grade`    | Compact `{ grade: null \| { score } }` projection for automatic refresh.                                                    |
+
+Lists use 50-item keyset pages with timestamp and attempt-ID tie breakers.
+The service locks the ownership-qualified attempt in a transaction before
+comparing grade revisions. Stale revisions produce `409` and `NOT_APPLIED`.
+A matching-revision same-score save preserves its revision and timestamp.
+Changed scores increment the revision. An uncertain commit produces `UNKNOWN`.
+The browser reconciles through GET before another deliberate save. Its client
+also checks that a successful reply agrees with the submitted score and a
+permitted revision transition.
+
+Grading response schemas and types live in `packages/contracts/src/grading.ts`.
+The server and Netlify compositions inject the same Prisma grading service.
+The opt-in browser backend additionally injects that service and the learner
+dashboard service. The HTTP module applies private/no-store headers, generated
+request IDs, route-template logs, cookie/role/actor checks, and origin and JSON
+checks for writes. Allowed-origin responses expose `Retry-After`. Compact learner
+reads use in-process limits of 600/minute per IP and 120/minute per verified learner.
+Rejected compact requests also count against the ordinary IP allowance.
+
+The frontend has `/instructor/submissions[/:attemptId]` and
+`/learner/submissions[/:attemptId]`. `GradingAdmission` scopes private state to the
+verified actor, route and session epoch. Indeterminate session reads preserve
+same-account state with writes paused. Grading revalidation has a four-second
+deadline. Peer-session changes clear the grading view before revalidation, and
+restoration handlers hide old content until fresh admission. The shared learner
+grade panel polls visible results every five seconds with a four-second read
+deadline, coalesces event-driven reads, and honors rate backoff. It also mounts
+on the existing question page after final submission.
+
+The local acceptance lanes cover real PostgreSQL races, denied access, paging,
+legacy finals, archive access, normal-limit shared-IP isolation, and lost BEGIN
+and COMMIT acknowledgements. Browser lanes distinguish intercepted recovery from
+real-cookie composed journeys. `grading-session-privacy.spec.ts` includes
+synthetic persisted-page lifecycle events. Actual BFCache restoration, manual
+screen-reader behavior, remote CI and deployed load require their own evidence.
+
 ## AI adapter
 
 `AiProvider` isolates product code from provider-specific transport. Local
@@ -152,7 +212,7 @@ instructor-reported; the generation ID does not attest to edited content.
 The additive migration adds four nullable version fields without backfilling
 legacy records. Incomplete legacy records are excluded from this draft surface.
 
-`soc-question-v2` sends exactly fixed system instructions and one topic JSON
+`soc-question-v3` sends exactly fixed system instructions and one topic JSON
 message. Structured output, two streaming byte caps (65,536-byte envelope and
 32,768-byte selected content), one overall deadline and bounded transient retries
 protect the boundary. String limits explicitly use JavaScript UTF-16 length.
@@ -565,8 +625,8 @@ References: [Netlify deploy flags](https://cli.netlify.com/commands/deploy/),
   and rejected benign coaching. Use the fake provider for deterministic
   development and treat live-provider enablement as a separate unresolved
   product and security decision.
-- A `Review` data model exists, but master has no instructor submission-review
-  route or interface. Do not infer a delivered review workflow from the schema.
+- Numeric grading uses `AttemptGrade` and its role-scoped routes. Legacy
+  `Review` decision and comment data remain separate from this workflow.
 - Account-linking behavior must be tested against the final Google configuration before production launch.
 
 ## Acknowledgements

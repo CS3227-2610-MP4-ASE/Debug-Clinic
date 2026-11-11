@@ -36,6 +36,39 @@ function fixture(module: LearnerAttempts) {
   });
 }
 describe("learner attempt HTTP boundary", () => {
+  it.each(["", "   "])(
+    "rejects blank reasoning %j with actionable details before either mutation",
+    async (reasoning) => {
+      const save = vi.fn(),
+        submit = vi.fn();
+      const app = fixture({
+        save,
+        submit,
+        get: vi.fn(),
+      } as unknown as LearnerAttempts);
+      for (const method of ["put", "post"] as const) {
+        const response = await request(app)
+          [method](
+            `/api/v1/learner/questions/q/attempt${method === "post" ? "/submit" : ""}`,
+          )
+          .set("origin", config.appOrigin)
+          .send({ ...body, reasoning })
+          .expect(400);
+        expect(response.body.error).toMatchObject({
+          message: "The request was invalid",
+          mutationOutcome: "NOT_APPLIED",
+          details: [
+            {
+              path: "reasoning",
+              message: "Required content must not be blank",
+            },
+          ],
+        });
+      }
+      expect(save).not.toHaveBeenCalled();
+      expect(submit).not.toHaveBeenCalled();
+    },
+  );
   it("requires a learner and allowed origin/JSON before calling mutations", async () => {
     const save = vi.fn(),
       submit = vi.fn(),

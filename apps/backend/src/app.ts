@@ -5,6 +5,8 @@ import cors from "cors";
 import express, {
   type ErrorRequestHandler,
   type RequestHandler,
+  type Request,
+  type Response,
 } from "express";
 import { rateLimit } from "express-rate-limit";
 import helmet from "helmet";
@@ -49,6 +51,15 @@ import { createSessionResolver, type SessionResolver } from "./auth/session.js";
 import type { DebugClinicAuth } from "./auth/auth.js";
 import type { AppConfig } from "./config/env.js";
 import { classifyDatabaseFailure } from "./db/diagnostics.js";
+import {
+  createCompactGradeIpLimit,
+  createGradingRouter,
+  gradingRequest,
+  rateLimitError,
+  sendGradingJson,
+  type GradingRequest,
+} from "./exercises/grading-http.js";
+import type { Grading } from "./exercises/grading.js";
 import type { InstructorDrafts } from "./exercises/instructor-drafts.js";
 import type { InstructorQuestions } from "./exercises/instructor-questions.js";
 import type { LearnerAttempts } from "./exercises/learner-attempts.js";
@@ -80,6 +91,7 @@ export interface CreateAppOptions {
   learnerAttempts?: LearnerAttempts;
   learnerAssistant?: LearnerAssistant;
   learnerDashboard?: LearnerDashboard;
+  grading?: Grading;
   profileUpdater: ProfileUpdater;
   logger?: AppLogger;
 }
@@ -89,6 +101,7 @@ declare global {
     interface Locals {
       requestId: string;
       user?: CurrentUser;
+      grading?: GradingRequest;
     }
   }
 }
@@ -180,6 +193,13 @@ function createErrorHandler(logger: AppLogger): ErrorRequestHandler {
         "BAD_REQUEST",
         "The request body exceeds the 64kb limit",
       );
+    } else if (
+      response.locals.grading &&
+      error instanceof URIError &&
+      "status" in error &&
+      error.status === 400
+    ) {
+      appError = new AppError(400, "BAD_REQUEST", "The request was invalid");
     } else {
       logger.error(
         { category: "UNHANDLED_REQUEST_ERROR", requestId },
@@ -195,11 +215,20 @@ function createErrorHandler(logger: AppLogger): ErrorRequestHandler {
     if (appError.retryAfterSeconds)
       response.setHeader("Retry-After", String(appError.retryAfterSeconds));
 
+    const grading = response.locals.grading;
+    if (grading) grading.failure = appError.code;
     const payload = ApiErrorSchema.parse({
       error: {
         code: appError.code,
         message: appError.message,
         requestId,
+        ...(grading?.mutation
+          ? {
+              mutationOutcome:
+                appError.mutationOutcome ??
+                (grading.writeStarted ? "UNKNOWN" : "NOT_APPLIED"),
+            }
+          : {}),
         ...((request.method === "POST" ||
           request.method === "PATCH" ||
           request.method === "PUT") &&
@@ -217,7 +246,9 @@ function createErrorHandler(logger: AppLogger): ErrorRequestHandler {
         ...(appError.details ? { details: appError.details } : {}),
       },
     });
-    response.status(appError.status).json(payload);
+    response.status(appError.status);
+    if (grading) sendGradingJson(response, payload);
+    else response.json(payload);
   };
 }
 
@@ -235,32 +266,58 @@ export function createApp(options: CreateAppOptions) {
   app.set("trust proxy", 1);
   app.disable("x-powered-by");
   app.use((request, response, next) => {
+    const grading = gradingRequest(request.path, request.method);
     const requestId =
-      request.header("x-request-id")?.slice(0, 128) || randomUUID();
+      (grading ? undefined : request.header("x-request-id")?.slice(0, 128)) ||
+      randomUUID();
     response.locals.requestId = requestId;
     response.setHeader("x-request-id", requestId);
+    if (grading) {
+      response.locals.grading = grading;
+      response.setHeader("Cache-Control", "private, no-store");
+      response.vary("Cookie");
+      response.vary("Origin");
+      const origin = request.header("origin");
+      if (origin && options.config.corsOrigins.includes(origin)) {
+        response.setHeader("Access-Control-Expose-Headers", "Retry-After");
+      }
+      response.on("finish", () => {
+        logger.info(
+          {
+            route: grading.route,
+            method: request.method,
+            statusCode: response.statusCode,
+            requestId,
+            ...(grading.failure ? { category: grading.failure } : {}),
+          },
+          "Grading request completed",
+        );
+      });
+    }
     next();
   });
-  app.use(
-    pinoHttp({
-      logger,
-      serializers: {
-        // pino-http synthesizes an Error for 5xx responses. Never serialize its
-        // stack, cause or arbitrary metadata; status and requestId are separate.
-        err: () => ({ category: "HTTP_RESPONSE_ERROR" }),
-        req: (request) => ({
-          id: request.id,
-          method: request.method,
-          url: sanitizeRequestUrl(request.url),
-          remoteAddress: request.remoteAddress,
-          remotePort: request.remotePort,
-        }),
-      },
-      customProps: (_request, response) => ({
-        requestId: response.locals.requestId,
+  const ordinaryRequestLog = pinoHttp<Request, Response>({
+    logger,
+    serializers: {
+      // pino-http synthesizes an Error for 5xx responses. Never serialize its
+      // stack, cause or arbitrary metadata; status and requestId are separate.
+      err: () => ({ category: "HTTP_RESPONSE_ERROR" }),
+      req: (request) => ({
+        id: request.id,
+        method: request.method,
+        url: sanitizeRequestUrl(request.url),
+        remoteAddress: request.remoteAddress,
+        remotePort: request.remotePort,
       }),
+    },
+    customProps: (_request, response) => ({
+      requestId: response.locals.requestId,
     }),
-  );
+  });
+  app.use((request, response, next) => {
+    if (response.locals.grading) return next();
+    ordinaryRequestLog(request, response, next);
+  });
   app.use(helmet());
   app.use(
     cors({
@@ -273,22 +330,20 @@ export function createApp(options: CreateAppOptions) {
       methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     }),
   );
-  app.use(
-    rateLimit({
-      windowMs: 60_000,
-      limit: options.config.nodeEnv === "test" ? 10_000 : 120,
-      standardHeaders: "draft-8",
-      legacyHeaders: false,
-      handler: (_request, _response, next) =>
-        next(
-          new AppError(
-            429,
-            "RATE_LIMITED",
-            "Too many requests; try again shortly",
-          ),
-        ),
-    }),
-  );
+  const ordinaryIpLimit = rateLimit({
+    windowMs: 60_000,
+    limit: options.config.nodeEnv === "test" ? 10_000 : 120,
+    standardHeaders: "draft-8",
+    legacyHeaders: false,
+    handler: (_request, _response, next) => next(rateLimitError()),
+  });
+  const compactGradeIpLimit = createCompactGradeIpLimit();
+  app.use((request, response, next) => {
+    const grading = response.locals.grading;
+    if (!grading?.compactRead) return ordinaryIpLimit(request, response, next);
+    grading.compactBudgetStarted = true;
+    return compactGradeIpLimit(request, response, next);
+  });
 
   if (options.auth) app.all("/api/auth/*splat", toNodeHandler(options.auth));
 
@@ -698,9 +753,49 @@ export function createApp(options: CreateAppOptions) {
     }),
   );
 
+  app.use(
+    createGradingRouter(
+      options.grading,
+      instructor,
+      learner,
+      requireDraftMutation,
+    ),
+  );
+
   app.use((_request, _response, next) => {
     next(new AppError(404, "NOT_FOUND", "Route not found"));
   });
+  const chargeRejectedCompactRead: ErrorRequestHandler = (
+    error: unknown,
+    request,
+    response,
+    next,
+  ) => {
+    // Authorized compact reads use their dedicated budgets. Rejected identity,
+    // input and ownership requests also spend the ordinary IP allowance.
+    const status =
+      error instanceof AppError
+        ? error.status
+        : error instanceof ZodError || error instanceof URIError
+          ? 400
+          : error instanceof Error && "status" in error
+            ? error.status
+            : undefined;
+    if (
+      response.locals.grading?.compactBudgetStarted &&
+      (status === 400 ||
+        status === 401 ||
+        status === 403 ||
+        status === 404 ||
+        status === 413)
+    ) {
+      return ordinaryIpLimit(request, response, (rateError?: unknown) =>
+        next(rateError ?? error),
+      );
+    }
+    next(error);
+  };
+  app.use(chargeRejectedCompactRead);
   app.use(createErrorHandler(logger));
 
   return app;

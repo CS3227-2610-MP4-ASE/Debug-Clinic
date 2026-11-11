@@ -295,6 +295,8 @@ export function LearnerWorkspace({
       </Box>
       <TextField
         label="Explain your reasoning"
+        required
+        helperText="Required for saving and submitting."
         multiline
         minRows={2}
         maxRows={3}

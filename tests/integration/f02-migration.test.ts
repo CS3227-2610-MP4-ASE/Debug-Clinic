@@ -123,7 +123,10 @@ it("B41 preserves old rows, identities, content, hints, attempts, reviews and FK
     ).toEqual([{ generationTopicDigest: null }]);
     await expect(
       client.query("DELETE FROM \"ExerciseVersion\" WHERE id='version-p'"),
-    ).rejects.toMatchObject({ code: "23503" });
+    ).rejects.toMatchObject({
+      // PostgreSQL 18 distinguishes RESTRICT from the general FK violation.
+      code: expect.stringMatching(/^(23503|23001)$/),
+    });
     expect((await client.query('SELECT id FROM "Attempt"')).rows).toEqual([
       { id: "attempt" },
     ]);

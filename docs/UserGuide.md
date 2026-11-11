@@ -90,9 +90,18 @@ dashboard. If you have unsaved learner edits, choose **Stay** to keep working or
 
 ## Preparing an instructor draft
 
-Choose **New question** in the instructor workspace and enter a beginner Python topic, then select
-**Generate**. A successful response shows one unsaved preview with six editable
-fields: title, problem statement, buggy Python code, expected behavior, bug
+In the instructor workspace, choose **New question**. Enter a specific
+concept or task in **Python topic**, then select **Generate**.
+
+- Simple example — `Summing a list with a Python for loop`
+- Advanced example — `Python descriptors that store a separate value for each instance`
+
+If your topic is too vague, name the Python feature and the behavior you
+want students to debug. For example, narrow “Python” to “Summing a list
+with a Python for loop.”
+
+A successful response shows one unsaved preview with six editable fields:
+title, problem statement, buggy Python code, expected behavior, bug
 explanation and corrected solution. The original topic stays read-only after
 generation. **New question** starts again after any discard warning.
 
@@ -203,6 +212,38 @@ On desktop, drag the divider between the editor and output areas to resize it;
 the keyboard can also move the focused divider. On a narrow mobile screen, the
 workspace sections stack vertically. The reasoning field shows up to four lines
 at a time and scrolls longer explanations.
+
+## Grading final submissions
+
+Instructors can open **Submissions** from their Home dashboard. **Awaiting grade**
+shows their questions' final submissions oldest first. Each entry identifies the
+learner, question and submission time. Open an entry to read the submitted code
+and reasoning alongside the question's problem and expected behavior.
+
+Enter a whole-number score from **1** through **10** and choose **Save grade**.
+The saved score becomes available to the learner immediately. Use the **Graded**
+tab to revisit a submission and save a correction. This view puts the most recent
+grade saves first. If another tab saved a newer grade, the form shows it and
+retains your entered score for review before another explicit save.
+
+If a save reply is lost, the page checks the stored grade. It keeps your entered
+score while the outcome is uncertain. **Check grade again** repeats the check.
+Wait for the current grade to be confirmed before deciding whether to save again.
+If your session needs verification, grade actions pause while the entered score
+stays in the open form. Use **Retry session** to recheck it. Leaving the grading
+page discards an unsaved score.
+
+Learners can open **My submissions** from Home to find their own final answers,
+newest first. Open an entry to see **Awaiting grade** or the saved score, such as
+**8/10**. The same grade appears beside a final answer in the question workspace.
+An active result checks for updates automatically. Under normal connectivity,
+initial grades and corrections appear within 15 seconds.
+
+**Result unavailable** means the result could not be loaded. **Retry result**
+checks again. If a later check fails, the last confirmed result stays visible
+with **This result may be out of date.** A successful check clears that message.
+Existing final submissions remain available through **My submissions** after
+their question is removed, and their instructor can continue grading them.
 
 ## Using the debugging coach
 

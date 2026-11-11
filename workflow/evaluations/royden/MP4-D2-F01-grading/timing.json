@@ -1,0 +1,148 @@
+{
+  "observations": [
+    {
+      "project": "chromium",
+      "entry": "published question",
+      "previous": null,
+      "score": 6,
+      "responseStatus": 200,
+      "rendered": true,
+      "preForwardToObservationMs": 5472.907900000006,
+      "committedResponseToObservationMs": 5458.6371,
+      "visibility": "visible",
+      "triggers": []
+    },
+    {
+      "project": "chromium",
+      "entry": "published question",
+      "previous": 6,
+      "score": 8,
+      "responseStatus": 200,
+      "rendered": true,
+      "preForwardToObservationMs": 5479.878900000003,
+      "committedResponseToObservationMs": 5457.2474,
+      "visibility": "visible",
+      "triggers": []
+    },
+    {
+      "project": "chromium",
+      "entry": "live private result",
+      "previous": null,
+      "score": 6,
+      "responseStatus": 200,
+      "rendered": true,
+      "preForwardToObservationMs": 5481.465499999998,
+      "committedResponseToObservationMs": 5462.9185,
+      "visibility": "visible",
+      "triggers": []
+    },
+    {
+      "project": "chromium",
+      "entry": "live private result",
+      "previous": 6,
+      "score": 8,
+      "responseStatus": 200,
+      "rendered": true,
+      "preForwardToObservationMs": 5449.583899999998,
+      "committedResponseToObservationMs": 5430.603900000002,
+      "visibility": "visible",
+      "triggers": []
+    },
+    {
+      "project": "chromium",
+      "entry": "archived private result",
+      "previous": null,
+      "score": 6,
+      "responseStatus": 200,
+      "rendered": true,
+      "preForwardToObservationMs": 5110.049200000009,
+      "committedResponseToObservationMs": 5059.40800000001,
+      "visibility": "visible",
+      "triggers": []
+    },
+    {
+      "project": "chromium",
+      "entry": "archived private result",
+      "previous": 6,
+      "score": 8,
+      "responseStatus": 200,
+      "rendered": true,
+      "preForwardToObservationMs": 5437.484499999991,
+      "committedResponseToObservationMs": 5422.3092999999935,
+      "visibility": "visible",
+      "triggers": []
+    },
+    {
+      "project": "mobile-chromium",
+      "entry": "published question",
+      "previous": null,
+      "score": 6,
+      "responseStatus": 200,
+      "rendered": true,
+      "preForwardToObservationMs": 5455.200700000001,
+      "committedResponseToObservationMs": 5444.223899999997,
+      "visibility": "visible",
+      "triggers": []
+    },
+    {
+      "project": "mobile-chromium",
+      "entry": "published question",
+      "previous": 6,
+      "score": 8,
+      "responseStatus": 200,
+      "rendered": true,
+      "preForwardToObservationMs": 5453.742100000003,
+      "committedResponseToObservationMs": 5434.397600000004,
+      "visibility": "visible",
+      "triggers": []
+    },
+    {
+      "project": "mobile-chromium",
+      "entry": "live private result",
+      "previous": null,
+      "score": 6,
+      "responseStatus": 200,
+      "rendered": true,
+      "preForwardToObservationMs": 5441.939599999998,
+      "committedResponseToObservationMs": 5427.316099999996,
+      "visibility": "visible",
+      "triggers": []
+    },
+    {
+      "project": "mobile-chromium",
+      "entry": "live private result",
+      "previous": 6,
+      "score": 8,
+      "responseStatus": 200,
+      "rendered": true,
+      "preForwardToObservationMs": 5422.031999999992,
+      "committedResponseToObservationMs": 5408.343999999997,
+      "visibility": "visible",
+      "triggers": []
+    },
+    {
+      "project": "mobile-chromium",
+      "entry": "archived private result",
+      "previous": null,
+      "score": 6,
+      "responseStatus": 200,
+      "rendered": true,
+      "preForwardToObservationMs": 5461.839899999992,
+      "committedResponseToObservationMs": 5446.953699999998,
+      "visibility": "visible",
+      "triggers": []
+    },
+    {
+      "project": "mobile-chromium",
+      "entry": "archived private result",
+      "previous": 6,
+      "score": 8,
+      "responseStatus": 200,
+      "rendered": true,
+      "preForwardToObservationMs": 5427.340400000001,
+      "committedResponseToObservationMs": 5417.112000000008,
+      "visibility": "visible",
+      "triggers": []
+    }
+  ]
+}

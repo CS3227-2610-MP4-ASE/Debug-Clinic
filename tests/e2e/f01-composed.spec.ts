@@ -109,8 +109,15 @@ test("B01/B05/B13/B14/B19/B23 actual instructor cookie flow generates unsaved pr
       cookie.name.includes("session_token"),
     ),
   ).toMatchObject({ httpOnly: true, sameSite: "Lax" });
-  await page.goto("/instructor/questions/new");
-  await page.getByRole("textbox", { name: /topic/i }).fill(f01Topic);
+  await expect(
+    page.getByText(/prepare a debugging question on a specific Python topic/i),
+  ).toBeVisible();
+  await page.getByRole("link", { name: "New question", exact: true }).click();
+  const topic = page.getByRole("textbox", {
+    name: "Python topic",
+    exact: true,
+  });
+  await topic.fill(f01Topic);
   const generation = page.waitForResponse(
     "**/api/v1/instructor/questions/generate",
   );
@@ -122,6 +129,8 @@ test("B01/B05/B13/B14/B19/B23 actual instructor cookie flow generates unsaved pr
     model: null,
     promptVersion: "fake-question-v1",
   });
+  await expect(topic).toHaveValue(f01Topic);
+  await expect(topic).not.toBeEditable();
   for (const name of Object.values(fields))
     await expect(page.getByRole("textbox", { name })).not.toHaveValue("");
   expect(

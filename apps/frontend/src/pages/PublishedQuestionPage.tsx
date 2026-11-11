@@ -14,13 +14,16 @@ import type {
   LearnerAttemptWrite,
   PublishedQuestion,
 } from "@debugclinic/contracts";
+import { LearnerAttemptWriteSchema } from "@debugclinic/contracts";
 import { useCallback, useEffect, useId, useRef, useState } from "react";
 import { Link as RouterLink, useLocation, useParams } from "react-router-dom";
 import { useAuth } from "../auth/AuthProvider.js";
+import { GradingAdmission } from "../auth/GradingAdmission.js";
 import { QuestionError } from "../lib/instructor-questions.js";
 import { useUnsavedWork } from "../components/UnsavedWork.js";
 import { LearnerWorkspace } from "../components/LearnerWorkspace.js";
 import { LearnerAssistantPanel } from "../components/LearnerAssistantPanel.js";
+import { LearnerGradePanel } from "../components/LearnerGradePanel.js";
 import {
   getLearnerAttempt,
   getPublishedQuestion,
@@ -245,6 +248,30 @@ export function PublishedQuestionPage() {
       ...local,
       expectedRevision: attempt?.revision ?? null,
     };
+    const validation = LearnerAttemptWriteSchema.safeParse(input);
+    if (!validation.success) {
+      setError(
+        validation.error.issues
+          .map((issue) => {
+            const label =
+              issue.path[0] === "reasoning"
+                ? "Explain your reasoning"
+                : issue.path[0] === "code"
+                  ? "Your Python 3 code"
+                  : "Attempt";
+            return `${label}: ${issue.message}`;
+          })
+          .join("; "),
+      );
+      return;
+    }
+    if (
+      submit &&
+      !window.confirm(
+        "Submit this final attempt? You cannot edit it afterward.",
+      )
+    )
+      return;
     setSaving(true);
     setError(null);
     setRecoveryNotice(null);
@@ -395,6 +422,13 @@ export function PublishedQuestionPage() {
           Final submission received. This attempt is read-only.
         </Alert>
       )}
+      {!pending &&
+        question?.id === id &&
+        attempt?.status === "FINAL_SUBMITTED" && (
+          <GradingAdmission key={attempt.id} role="LEARNER" embedded>
+            <LearnerGradePanel attemptId={attempt.id} />
+          </GradingAdmission>
+        )}
       {question && (
         <Box
           sx={{
@@ -557,14 +591,7 @@ export function PublishedQuestionPage() {
             onReasoningChange={editReasoning}
             onOutputChange={setRunOutput}
             onSave={() => void persist(false)}
-            onSubmit={() => {
-              if (
-                window.confirm(
-                  "Submit this final attempt? You cannot edit it afterward.",
-                )
-              )
-                void persist(true);
-            }}
+            onSubmit={() => void persist(true)}
           />
         </Box>
       )}

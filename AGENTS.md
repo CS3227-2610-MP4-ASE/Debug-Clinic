@@ -37,6 +37,9 @@ Verify actual command invocation and results before reporting a delegated check
 as running or passing; compact status snapshots can omit in-flight tool calls.
 Monitor report commands also lock private state; use
 scoped write permission when that state is outside the workspace.
+For session timestamps, preserve raw ISO strings with a JSON parser and verify
+their calendar date before recording bounds. PowerShell's automatic date
+conversion can swap month and day during culture-sensitive reparsing.
 
 # Project lessons
 
