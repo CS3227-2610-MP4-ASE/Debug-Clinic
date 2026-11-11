@@ -1,0 +1,65 @@
+name: Deploy documentation to GitHub Pages
+
+on:
+  push:
+    branches: [master]
+    paths:
+      - .github/workflows/deploy-pages.yml
+      - pages/**
+      - docs/DeveloperGuide.md
+      - docs/UserGuide.md
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: github-pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    if: github.ref == 'refs/heads/master'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+
+      - name: Configure GitHub Pages
+        uses: actions/configure-pages@v5
+
+      - name: Assemble public documentation
+        run: |
+          mkdir -p _pages-source
+          cp pages/_config.yml _pages-source/_config.yml
+          cp pages/index.md _pages-source/index.md
+          cp docs/DeveloperGuide.md _pages-source/DeveloperGuide.md
+          cp docs/UserGuide.md _pages-source/UserGuide.md
+
+          repository_source="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/blob/${GITHUB_SHA}"
+          sed -i "s|](CredentialsSetup.md|](${repository_source}/docs/CredentialsSetup.md|g" _pages-source/DeveloperGuide.md
+          sed -i "s|](../workflow/|](${repository_source}/workflow/|g" _pages-source/DeveloperGuide.md
+
+      - name: Build documentation site
+        uses: actions/jekyll-build-pages@v1
+        with:
+          source: ./_pages-source
+          destination: ./_site
+
+      - name: Upload GitHub Pages artifact
+        uses: actions/upload-pages-artifact@v4
+        with:
+          path: ./_site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
